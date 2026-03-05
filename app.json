@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "GreenHeal",
+    "slug": "greenheal",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#2D6A4F"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.greenheal.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#2D6A4F"
+      },
+      "package": "com.greenheal.app"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "3efdec26-ca09-420c-a6d7-d2cf3f924762"
+      }
+    },
+    "owner": "marwawerfellis-organization"
+  }
+}

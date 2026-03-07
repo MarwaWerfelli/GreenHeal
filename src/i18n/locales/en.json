@@ -1,0 +1,157 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "save": "Save",
+    "continue": "Continue",
+    "back": "Back",
+    "next": "Next",
+    "done": "Done",
+    "ok": "OK",
+    "retry": "Retry",
+    "complete": "Complete",
+    "open_settings": "Open Settings",
+    "loading": "Loading..."
+  },
+  "languages": {
+    "english": "English",
+    "arabic": "Arabic",
+    "french": "French"
+  },
+  "languageSelection": {
+    "title": "Choose Your Language",
+    "subtitle": "Select your preferred language"
+  },
+  "onboarding": {
+    "title": "GreenHeal",
+    "welcome": "Welcome to GreenHeal",
+    "subtitle": "Your plant-based healing companion",
+    "healingQuestion": "What are you healing from?",
+    "healingSubtitle": "Choose the area you'd like to focus on",
+    "healingGoals": {
+      "stress": "Stress & Anxiety",
+      "physical": "Physical Recovery",
+      "depression": "Depression & Low Mood",
+      "sleep": "Sleep Issues",
+      "wellness": "General Wellness"
+    },
+    "budgetQuestion": "What's your budget for plants?",
+    "budgetSubtitle": "This helps us recommend plants within your range",
+    "budget": {
+      "under10": "Under 10 TND",
+      "10to30": "10–30 TND",
+      "over30": "30+ TND",
+      "havePlants": "I already have plants"
+    },
+    "photosQuestion": "Upload photos of plants you already own",
+    "photosSubtitle": "This is optional but helps us give better recommendations",
+    "uploadPhotos": "Upload Photos",
+    "addMorePhotos": "Add More Photos",
+    "optional": "(Optional - you can skip this step)"
+  },
+  "home": {
+    "title": "GreenHeal",
+    "scanRoom": "Scan My Room",
+    "myJourney": "My Healing Journey",
+    "dailyTip": "Daily Healing Tip",
+    "moodCheckIn": "How are you feeling today?"
+  },
+  "camera": {
+    "title": "Scan Your Room",
+    "capture": "Capture",
+    "usePhoto": "Use this photo",
+    "retake": "Retake",
+    "permissionDenied": "Camera permission is required to scan your room and capture plant photos.",
+    "permissionTitle": "Camera Access Required"
+  },
+  "aiAnalysis": {
+    "title": "Analyzing Your Space",
+    "analyzing": "Finding the perfect plants for your healing journey...",
+    "recommendations": "Plant Recommendations",
+    "limitReached": "Daily limit reached",
+    "limitMessage": "You've reached your daily limit of {{limit}} AI analyses. Resets at {{resetTime}}.",
+    "remainingRequests": "{{count}} analyses remaining today",
+    "error": "Unable to analyze your room. Please check your internet connection and try again.",
+    "generateVisualization": "See Your Room with Plants",
+    "generatingVisualization": "Creating your design...",
+    "yourRoomWithPlants": "Your Room with Healing Plants",
+    "visualizationError": "Visualization Error",
+    "visualizationErrorMessage": "Unable to generate room visualization. Please try again later."
+  },
+  "plantDetail": {
+    "title": "Plant Details",
+    "healingBenefits": "Healing Benefits",
+    "placement": "Placement Guidance",
+    "careInstructions": "Care Instructions",
+    "difficulty": "Care Difficulty",
+    "cost": "Estimated Cost",
+    "wateringFrequency": "Water every {{days}} days",
+    "addToGarden": "Add to My Garden",
+    "findNearMe": "Find it Near Me",
+    "added": "Added to your garden!"
+  },
+  "journal": {
+    "title": "Healing Journal",
+    "newEntry": "New Entry",
+    "moodScale": "How do you feel?",
+    "notes": "Notes",
+    "notesPlaceholder": "Write about your day, your plants, or how you're feeling...",
+    "addPhoto": "Add Photo",
+    "takePhoto": "Take Photo",
+    "chooseFromGallery": "Choose from Gallery",
+    "deleteEntry": "Delete Entry",
+    "deleteConfirm": "Are you sure you want to delete this journal entry?",
+    "noEntries": "No journal entries yet. Start tracking your healing journey!",
+    "noNotes": "No notes"
+  },
+  "garden": {
+    "title": "My Garden",
+    "noPlantsYet": "No plants in your garden yet. Scan a room to get recommendations!",
+    "needsWatering": "Needs watering",
+    "lastWatered": "Last watered {{date}}",
+    "nextWatering": "Water in {{days}} days",
+    "markAsWatered": "Mark as Watered",
+    "removeFromGarden": "Remove from Garden",
+    "removeConfirm": "Are you sure you want to remove this plant from your garden?",
+    "watered": "Plant watered!"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "resetProfile": "Reset Healing Profile",
+    "resetConfirm": "Are you sure you want to reset your healing profile? This will clear all your onboarding data.",
+    "version": "Version",
+    "about": "About GreenHeal"
+  },
+  "permissions": {
+    "camera_required": "Camera Access Required",
+    "camera_explanation": "GreenHeal needs camera access to scan your room and capture plant photos for your healing journey.",
+    "notifications_required": "Notification Access",
+    "notifications_explanation": "Enable notifications to receive plant care reminders."
+  },
+  "errors": {
+    "network": "Unable to connect. Please check your internet connection.",
+    "service_unavailable": "Service temporarily unavailable. Please try again later.",
+    "save_failed": "Unable to save data. Please try again.",
+    "load_failed": "Unable to load data. Please try again.",
+    "generic": "Something went wrong. Please try again."
+  },
+  "offline": {
+    "indicator": "You're offline",
+    "aiUnavailable": "AI analysis requires an internet connection. Please connect to the internet to scan your room.",
+    "cacheAvailable": "Showing cached data"
+  },
+  "careDifficulty": {
+    "easy": "Easy",
+    "medium": "Medium",
+    "hard": "Hard"
+  },
+  "mood": {
+    "1": "Very Bad",
+    "2": "Bad",
+    "3": "Okay",
+    "4": "Good",
+    "5": "Great"
+  }
+}

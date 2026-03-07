@@ -1,171 +1,269 @@
-# GreenHeal 🌿
+# GreenHeal Mobile App
 
-A React Native Expo mobile app that helps users transform their living spaces into therapeutic environments using the proven health benefits of plants.
+GreenHeal is a plant-based healing companion mobile app built with React Native and Expo. The app helps users discover healing plants for their living spaces through AI-powered room analysis, manage their plant garden, and track their healing journey.
 
 ## Features
 
-- **Personalized Onboarding**: Understand user's healing goals, budget, and existing plants
-- **Room Scanning**: Use camera to capture room photos
-- **AI-Powered Analysis**: GPT-4o Vision analyzes rooms and suggests healing plants
-- **Healing Journal**: Track mood and progress over time
-- **My Garden**: Manage saved plants with care reminders
-- **Plant Care Notifications**: Get reminders to water your plants
+- 🌍 **Multi-language Support**: English, Arabic (RTL), and French
+- 🤖 **AI Room Analysis**: Scan your room and get personalized plant recommendations using GPT-4o Vision
+- 🌱 **My Garden**: Track your plants with watering reminders and care instructions
+- 📔 **Healing Journal**: Document your healing journey with mood tracking and photos
+- 📡 **Offline Mode**: Access your garden and journal even without internet
+- 🔔 **Smart Notifications**: Get reminders when your plants need watering
+- 🎨 **Beautiful UI**: Nature-inspired design with calming colors
 
-## Tech Stack
+## Prerequisites
 
-- React Native with Expo SDK 51
-- expo-camera, expo-image-picker, expo-file-system, expo-notifications
-- expo-sqlite for local data storage
-- AsyncStorage for user preferences
-- Axios for API calls
-- React Navigation (Stack + Bottom Tabs)
-- OpenAI GPT-4o Vision API
+- Node.js (v16 or higher)
+- npm or yarn
+- Expo CLI (`npm install -g expo-cli`)
+- For Android: Android Studio or Expo Go app
+- For iOS: Xcode (macOS only) or Expo Go app
 
 ## Setup Instructions
 
-### Prerequisites
+### 1. Clone the Repository
 
-- Node.js 18+ installed
-- Expo CLI installed: `npm install -g expo-cli`
-- OpenAI API key (get from https://platform.openai.com/api-keys)
-
-### Installation
-
-1. Clone the repository
 ```bash
-git clone <your-repo-url>
+git clone <repository-url>
 cd greenheal
 ```
 
-2. Install dependencies
+### 2. Install Dependencies
+
 ```bash
-npm install
+npm install --legacy-peer-deps
 ```
 
-3. Create environment file
+Note: The `--legacy-peer-deps` flag is required due to React 19 peer dependency conflicts.
+
+### 3. Configure Environment Variables
+
+Create a `.env` file in the root directory:
+
 ```bash
 cp .env.example .env
 ```
 
-4. Add your API keys to `.env`
-```
+Edit `.env` and add your API keys:
+
+```env
 OPENAI_API_KEY=your_openai_api_key_here
 PERENUAL_API_KEY=your_perenual_api_key_here
 ```
 
-### Running the App
+**Getting API Keys:**
 
-#### Development Mode
+- **OpenAI API Key**: Sign up at [platform.openai.com](https://platform.openai.com/) and create an API key
+- **Perenual API Key**: Sign up at [perenual.com/docs/api](https://perenual.com/docs/api) for plant database access
+
+### 4. Start the Development Server
 
 ```bash
-# Start Expo dev server
 npm start
-
-# Run on Android
-npm run android
-
-# Run on iOS
-npm run ios
 ```
 
-#### Testing on Physical Device
+This will start the Expo development server. You can then:
 
-1. Install Expo Go app on your phone
-2. Scan the QR code from the terminal
+- Press `a` to open on Android emulator
+- Press `i` to open on iOS simulator (macOS only)
+- Scan the QR code with Expo Go app on your physical device
 
-### Building APK
+## Testing
 
-1. Install EAS CLI
+Run the test suite:
+
+```bash
+npm test
+```
+
+Run tests with coverage:
+
+```bash
+npm test -- --coverage
+```
+
+Run specific test file:
+
+```bash
+npm test -- __tests__/ai.test.ts
+```
+
+## Building for Production
+
+### Android APK
+
+1. Configure EAS Build (first time only):
+
 ```bash
 npm install -g eas-cli
-```
-
-2. Login to Expo
-```bash
 eas login
-```
-
-3. Configure the project
-```bash
 eas build:configure
 ```
 
-4. Build APK for Android
-```bash
-# Preview build (for testing)
-eas build --platform android --profile preview
+2. Build APK:
 
-# Production build
-eas build --platform android --profile production
+```bash
+eas build --platform android --profile preview
 ```
 
-5. Download the APK from the Expo dashboard or the link provided in terminal
+The APK will be available for download from the Expo dashboard.
+
+### iOS (macOS only)
+
+```bash
+eas build --platform ios --profile preview
+```
 
 ## Project Structure
 
 ```
 greenheal/
 ├── src/
-│   ├── screens/
-│   │   ├── OnboardingScreen.js
-│   │   ├── HomeScreen.js
-│   │   ├── RoomScanScreen.js
-│   │   ├── AnalysisScreen.js
-│   │   ├── PlantDetailScreen.js
-│   │   ├── JournalScreen.js
-│   │   └── MyGardenScreen.js
-│   ├── services/
-│   │   └── openai.js
-│   └── utils/
-│       ├── database.js
-│       └── notifications.js
-├── App.js
-├── app.json
-├── eas.json
-├── package.json
-└── README.md
+│   ├── components/       # Reusable UI components
+│   ├── i18n/            # Internationalization
+│   │   └── locales/     # Translation files (en, ar, fr)
+│   ├── modules/         # Core functionality modules
+│   │   ├── ai.ts        # AI analysis with OpenAI
+│   │   ├── connectivity.ts  # Network connectivity
+│   │   ├── image.ts     # Image capture and processing
+│   │   ├── notifications.ts # Push notifications
+│   │   ├── plantDatabase.ts # Perenual API integration
+│   │   └── storage.ts   # AsyncStorage & SQLite
+│   ├── navigation/      # React Navigation setup
+│   ├── screens/         # App screens
+│   ├── types/           # TypeScript type definitions
+│   └── utils/           # Utility functions and constants
+├── __tests__/           # Jest test files
+├── assets/              # Images and static assets
+├── .env.example         # Environment variables template
+├── app.json            # Expo configuration
+├── eas.json            # EAS Build configuration
+└── package.json        # Dependencies and scripts
 ```
 
-## Color Palette
+## Key Technologies
 
-- Primary Green: `#2D6A4F`
-- Light Green: `#74C69D`
-- Cream: `#F8F4E3`
-- Light Cream: `#FEFAE0`
+- **React Native 0.81.5**: Mobile app framework
+- **Expo SDK 54**: Development platform
+- **TypeScript**: Type-safe JavaScript
+- **React Navigation**: Navigation library
+- **i18next**: Internationalization
+- **SQLite**: Local database for offline storage
+- **AsyncStorage**: Key-value storage
+- **OpenAI GPT-4o Vision**: AI-powered room analysis
+- **Perenual API**: Plant database and care information
+- **Jest & React Native Testing Library**: Testing framework
+- **fast-check**: Property-based testing
 
-## API Requirements
+## Features in Detail
 
-### OpenAI API
-- Model: GPT-4o (with vision capabilities)
-- Used for room analysis and plant recommendations
-- Cost: ~$0.01-0.03 per image analysis
+### AI Room Analysis
 
-## Permissions Required
+1. Take a photo of your room
+2. AI analyzes the space considering lighting, humidity, and your healing goals
+3. Get 3 personalized plant recommendations with:
+   - Healing benefits
+   - Placement guidance
+   - Care difficulty
+   - Estimated cost
+   - Watering frequency
 
-- Camera (for room scanning)
-- Photo Library (for uploading existing plant photos)
-- Notifications (for plant care reminders)
+### My Garden
+
+- View all your saved plants in a grid layout
+- Visual indicators for plants needing water
+- Mark plants as watered
+- Get enriched care instructions from Perenual API
+- Remove plants from your garden
+- Automatic watering reminders
+
+### Healing Journal
+
+- Track your mood on a 1-5 scale with emojis
+- Write notes about your day and healing journey
+- Attach photos to journal entries
+- View timeline of all entries
+- Delete entries with confirmation
+
+### Settings
+
+- Change app language (English, Arabic, French)
+- RTL support for Arabic
+- Reset healing profile
+- View app version
+
+### Offline Mode
+
+- Offline indicator when no internet connection
+- AI analysis blocked with explanatory message
+- Full access to My Garden (SQLite data)
+- Full access to Healing Journal (SQLite data)
+- Mood check-ins work offline
+- Cached plant data displayed when available
 
 ## Troubleshooting
 
-### Camera not working
-- Ensure camera permissions are granted in device settings
-- Check that expo-camera is properly installed
+### Metro Bundler Issues
 
-### API errors
-- Verify your OpenAI API key is correct in `.env`
-- Check that you have sufficient API credits
-- Ensure your API key has access to GPT-4o model
+If you encounter Metro bundler errors:
 
-### Build errors
-- Clear cache: `expo start -c`
-- Reinstall dependencies: `rm -rf node_modules && npm install`
-- Update Expo: `npm install expo@latest`
+```bash
+npm start -- --reset-cache
+```
+
+### Android Build Issues
+
+Clear build cache:
+
+```bash
+cd android
+./gradlew clean
+cd ..
+```
+
+### iOS Build Issues (macOS)
+
+```bash
+cd ios
+pod install
+cd ..
+```
+
+### Test Failures
+
+Clear Jest cache:
+
+```bash
+npm test -- --clearCache
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## License
 
-MIT
+This project is licensed under the MIT License.
 
 ## Support
 
-For issues and questions, please open an issue on GitHub.
+For issues and questions:
+- Open an issue on GitHub
+- Check existing issues for solutions
+- Review the troubleshooting section
+
+## Acknowledgments
+
+- OpenAI for GPT-4o Vision API
+- Perenual for plant database API
+- Expo team for the amazing development platform
+- React Native community for excellent libraries
+
+---
+
+Built with ❤️ for plant lovers and healing seekers

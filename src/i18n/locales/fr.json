@@ -1,0 +1,156 @@
+{
+  "common": {
+    "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "delete": "Supprimer",
+    "save": "Enregistrer",
+    "continue": "Continuer",
+    "back": "Retour",
+    "next": "Suivant",
+    "done": "Terminé",
+    "ok": "OK",
+    "retry": "Réessayer",
+    "complete": "Terminer",
+    "open_settings": "Ouvrir les paramètres",
+    "loading": "Chargement..."
+  },
+  "languages": {
+    "english": "Anglais",
+    "arabic": "Arabe",
+    "french": "Français"
+  },
+  "languageSelection": {
+    "title": "Choisissez votre langue",
+    "subtitle": "Sélectionnez votre langue préférée"
+  },
+  "onboarding": {
+    "title": "GreenHeal",
+    "welcome": "Bienvenue sur GreenHeal",
+    "subtitle": "Votre compagnon de guérison par les plantes",
+    "healingQuestion": "De quoi souhaitez-vous guérir ?",
+    "healingSubtitle": "Choisissez le domaine sur lequel vous souhaitez vous concentrer",
+    "healingGoals": {
+      "stress": "Stress et anxiété",
+      "physical": "Récupération physique",
+      "depression": "Dépression et humeur basse",
+      "sleep": "Problèmes de sommeil",
+      "wellness": "Bien-être général"
+    },
+    "budgetQuestion": "Quel est votre budget pour les plantes ?",
+    "budgetSubtitle": "Cela nous aide à recommander des plantes dans votre gamme",
+    "budget": {
+      "under10": "Moins de 10 TND",
+      "10to30": "10-30 TND",
+      "over30": "Plus de 30 TND",
+      "havePlants": "J'ai déjà des plantes"
+    },
+    "photosQuestion": "Téléchargez des photos de vos plantes",
+    "photosSubtitle": "C'est facultatif mais cela nous aide à donner de meilleures recommandations",
+    "uploadPhotos": "Télécharger des photos",
+    "addMorePhotos": "Ajouter plus de photos",
+    "optional": "(Facultatif - vous pouvez sauter cette étape)"
+  },
+  "home": {
+    "title": "GreenHeal",
+    "scanRoom": "Scanner ma pièce",
+    "myJourney": "Mon parcours de guérison",
+    "dailyTip": "Conseil de guérison du jour",
+    "moodCheckIn": "Comment vous sentez-vous aujourd'hui ?"
+  },
+  "camera": {
+    "title": "Scanner votre pièce",
+    "capture": "Capturer",
+    "usePhoto": "Utiliser cette photo",
+    "retake": "Reprendre",
+    "permissionDenied": "L'accès à la caméra est requis pour scanner votre pièce et capturer des photos de plantes.",
+    "permissionTitle": "Accès à la caméra requis"
+  },
+  "aiAnalysis": {
+    "title": "Analyse de votre espace",
+    "analyzing": "Recherche des plantes parfaites pour votre parcours de guérison...",
+    "recommendations": "Recommandations de plantes",
+    "limitReached": "Limite quotidienne atteinte",
+    "limitMessage": "Vous avez atteint votre limite quotidienne de {{limit}} analyses. Réinitialisation à {{resetTime}}.",
+    "remainingRequests": "{{count}} analyses restantes aujourd'hui",
+    "error": "Impossible d'analyser votre pièce. Veuillez vérifier votre connexion Internet et réessayer.",
+    "generateVisualization": "Voir votre pièce avec des plantes",
+    "generatingVisualization": "Création de votre design...",
+    "yourRoomWithPlants": "Votre pièce avec des plantes thérapeutiques",
+    "visualizationError": "Erreur de visualisation",
+    "visualizationErrorMessage": "Impossible de générer la visualisation de la pièce. Veuillez réessayer plus tard."
+  },
+  "plantDetail": {
+    "title": "Détails de la plante",
+    "healingBenefits": "Bienfaits thérapeutiques",
+    "placement": "Guide de placement",
+    "careInstructions": "Instructions d'entretien",
+    "difficulty": "Difficulté d'entretien",
+    "cost": "Coût estimé",
+    "wateringFrequency": "Arroser tous les {{days}} jours",
+    "addToGarden": "Ajouter à mon jardin",
+    "findNearMe": "Trouver près de moi",
+    "added": "Ajouté à votre jardin !"
+  },
+  "journal": {
+    "title": "Journal de guérison",
+    "newEntry": "Nouvelle entrée",
+    "moodScale": "Comment vous sentez-vous ?",
+    "notes": "Notes",
+    "notesPlaceholder": "Écrivez sur votre journée, vos plantes ou comment vous vous sentez...",
+    "addPhoto": "Ajouter une photo",
+    "takePhoto": "Prendre une photo",
+    "chooseFromGallery": "Choisir dans la galerie",
+    "deleteEntry": "Supprimer l'entrée",
+    "deleteConfirm": "Êtes-vous sûr de vouloir supprimer cette entrée de journal ?",
+    "noEntries": "Aucune entrée de journal pour le moment. Commencez à suivre votre parcours de guérison !"
+  },
+  "garden": {
+    "title": "Mon jardin",
+    "noPlantsYet": "Aucune plante dans votre jardin pour le moment. Scannez une pièce pour obtenir des recommandations !",
+    "needsWatering": "Besoin d'arrosage",
+    "lastWatered": "Dernier arrosage {{date}}",
+    "nextWatering": "Arroser dans {{days}} jours",
+    "markAsWatered": "Marquer comme arrosé",
+    "removeFromGarden": "Retirer du jardin",
+    "removeConfirm": "Êtes-vous sûr de vouloir retirer cette plante de votre jardin ?",
+    "watered": "Plante arrosée !"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "language": "Langue",
+    "resetProfile": "Réinitialiser le profil de guérison",
+    "resetConfirm": "Êtes-vous sûr de vouloir réinitialiser votre profil de guérison ? Cela effacera toutes vos données d'intégration.",
+    "version": "Version",
+    "about": "À propos de GreenHeal"
+  },
+  "permissions": {
+    "camera_required": "Accès à la caméra requis",
+    "camera_explanation": "GreenHeal a besoin d'accéder à la caméra pour scanner votre pièce et capturer des photos de plantes pour votre parcours de guérison.",
+    "notifications_required": "Accès aux notifications",
+    "notifications_explanation": "Activez les notifications pour recevoir des rappels d'entretien des plantes."
+  },
+  "errors": {
+    "network": "Impossible de se connecter. Veuillez vérifier votre connexion Internet.",
+    "service_unavailable": "Service temporairement indisponible. Veuillez réessayer plus tard.",
+    "save_failed": "Impossible d'enregistrer les données. Veuillez réessayer.",
+    "load_failed": "Impossible de charger les données. Veuillez réessayer.",
+    "generic": "Une erreur s'est produite. Veuillez réessayer."
+  },
+  "offline": {
+    "indicator": "Vous êtes hors ligne",
+    "aiUnavailable": "L'analyse IA nécessite une connexion Internet. Veuillez vous connecter à Internet pour scanner votre pièce.",
+    "cacheAvailable": "Affichage des données en cache"
+  },
+  "careDifficulty": {
+    "easy": "Facile",
+    "medium": "Moyen",
+    "hard": "Difficile"
+  },
+  "mood": {
+    "1": "Très mauvais",
+    "2": "Mauvais",
+    "3": "Correct",
+    "4": "Bon",
+    "5": "Excellent"
+  }
+}

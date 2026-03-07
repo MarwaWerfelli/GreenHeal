@@ -1,0 +1,11 @@
+# Exclude Kiro IDE files from EAS Build
+.kiro/
+
+# Exclude development files
+.vscode/
+.git/
+*.md
+*.bat
+__tests__/
+*.log
+.DS_Store

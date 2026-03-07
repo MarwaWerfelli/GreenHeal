@@ -1,0 +1,156 @@
+{
+  "common": {
+    "cancel": "إلغاء",
+    "confirm": "تأكيد",
+    "delete": "حذف",
+    "save": "حفظ",
+    "continue": "متابعة",
+    "back": "رجوع",
+    "next": "التالي",
+    "done": "تم",
+    "ok": "حسناً",
+    "retry": "إعادة المحاولة",
+    "complete": "إكمال",
+    "open_settings": "فتح الإعدادات",
+    "loading": "جاري التحميل..."
+  },
+  "languages": {
+    "english": "الإنجليزية",
+    "arabic": "العربية",
+    "french": "الفرنسية"
+  },
+  "languageSelection": {
+    "title": "اختر لغتك",
+    "subtitle": "حدد لغتك المفضلة"
+  },
+  "onboarding": {
+    "title": "GreenHeal",
+    "welcome": "مرحباً بك في GreenHeal",
+    "subtitle": "رفيقك في العلاج بالنباتات",
+    "healingQuestion": "ما الذي تريد علاجه؟",
+    "healingSubtitle": "اختر المجال الذي تريد التركيز عليه",
+    "healingGoals": {
+      "stress": "التوتر والقلق",
+      "physical": "التعافي الجسدي",
+      "depression": "الاكتئاب والمزاج المنخفض",
+      "sleep": "مشاكل النوم",
+      "wellness": "الصحة العامة"
+    },
+    "budgetQuestion": "ما هي ميزانيتك للنباتات؟",
+    "budgetSubtitle": "هذا يساعدنا على التوصية بالنباتات ضمن نطاقك",
+    "budget": {
+      "under10": "أقل من 10 دينار",
+      "10to30": "10-30 دينار",
+      "over30": "أكثر من 30 دينار",
+      "havePlants": "لدي نباتات بالفعل"
+    },
+    "photosQuestion": "قم بتحميل صور النباتات التي تمتلكها",
+    "photosSubtitle": "هذا اختياري ولكنه يساعدنا على تقديم توصيات أفضل",
+    "uploadPhotos": "تحميل الصور",
+    "addMorePhotos": "إضافة المزيد من الصور",
+    "optional": "(اختياري - يمكنك تخطي هذه الخطوة)"
+  },
+  "home": {
+    "title": "GreenHeal",
+    "scanRoom": "مسح غرفتي",
+    "myJourney": "رحلة الشفاء",
+    "dailyTip": "نصيحة الشفاء اليومية",
+    "moodCheckIn": "كيف تشعر اليوم؟"
+  },
+  "camera": {
+    "title": "مسح غرفتك",
+    "capture": "التقاط",
+    "usePhoto": "استخدم هذه الصورة",
+    "retake": "إعادة التقاط",
+    "permissionDenied": "يتطلب الوصول إلى الكاميرا لمسح غرفتك والتقاط صور النباتات.",
+    "permissionTitle": "الوصول إلى الكاميرا مطلوب"
+  },
+  "aiAnalysis": {
+    "title": "تحليل مساحتك",
+    "analyzing": "البحث عن النباتات المثالية لرحلة الشفاء الخاصة بك...",
+    "recommendations": "توصيات النباتات",
+    "limitReached": "تم الوصول إلى الحد اليومي",
+    "limitMessage": "لقد وصلت إلى الحد اليومي البالغ {{limit}} تحليلات. يتم إعادة التعيين في {{resetTime}}.",
+    "remainingRequests": "{{count}} تحليلات متبقية اليوم",
+    "error": "غير قادر على تحليل غرفتك. يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.",
+    "generateVisualization": "إنشاء تصور للغرفة مع النباتات",
+    "generatingVisualization": "جاري إنشاء التصور...",
+    "yourRoomWithPlants": "غرفتك مع النباتات",
+    "visualizationError": "خطأ في التصور",
+    "visualizationErrorMessage": "غير قادر على إنشاء تصور الغرفة. يرجى المحاولة مرة أخرى."
+  },
+  "plantDetail": {
+    "title": "تفاصيل النبات",
+    "healingBenefits": "فوائد الشفاء",
+    "placement": "إرشادات الوضع",
+    "careInstructions": "تعليمات العناية",
+    "difficulty": "صعوبة العناية",
+    "cost": "التكلفة المقدرة",
+    "wateringFrequency": "الري كل {{days}} أيام",
+    "addToGarden": "أضف إلى حديقتي",
+    "findNearMe": "ابحث عنه بالقرب مني",
+    "added": "تمت الإضافة إلى حديقتك!"
+  },
+  "journal": {
+    "title": "يومية الشفاء",
+    "newEntry": "إدخال جديد",
+    "moodScale": "كيف تشعر؟",
+    "notes": "ملاحظات",
+    "notesPlaceholder": "اكتب عن يومك أو نباتاتك أو كيف تشعر...",
+    "addPhoto": "إضافة صورة",
+    "takePhoto": "التقاط صورة",
+    "chooseFromGallery": "اختر من المعرض",
+    "deleteEntry": "حذف الإدخال",
+    "deleteConfirm": "هل أنت متأكد أنك تريد حذف هذا الإدخال؟",
+    "noEntries": "لا توجد إدخالات في اليومية بعد. ابدأ في تتبع رحلة الشفاء الخاصة بك!"
+  },
+  "garden": {
+    "title": "حديقتي",
+    "noPlantsYet": "لا توجد نباتات في حديقتك بعد. امسح غرفة للحصول على توصيات!",
+    "needsWatering": "يحتاج إلى الري",
+    "lastWatered": "آخر ري {{date}}",
+    "nextWatering": "الري بعد {{days}} أيام",
+    "markAsWatered": "وضع علامة كمروي",
+    "removeFromGarden": "إزالة من الحديقة",
+    "removeConfirm": "هل أنت متأكد أنك تريد إزالة هذا النبات من حديقتك؟",
+    "watered": "تم ري النبات!"
+  },
+  "settings": {
+    "title": "الإعدادات",
+    "language": "اللغة",
+    "resetProfile": "إعادة تعيين ملف الشفاء",
+    "resetConfirm": "هل أنت متأكد أنك تريد إعادة تعيين ملف الشفاء الخاص بك؟ سيؤدي هذا إلى مسح جميع بيانات الإعداد الخاصة بك.",
+    "version": "الإصدار",
+    "about": "حول GreenHeal"
+  },
+  "permissions": {
+    "camera_required": "الوصول إلى الكاميرا مطلوب",
+    "camera_explanation": "يحتاج GreenHeal إلى الوصول إلى الكاميرا لمسح غرفتك والتقاط صور النباتات لرحلة الشفاء الخاصة بك.",
+    "notifications_required": "الوصول إلى الإشعارات",
+    "notifications_explanation": "قم بتمكين الإشعارات لتلقي تذكيرات العناية بالنباتات."
+  },
+  "errors": {
+    "network": "غير قادر على الاتصال. يرجى التحقق من اتصالك بالإنترنت.",
+    "service_unavailable": "الخدمة غير متاحة مؤقتاً. يرجى المحاولة مرة أخرى لاحقاً.",
+    "save_failed": "غير قادر على حفظ البيانات. يرجى المحاولة مرة أخرى.",
+    "load_failed": "غير قادر على تحميل البيانات. يرجى المحاولة مرة أخرى.",
+    "generic": "حدث خطأ ما. يرجى المحاولة مرة أخرى."
+  },
+  "offline": {
+    "indicator": "أنت غير متصل",
+    "aiUnavailable": "يتطلب تحليل الذكاء الاصطناعي اتصالاً بالإنترنت. يرجى الاتصال بالإنترنت لمسح غرفتك.",
+    "cacheAvailable": "عرض البيانات المخزنة مؤقتاً"
+  },
+  "careDifficulty": {
+    "easy": "سهل",
+    "medium": "متوسط",
+    "hard": "صعب"
+  },
+  "mood": {
+    "1": "سيء جداً",
+    "2": "سيء",
+    "3": "جيد",
+    "4": "جيد جداً",
+    "5": "ممتاز"
+  }
+}

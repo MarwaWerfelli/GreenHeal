@@ -4,8 +4,10 @@
     "slug": "greenheal",
     "version": "1.0.0",
     "orientation": "portrait",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
+      "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#2D6A4F"
     },
@@ -17,6 +19,10 @@
       "bundleIdentifier": "com.greenheal.app"
     },
     "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#2D6A4F"
+      },
       "package": "com.greenheal.app"
     },
     "plugins": [
@@ -31,15 +37,12 @@
         {
           "photosPermission": "Allow GreenHeal to access your photos to upload plant images."
         }
-      ],
-      "expo-notifications"
+      ]
     ],
     "extra": {
       "eas": {
         "projectId": "3efdec26-ca09-420c-a6d7-d2cf3f924762"
-      },
-      "OPENAI_API_KEY": "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",
-      "PERENUAL_API_KEY": "sk-Prlb69aae80f17c4e15244"
+      }
     },
     "owner": "marwawerfellis-organization"
   }

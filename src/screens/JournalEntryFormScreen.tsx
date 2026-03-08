@@ -39,9 +39,10 @@ export default function JournalEntryFormScreen({ navigation }: JournalEntryFormS
 
   async function handleChooseFromGallery() {
     try {
-      const result = await pickFromGallery();
-      if (result && typeof result === 'string') {
-        setPhotoUri(result);
+      const results = await pickFromGallery(false); // Single image selection
+      if (results && results.length > 0) {
+        console.log('Selected image:', results[0]);
+        setPhotoUri(results[0]);
       }
     } catch (error) {
       console.error('Error picking photo:', error);
@@ -82,15 +83,21 @@ export default function JournalEntryFormScreen({ navigation }: JournalEntryFormS
 
       let savedPhotoPath: string | undefined;
       if (photoUri) {
+        console.log('Saving photo:', photoUri);
         savedPhotoPath = await saveImage(photoUri, 'journal_photos');
+        console.log('Photo saved to:', savedPhotoPath);
       }
 
-      await saveJournalEntry({
+      const entryData = {
         moodScore,
         notes: notes.trim() || undefined,
         photoPath: savedPhotoPath,
         createdAt: new Date().toISOString(),
-      });
+      };
+      
+      console.log('Saving journal entry:', entryData);
+      await saveJournalEntry(entryData);
+      console.log('Journal entry saved successfully');
 
       navigation.goBack();
     } catch (error) {

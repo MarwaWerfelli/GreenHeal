@@ -133,6 +133,11 @@ export default function CameraScreen({ navigation }: CameraScreenProps) {
   return (
     <SafeAreaView style={styles.container}>
       <CameraView style={styles.camera} ref={cameraRef} facing="back">
+        <View style={styles.cameraOverlayTop}>
+          <Text style={styles.cameraHint}>
+            {t('camera.hint') || 'Aim at the main area of your room for the best analysis.'}
+          </Text>
+        </View>
         <View style={styles.cameraControls}>
           <TouchableOpacity
             style={styles.captureButton}
@@ -189,6 +194,21 @@ const styles = StyleSheet.create({
   },
   camera: {
     flex: 1,
+  },
+  cameraOverlayTop: {
+    position: 'absolute',
+    top: 20,
+    left: 16,
+    right: 16,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    backgroundColor: COLORS.black + '55',
+  },
+  cameraHint: {
+    fontSize: 12,
+    color: COLORS.white,
+    textAlign: 'center',
   },
   cameraControls: {
     flex: 1,

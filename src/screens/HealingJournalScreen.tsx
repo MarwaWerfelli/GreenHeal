@@ -53,19 +53,31 @@ export default function HealingJournalScreen({ navigation }: HealingJournalScree
   }
 
   function formatDate(dateString: string): string {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInMs = now.getTime() - date.getTime();
-    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+    try {
+      const date = new Date(dateString);
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        console.error('Invalid date string:', dateString);
+        return 'Invalid Date';
+      }
+      
+      const now = new Date();
+      const diffInMs = now.getTime() - date.getTime();
+      const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
 
-    if (diffInDays === 0) {
-      return 'Today';
-    } else if (diffInDays === 1) {
-      return 'Yesterday';
-    } else if (diffInDays < 7) {
-      return `${diffInDays} days ago`;
-    } else {
-      return date.toLocaleDateString();
+      if (diffInDays === 0) {
+        return t('journal.today', 'Today');
+      } else if (diffInDays === 1) {
+        return t('journal.yesterday', 'Yesterday');
+      } else if (diffInDays < 7) {
+        return t('journal.daysAgo', `${diffInDays} days ago`, { days: diffInDays });
+      } else {
+        return date.toLocaleDateString();
+      }
+    } catch (error) {
+      console.error('Error formatting date:', error, dateString);
+      return 'Invalid Date';
     }
   }
 
@@ -79,7 +91,7 @@ export default function HealingJournalScreen({ navigation }: HealingJournalScree
 
     return (
       <TouchableOpacity
-        style={styles.entryCard}
+        style={[styles.entryCard, styles[`moodBorder${item.moodScore}` as keyof typeof styles] as any]}
         onPress={() => {
           if (item.id) {
             navigation.navigate('JournalEntryDetail', { entryId: item.id });
@@ -172,7 +184,27 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: COLORS.secondary + '30',
+    borderColor: COLORS.secondary + '20',
+  },
+  moodBorder1: {
+    borderLeftWidth: 4,
+    borderLeftColor: '#E53935',
+  },
+  moodBorder2: {
+    borderLeftWidth: 4,
+    borderLeftColor: '#FB8C00',
+  },
+  moodBorder3: {
+    borderLeftWidth: 4,
+    borderLeftColor: '#FDD835',
+  },
+  moodBorder4: {
+    borderLeftWidth: 4,
+    borderLeftColor: '#7CB342',
+  },
+  moodBorder5: {
+    borderLeftWidth: 4,
+    borderLeftColor: '#43A047',
   },
   entryHeader: {
     flexDirection: 'row',

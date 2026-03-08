@@ -5,7 +5,9 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
     "splash": {
+      "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#2D6A4F"
     },
@@ -17,7 +19,15 @@
       "bundleIdentifier": "com.greenheal.app"
     },
     "android": {
-      "package": "com.greenheal.app"
+      "package": "com.greenheal.app",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#2D6A4F"
+      }
     },
     "plugins": [
       [
@@ -35,12 +45,13 @@
       "expo-notifications"
     ],
     "extra": {
-      "eas": {
-        "projectId": "3efdec26-ca09-420c-a6d7-d2cf3f924762"
-      },
       "OPENAI_API_KEY": "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",
-      "PERENUAL_API_KEY": "sk-Prlb69aae80f17c4e15244"
+      "PERENUAL_API_KEY": "sk-Prlb69aae80f17c4e15244",
+      "STABILITY_API_KEY": "sk-Atj8Ocb47fjIBQNQ68CpZwnnnEh7HrSGm6cBlDyLFcvydjCa",
+      "eas": {
+        "projectId": "d53d5d1b-3e29-4cce-a85e-dfe2d70ec651"
+      }
     },
-    "owner": "marwawerfellis-organization"
+    "owner": "marwawerfelli"
   }
 }

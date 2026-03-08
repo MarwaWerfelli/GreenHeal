@@ -10,7 +10,7 @@ import {
   Image,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { analyzeRoom, getRemainingRequests, generateRoomVisualization, PlantRecommendation } from '../modules/ai';
+import { analyzeRoom, getRemainingRequests, PlantRecommendation } from '../modules/ai';
 import { isConnected } from '../modules/connectivity';
 import { COLORS } from '../utils/constants';
 import type { AIAnalysisScreenProps } from '../types';
@@ -22,8 +22,6 @@ export default function AIAnalysisScreen({ route, navigation }: AIAnalysisScreen
   const [error, setError] = useState<string | null>(null);
   const [recommendations, setRecommendations] = useState<PlantRecommendation[]>([]);
   const [remainingRequests, setRemainingRequests] = useState<number>(5);
-  const [visualizationUrl, setVisualizationUrl] = useState<string | null>(null);
-  const [generatingVisualization, setGeneratingVisualization] = useState(false);
 
   useEffect(() => {
     checkConnectivityAndAnalyze();
@@ -80,21 +78,20 @@ export default function AIAnalysisScreen({ route, navigation }: AIAnalysisScreen
     navigation.navigate('PlantDetail', { plant, source: 'ai' });
   }
 
-  async function handleGenerateVisualization() {
-    setGeneratingVisualization(true);
-    try {
-      const imageUrl = await generateRoomVisualization(imageUri, recommendations);
-      setVisualizationUrl(imageUrl);
-    } catch (err: any) {
-      console.error('Visualization error:', err);
+  function handleGenerateVisualization() {
+    if (!recommendations.length) {
       Alert.alert(
         t('aiAnalysis.visualizationError'),
         t('aiAnalysis.visualizationErrorMessage'),
         [{ text: t('common.ok') }]
       );
-    } finally {
-      setGeneratingVisualization(false);
+      return;
     }
+
+    navigation.navigate('RoomVisualization', {
+      imageUri,
+      recommendations,
+    });
   }
 
   if (loading) {
@@ -155,40 +152,20 @@ export default function AIAnalysisScreen({ route, navigation }: AIAnalysisScreen
         </View>
 
         {/* Visualization Section */}
-        {visualizationUrl ? (
-          <View style={styles.visualizationContainer}>
-            <Text style={styles.visualizationTitle}>
-              ✨ {t('aiAnalysis.yourRoomWithPlants')}
-            </Text>
-            <Image
-              source={{ uri: visualizationUrl }}
-              style={styles.visualizationImage}
-              resizeMode="cover"
-            />
-          </View>
-        ) : (
+        <View style={styles.visualizationContainer}>
+          <Text style={styles.visualizationTitle}>
+            ✨ {t('aiAnalysis.yourRoomWithPlants')}
+          </Text>
           <TouchableOpacity
             style={styles.generateButton}
             onPress={handleGenerateVisualization}
-            disabled={generatingVisualization}
           >
-            {generatingVisualization ? (
-              <>
-                <ActivityIndicator size="small" color={COLORS.white} style={{ marginRight: 10 }} />
-                <Text style={styles.generateButtonText}>
-                  {t('aiAnalysis.generatingVisualization')}
-                </Text>
-              </>
-            ) : (
-              <>
-                <Text style={styles.generateButtonIcon}>🎨</Text>
-                <Text style={styles.generateButtonText}>
-                  {t('aiAnalysis.generateVisualization')}
-                </Text>
-              </>
-            )}
+            <Text style={styles.generateButtonIcon}>🎨</Text>
+            <Text style={styles.generateButtonText}>
+              {t('aiAnalysis.generateVisualization')}
+            </Text>
           </TouchableOpacity>
-        )}
+        </View>
 
         {recommendations.map((plant, index) => (
           <TouchableOpacity

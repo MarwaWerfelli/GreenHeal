@@ -77,7 +77,8 @@ export default function PlantDetailScreen({ route, navigation }: PlantDetailScre
       );
     } catch (error) {
       console.error('Error adding plant to garden:', error);
-      Alert.alert(t('errors.save_failed'));
+      const message = error instanceof Error ? error.message : String(error);
+      Alert.alert(t('errors.save_failed'), __DEV__ ? message : undefined);
     } finally {
       setAdding(false);
     }

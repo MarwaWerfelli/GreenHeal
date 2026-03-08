@@ -1,20 +1,46 @@
-// Color palette
+// Modern healing color palette
 export const COLORS = {
-  primary: '#2D6A4F',
-  primaryLight: '#E8F5E9',
-  secondary: '#74C69D',
-  background: '#F8F4E3',
-  backgroundLight: '#FEFAE0',
-  accent: '#52B788',
+  // Primary - Calming sage green (healing, growth, recovery)
+  primary: '#6B9080',
+  primaryLight: '#E8F3EF',
+  primaryDark: '#4A6B5E',
+  
+  // Secondary - Soft lavender (calm, peace, recovery)
+  secondary: '#9B8FA5',
+  secondaryLight: '#EAE6ED',
+  
+  // Accent - Warm terracotta (grounding, earth, stability)
+  accent: '#D4A574',
+  accentLight: '#F5EDE3',
+  
+  // Neutrals
+  background: '#F5F7F6',
+  backgroundLight: '#FAFBFA',
+  surface: '#FFFFFF',
+  
+  // Text
+  text: '#2C3E3D',
+  textSecondary: '#6B7C7A',
+  textLight: '#9EAAA8',
+  
+  // Status colors
+  success: '#7FB685',
+  warning: '#E8B86D',
+  error: '#D17A7A',
+  info: '#7AAED6',
+  
+  // Overlays & shadows
+  overlay: 'rgba(44, 62, 61, 0.5)',
+  overlayLight: 'rgba(44, 62, 61, 0.1)',
+  shadow: 'rgba(44, 62, 61, 0.15)',
+  
+  // Legacy compatibility
   white: '#FFFFFF',
-  text: '#1B4332',
-  textSecondary: '#52796F',
-  // Legacy names for backward compatibility
-  darkGreen: '#2D6A4F',
-  mediumGreen: '#74C69D',
-  warmBeige: '#F8F4E3',
-  lightCream: '#FEFAE0',
-  accentGreen: '#52B788',
+  darkGreen: '#6B9080',
+  mediumGreen: '#A4C3B2',
+  warmBeige: '#F5F7F6',
+  lightCream: '#FAFBFA',
+  accentGreen: '#7FB685',
 };
 
 // Storage keys

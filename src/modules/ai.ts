@@ -2,6 +2,7 @@ import axios from 'axios';
 import Constants from 'expo-constants';
 import { getOnboardingData, saveAIRequestCount, getAIRequestCount } from './storage';
 import { getCurrentLanguage } from '../i18n';
+import { resizeForStabilityAI } from './image';
 import type { PlantRecommendation } from '../types';
 
 export type { PlantRecommendation };
@@ -9,6 +10,7 @@ export type { PlantRecommendation };
 // Get API keys from app config
 const OPENAI_API_KEY = Constants.expoConfig?.extra?.OPENAI_API_KEY || '';
 const PERENUAL_API_KEY = Constants.expoConfig?.extra?.PERENUAL_API_KEY || '';
+const STABILITY_API_KEY = Constants.expoConfig?.extra?.STABILITY_API_KEY || '';
 const DAILY_LIMIT = 5;
 
 interface AIRequestCount {
@@ -242,88 +244,72 @@ export async function getRemainingRequests(): Promise<number> {
 
 /**
  * Generate a visualization of the room with the recommended plants
- * Uses GPT-4 Vision to describe the room, then DALL-E 3 to generate a matching visualization
+ * Uses backend API which calls Stability AI
  */
 export async function generateRoomVisualization(
   originalImageUri: string,
   recommendations: PlantRecommendation[]
 ): Promise<string> {
   try {
-    // Step 1: Use GPT-4 Vision to get a detailed description of the room
-    const base64Image = await convertImageToBase64(originalImageUri);
+    console.log('[VISUALIZATION] Starting visualization generation...');
+    console.log('[VISUALIZATION] Original image URI:', originalImageUri);
+    console.log('[VISUALIZATION] Recommendations count:', recommendations.length);
     
-    const descriptionResponse = await axios.post(
-      'https://api.openai.com/v1/chat/completions',
-      {
-        model: 'gpt-4o',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are an interior design expert. Describe this room in extreme detail: layout, furniture, colors, materials, lighting, flooring, walls, windows, doors, and any existing objects. Be very specific about spatial relationships and exact positions. Keep it under 200 words.',
-          },
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'image_url',
-                image_url: {
-                  url: `data:image/jpeg;base64,${base64Image}`,
-                },
-              },
-            ],
-          },
-        ],
-        max_tokens: 300,
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${OPENAI_API_KEY}`,
-        },
-      }
-    );
+    // Resize image to meet Stability AI requirements (max 9.4 megapixels)
+    console.log('[VISUALIZATION] Resizing image...');
+    const resizedImageUri = await resizeForStabilityAI(originalImageUri);
+    console.log('[VISUALIZATION] Image resized successfully');
 
-    const roomDescription = descriptionResponse.data.choices[0]?.message?.content;
-    if (!roomDescription) {
-      throw new Error('Failed to get room description');
-    }
-
-    // Step 2: Build plant placement descriptions
+    // Build a detailed prompt describing what to add
     const plantDescriptions = recommendations.map((plant) => 
-      `${plant.name} ${plant.placement}`
+      `${plant.name} in a modern pot ${plant.placement}`
     ).join(', ');
 
-    // Step 3: Create a detailed prompt for DALL-E 3
-    const prompt = `Professional interior design photograph: ${roomDescription} Now add these healing plants in modern decorative pots: ${plantDescriptions}. The plants should be placed exactly as described, looking healthy and vibrant. Maintain the exact same room layout, furniture, colors, and lighting. Only add the plants. Photorealistic, high quality, natural lighting.`;
+    const prompt = `Room with healing plants: ${plantDescriptions}. The plants should look healthy, vibrant, and professionally placed in modern decorative pots.`;
+    console.log('[VISUALIZATION] Prompt:', prompt);
 
-    // Step 4: Generate image with DALL-E 3
-    const imageResponse = await axios.post(
-      'https://api.openai.com/v1/images/generations',
+    // Create form data
+    const formData = new FormData();
+    formData.append('image', {
+      uri: resizedImageUri,
+      type: 'image/jpeg',
+      name: 'room.jpg',
+    } as any);
+    formData.append('prompt', prompt);
+
+    // Call backend API
+    const BACKEND_URL = __DEV__ 
+      ? 'http://localhost:3000' 
+      : 'https://greenhealbackend.vercel.app';
+
+    console.log('[VISUALIZATION] Calling backend API:', BACKEND_URL);
+    const apiResponse = await axios.post(
+      `${BACKEND_URL}/api/visualize`,
+      formData,
       {
-        model: 'dall-e-3',
-        prompt: prompt,
-        n: 1,
-        size: '1024x1024',
-        quality: 'standard',
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${OPENAI_API_KEY}`,
-        },
+        timeout: 90000, // 90 second timeout for DALL-E
       }
     );
 
-    const imageUrl = imageResponse.data.data[0]?.url;
-    if (!imageUrl) {
-      throw new Error('No image URL in response');
+    console.log('[VISUALIZATION] Backend response status:', apiResponse.status);
+    console.log('[VISUALIZATION] Backend response data:', JSON.stringify(apiResponse.data));
+
+    if (!apiResponse.data.success || !apiResponse.data.imageUrl) {
+      console.error('[VISUALIZATION] Invalid response from backend:', apiResponse.data);
+      throw new Error('Invalid response from backend');
     }
 
-    return imageUrl;
+    console.log('[VISUALIZATION] Visualization generated successfully!');
+    console.log('[VISUALIZATION] Image URL:', apiResponse.data.imageUrl);
+    return apiResponse.data.imageUrl;
   } catch (error: any) {
-    console.error('Error generating room visualization:', error);
-    console.error('Error details:', error.response?.data);
-    if (error.response?.status === 401) {
+    console.error('[VISUALIZATION] Error generating room visualization:', error.message);
+    console.error('[VISUALIZATION] Error details:', error);
+    if (error.response) {
+      console.error('[VISUALIZATION] Error response status:', error.response.status);
+      console.error('[VISUALIZATION] Error response data:', JSON.stringify(error.response.data));
+    }
+    if (error.response?.status === 401 || error.response?.status === 403) {
       throw new Error('API_AUTH_ERROR');
     }
     throw new Error('IMAGE_GENERATION_FAILED');

@@ -70,6 +70,9 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>🌿 {t('home.title')}</Text>
+          <Text style={styles.subtitle}>
+            {t('home.moodCheckIn')}
+          </Text>
         </View>
 
         {/* Main Action Buttons */}
@@ -113,8 +116,12 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                     styles.moodButton,
                     isSelected && styles.moodButtonSelected,
                   ]}
-                  onPress={() => handleMoodSelection(moodScore)}
-                  activeOpacity={0.7}
+                  onPress={() => {
+                    console.log(`Mood ${moodScore} pressed`);
+                    handleMoodSelection(moodScore);
+                  }}
+                  activeOpacity={0.6}
+                  testID={`mood-button-${moodScore}`}
                 >
                   <Text style={styles.moodEmoji}>{emoji}</Text>
                   <Text style={styles.moodLabel}>{t(MOOD_LABELS[index])}</Text>
@@ -144,6 +151,12 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: 'bold',
     color: COLORS.primary,
+  },
+  subtitle: {
+    marginTop: 4,
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
   },
   actionsContainer: {
     marginBottom: 30,
@@ -221,13 +234,19 @@ const styles = StyleSheet.create({
   },
   moodButton: {
     alignItems: 'center',
-    padding: 8,
+    padding: 12,
     borderRadius: 12,
     flex: 1,
     marginHorizontal: 4,
+    backgroundColor: COLORS.white,
+    borderWidth: 2,
+    borderColor: COLORS.background,
+    minHeight: 80,
+    justifyContent: 'center',
   },
   moodButtonSelected: {
     backgroundColor: COLORS.primaryLight + '30',
+    borderColor: COLORS.primary,
   },
   moodEmoji: {
     fontSize: 32,

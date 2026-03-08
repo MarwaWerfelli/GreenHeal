@@ -295,22 +295,22 @@ export async function savePlant(plant: GardenPlant): Promise<number> {
 export async function getGardenPlants(): Promise<GardenPlant[]> {
   try {
     const database = getDatabase();
-    const rows = await database.getAllAsync<GardenPlant>(
+    const rows = await database.getAllAsync<Record<string, unknown>>(
       'SELECT * FROM garden_plants ORDER BY added_at DESC'
     );
     return rows.map(row => ({
-      id: row.id,
-      name: row.name,
-      placement: row.placement,
-      healingBenefit: row.healingBenefit,
-      careDifficulty: row.careDifficulty as 'easy' | 'medium' | 'hard',
-      estimatedCost: row.estimatedCost,
-      wateringFrequencyDays: row.wateringFrequencyDays,
-      lastWateredAt: row.lastWateredAt,
-      nextWateringAt: row.nextWateringAt,
-      careInstructions: row.careInstructions,
-      notificationId: row.notificationId,
-      addedAt: row.addedAt,
+      id: row.id as number,
+      name: row.name as string,
+      placement: row.placement as string | undefined,
+      healingBenefit: (row.healing_benefit ?? row.healingBenefit) as string | undefined,
+      careDifficulty: (row.care_difficulty ?? row.careDifficulty) as 'easy' | 'medium' | 'hard',
+      estimatedCost: (row.estimated_cost ?? row.estimatedCost) as string | undefined,
+      wateringFrequencyDays: (row.watering_frequency_days ?? row.wateringFrequencyDays) as number,
+      lastWateredAt: (row.last_watered_at ?? row.lastWateredAt) as string | undefined,
+      nextWateringAt: (row.next_watering_at ?? row.nextWateringAt) as string,
+      careInstructions: (row.care_instructions ?? row.careInstructions) as string | undefined,
+      notificationId: (row.notification_id ?? row.notificationId) as string | undefined,
+      addedAt: (row.added_at ?? row.addedAt) as string,
     }));
   } catch (error) {
     console.error('Error getting garden plants:', error);
@@ -327,7 +327,7 @@ export async function updatePlantWateringDate(plantId: number, date: Date): Prom
     const lastWatered = date.toISOString();
     
     // Get the plant to calculate next watering date
-    const plant = await database.getFirstAsync<GardenPlant>(
+    const plant = await database.getFirstAsync<{ watering_frequency_days?: number; wateringFrequencyDays?: number }>(
       'SELECT watering_frequency_days FROM garden_plants WHERE id = ?',
       [plantId]
     );
@@ -336,8 +336,9 @@ export async function updatePlantWateringDate(plantId: number, date: Date): Prom
       throw new Error('Plant not found');
     }
     
+    const days = plant.watering_frequency_days ?? plant.wateringFrequencyDays ?? 7;
     const nextWateringDate = new Date(date);
-    nextWateringDate.setDate(nextWateringDate.getDate() + plant.wateringFrequencyDays);
+    nextWateringDate.setDate(nextWateringDate.getDate() + days);
     const nextWatering = nextWateringDate.toISOString();
     
     await database.runAsync(

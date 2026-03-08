@@ -101,6 +101,7 @@ export type RootStackParamList = {
   MainTabs: undefined;
   Camera: undefined;
   AIAnalysis: { imageUri: string };
+  RoomVisualization: { imageUri: string; recommendations: PlantRecommendation[] };
   PlantDetail: { plant: PlantRecommendation | GardenPlant; source: 'ai' | 'garden' };
   JournalEntryForm: { entryId?: number };
   JournalEntryDetail: { entryId: number };
@@ -126,6 +127,8 @@ export type HomeScreenProps = CompositeScreenProps<
 export type CameraScreenProps = StackScreenProps<RootStackParamList, 'Camera'>;
 
 export type AIAnalysisScreenProps = StackScreenProps<RootStackParamList, 'AIAnalysis'>;
+
+export type RoomVisualizationScreenProps = StackScreenProps<RootStackParamList, 'RoomVisualization'>;
 
 export type PlantDetailScreenProps = StackScreenProps<RootStackParamList, 'PlantDetail'>;
 

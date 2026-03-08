@@ -1,6 +1,7 @@
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
+import { Image } from 'react-native';
 
 /**
  * Image directory types
@@ -120,6 +121,51 @@ export async function compressImage(uri: string, quality: number = 0.7): Promise
   } catch (error) {
     console.error('Error compressing image:', error);
     // Return original URI if compression fails
+    return uri;
+  }
+}
+
+/**
+ * Resize image for Stability AI API (max 3072x3072 pixels = 9.4 megapixels)
+ * Returns the URI of the resized image
+ */
+export async function resizeForStabilityAI(uri: string): Promise<string> {
+  try {
+    const MAX_DIMENSION = 3072; // Stability AI max dimension
+    
+    // Get original image dimensions
+    const { width, height } = await new Promise<{ width: number; height: number }>((resolve, reject) => {
+      Image.getSize(
+        uri,
+        (w, h) => resolve({ width: w, height: h }),
+        reject
+      );
+    });
+
+    // If already within bounds, don't resize
+    if (width <= MAX_DIMENSION && height <= MAX_DIMENSION) {
+      console.log(`Image already within bounds: ${width}x${height}`);
+      return uri;
+    }
+
+    // Resize based on the larger dimension to avoid upscaling
+    const operations = width >= height
+      ? [{ resize: { width: MAX_DIMENSION } }]
+      : [{ resize: { height: MAX_DIMENSION } }];
+
+    console.log(`Resizing image from ${width}x${height} to fit ${MAX_DIMENSION}px`);
+    
+    const manipResult = await manipulateAsync(
+      uri,
+      operations,
+      { compress: 0.8, format: SaveFormat.JPEG }
+    );
+
+    console.log(`Image resized successfully`);
+    return manipResult.uri;
+  } catch (error) {
+    console.error('Error resizing image for Stability AI:', error);
+    // Return original URI if resize fails
     return uri;
   }
 }

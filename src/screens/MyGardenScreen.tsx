@@ -138,6 +138,15 @@ export default function MyGardenScreen({ navigation }: MyGardenScreenProps) {
       <View style={styles.emptyContainer}>
         <Text style={styles.emptyEmoji}>🌱</Text>
         <Text style={styles.emptyText}>{t('garden.noPlantsYet')}</Text>
+        <TouchableOpacity
+          style={styles.emptyButton}
+          onPress={() => {
+            // @ts-ignore - navigation type issue
+            navigation.navigate('Camera');
+          }}
+        >
+          <Text style={styles.emptyButtonText}>{t('home.scanRoom')}</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -182,6 +191,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.textSecondary,
     textAlign: 'center',
+  },
+  emptyButton: {
+    marginTop: 16,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 20,
+    backgroundColor: COLORS.primary,
+  },
+  emptyButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.white,
   },
   listContent: {
     padding: 16,

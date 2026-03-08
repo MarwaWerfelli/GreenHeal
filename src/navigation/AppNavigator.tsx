@@ -4,13 +4,14 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { getOnboardingData, clearOnboardingData } from '../modules/storage';
+import { getOnboardingData, clearOnboardingData, initDatabase } from '../modules/storage';
 import { init as initI18n } from '../i18n';
 import LanguageSelectionScreen from '../screens/LanguageSelectionScreen';
 import OnboardingScreen from '../screens/OnboardingScreen';
 import HomeScreen from '../screens/HomeScreen';
 import CameraScreen from '../screens/CameraScreen';
 import AIAnalysisScreen from '../screens/AIAnalysisScreen';
+import RoomVisualizationScreen from '../screens/RoomVisualizationScreen';
 import PlantDetailScreen from '../screens/PlantDetailScreen';
 import HealingJournalScreen from '../screens/HealingJournalScreen';
 import JournalEntryFormScreen from '../screens/JournalEntryFormScreen';
@@ -108,7 +109,11 @@ export default function AppNavigator() {
         // Initialize i18n
         await initI18n();
         console.log('i18n initialized');
-        
+
+        // Initialize SQLite database early so it's ready for Add to Garden, Journal, etc.
+        await initDatabase();
+        console.log('Database initialized');
+
         // Check if onboarding is complete
         try {
           const onboardingData = await getOnboardingData();
@@ -203,6 +208,17 @@ export default function AppNavigator() {
               component={AIAnalysisScreen}
               options={{ 
                 title: 'AI Analysis',
+                headerStyle: {
+                  backgroundColor: COLORS.background,
+                },
+                headerTintColor: COLORS.primary,
+              }}
+            />
+            <Stack.Screen 
+              name="RoomVisualization" 
+              component={RoomVisualizationScreen}
+              options={{ 
+                title: 'Room Visualization',
                 headerStyle: {
                   backgroundColor: COLORS.background,
                 },

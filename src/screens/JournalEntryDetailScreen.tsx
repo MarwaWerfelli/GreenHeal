@@ -43,13 +43,25 @@ export default function JournalEntryDetailScreen({ route, navigation }: JournalE
   }
 
   function formatDate(dateString: string): string {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
+    try {
+      const date = new Date(dateString);
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        console.error('Invalid date string in detail:', dateString);
+        return 'Invalid Date';
+      }
+      
+      return date.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      });
+    } catch (error) {
+      console.error('Error formatting date in detail:', error, dateString);
+      return 'Invalid Date';
+    }
   }
 
   function handleDelete() {
@@ -108,7 +120,9 @@ export default function JournalEntryDetailScreen({ route, navigation }: JournalE
     );
   }
 
-  const moodEmoji = MOOD_EMOJIS[entry.moodScore - 1];
+  console.log('Journal entry loaded:', entry);
+  const moodEmoji = MOOD_EMOJIS[entry.moodScore - 1] || '😐';
+  const moodLabel = entry.moodScore ? t(`mood.${entry.moodScore}`) : t('mood.3', 'Neutral');
 
   return (
     <ScrollView style={styles.container}>
@@ -116,17 +130,22 @@ export default function JournalEntryDetailScreen({ route, navigation }: JournalE
         <View style={styles.header}>
           <Text style={styles.moodEmoji}>{moodEmoji}</Text>
           <View style={styles.headerText}>
-            <Text style={styles.moodLabel}>{t(`mood.${entry.moodScore}`)}</Text>
+            <Text style={styles.moodLabel}>{moodLabel}</Text>
             <Text style={styles.date}>{formatDate(entry.createdAt)}</Text>
           </View>
         </View>
 
         {entry.photoPath && (
-          <Image
-            source={{ uri: entry.photoPath }}
-            style={styles.photo}
-            resizeMode="cover"
-          />
+          <View>
+            <Text style={styles.debugText}>Photo path: {entry.photoPath}</Text>
+            <Image
+              source={{ uri: entry.photoPath }}
+              style={styles.photo}
+              resizeMode="cover"
+              onError={(error) => console.error('Image load error:', error.nativeEvent.error)}
+              onLoad={() => console.log('Image loaded successfully')}
+            />
+          </View>
         )}
 
         {entry.notes && (
@@ -197,6 +216,12 @@ const styles = StyleSheet.create({
     height: 300,
     borderRadius: 12,
     marginBottom: 24,
+    backgroundColor: '#f0f0f0',
+  },
+  debugText: {
+    fontSize: 10,
+    color: COLORS.textSecondary,
+    marginBottom: 4,
   },
   notesSection: {
     marginBottom: 24,

@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
 import { getJournalEntries, deleteJournalEntry } from '../modules/storage';
 import { deleteImage } from '../modules/image';
 import { COLORS } from '../utils/constants';
@@ -52,7 +53,15 @@ export default function JournalEntryDetailScreen({ route, navigation }: JournalE
         return 'Invalid Date';
       }
       
-      return date.toLocaleDateString('en-US', {
+      // Use i18n to get current language for localized date formatting
+      const locale = i18n.language || 'en';
+      const localeMap: Record<string, string> = {
+        en: 'en-US',
+        fr: 'fr-FR',
+        ar: 'ar-SA',
+      };
+      
+      return date.toLocaleDateString(localeMap[locale] || 'en-US', {
         weekday: 'long',
         year: 'numeric',
         month: 'long',
@@ -136,16 +145,13 @@ export default function JournalEntryDetailScreen({ route, navigation }: JournalE
         </View>
 
         {entry.photoPath && (
-          <View>
-            <Text style={styles.debugText}>Photo path: {entry.photoPath}</Text>
-            <Image
-              source={{ uri: entry.photoPath }}
-              style={styles.photo}
-              resizeMode="cover"
-              onError={(error) => console.error('Image load error:', error.nativeEvent.error)}
-              onLoad={() => console.log('Image loaded successfully')}
-            />
-          </View>
+          <Image
+            source={{ uri: entry.photoPath }}
+            style={styles.photo}
+            resizeMode="cover"
+            onError={(error) => console.error('Image load error:', error.nativeEvent.error, 'Path:', entry.photoPath)}
+            onLoad={() => console.log('Image loaded successfully from:', entry.photoPath)}
+          />
         )}
 
         {entry.notes && (
@@ -216,12 +222,6 @@ const styles = StyleSheet.create({
     height: 300,
     borderRadius: 12,
     marginBottom: 24,
-    backgroundColor: '#f0f0f0',
-  },
-  debugText: {
-    fontSize: 10,
-    color: COLORS.textSecondary,
-    marginBottom: 4,
   },
   notesSection: {
     marginBottom: 24,

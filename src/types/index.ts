@@ -36,6 +36,11 @@ export interface GardenPlant {
   careInstructions?: string;
   notificationId?: string;
   addedAt: string;
+  // Watering reminder fields
+  wateringReminderEnabled: boolean;
+  lastWateredDate?: string; // ISO format
+  nextWateringDate?: string; // ISO format
+  reminderTime?: string; // HH:MM format
 }
 
 export interface EnrichedPlantData {

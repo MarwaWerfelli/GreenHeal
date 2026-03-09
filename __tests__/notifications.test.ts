@@ -6,6 +6,11 @@ import {
   cancelAllReminders,
   reschedulePlantReminder,
   hasNotificationPermissions,
+  scheduleWateringReminder,
+  cancelWateringReminder,
+  rescheduleWateringReminder,
+  setupWateringReminderCategories,
+  handleWateringReminderResponse,
 } from '../src/modules/notifications';
 
 /**
@@ -332,6 +337,249 @@ describe.skip('Notification Module (Stub - Tests Skipped for Expo Go)', () => {
       await expect(
         schedulePlantReminder(1, 'Test', new Date(Date.now() + 86400000))
       ).rejects.toThrow('Failed to schedule plant reminder');
+    });
+  });
+});
+
+
+describe.skip('Watering Reminder Service Enhancement (Stub - Tests Skipped for Expo Go)', () => {
+  describe('scheduleWateringReminder', () => {
+    test('schedules notification with plant name and last watered info', async () => {
+      const plant = {
+        id: 1,
+        name: 'Peace Lily',
+        nextWateringDate: new Date(Date.now() + 86400000).toISOString(),
+        lastWateredDate: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
+        reminderTime: '09:00',
+      };
+
+      const notificationId = await scheduleWateringReminder(plant);
+
+      expect(notificationId).toBeTruthy();
+      expect(typeof notificationId).toBe('string');
+    });
+
+    test('uses custom reminder time when provided', async () => {
+      const plant = {
+        id: 1,
+        name: 'Snake Plant',
+        nextWateringDate: new Date(Date.now() + 86400000).toISOString(),
+        reminderTime: '14:30',
+      };
+
+      await scheduleWateringReminder(plant);
+
+      // Verify the trigger time is set correctly
+      // This would need to check the mock call arguments
+    });
+
+    test('defaults to 9:00 AM when no reminder time provided', async () => {
+      const plant = {
+        id: 1,
+        name: 'Pothos',
+        nextWateringDate: new Date(Date.now() + 86400000).toISOString(),
+      };
+
+      await scheduleWateringReminder(plant);
+
+      // Verify default time is used
+    });
+
+    test('returns empty string when no permission', async () => {
+      (Notifications.getPermissionsAsync as jest.Mock).mockResolvedValue({ status: 'denied' });
+
+      const plant = {
+        id: 1,
+        name: 'Fern',
+        nextWateringDate: new Date(Date.now() + 86400000).toISOString(),
+      };
+
+      const notificationId = await scheduleWateringReminder(plant);
+
+      expect(notificationId).toBe('');
+    });
+
+    test('returns empty string for past dates', async () => {
+      const plant = {
+        id: 1,
+        name: 'Cactus',
+        nextWateringDate: new Date(Date.now() - 86400000).toISOString(),
+      };
+
+      const notificationId = await scheduleWateringReminder(plant);
+
+      expect(notificationId).toBe('');
+    });
+
+    test('returns empty string when no next watering date', async () => {
+      const plant = {
+        id: 1,
+        name: 'Succulent',
+      };
+
+      const notificationId = await scheduleWateringReminder(plant);
+
+      expect(notificationId).toBe('');
+    });
+
+    test('includes days since last watered in notification body', async () => {
+      const plant = {
+        id: 1,
+        name: 'Monstera',
+        nextWateringDate: new Date(Date.now() + 86400000).toISOString(),
+        lastWateredDate: new Date(Date.now() - 259200000).toISOString(), // 3 days ago
+      };
+
+      await scheduleWateringReminder(plant);
+
+      // Verify notification body contains "Last watered 3 days ago"
+    });
+  });
+
+  describe('cancelWateringReminder', () => {
+    test('cancels all notifications for a specific plant', async () => {
+      const plant = {
+        id: 1,
+        name: 'Aloe Vera',
+        nextWateringDate: new Date(Date.now() + 86400000).toISOString(),
+      };
+
+      await scheduleWateringReminder(plant);
+      await cancelWateringReminder(plant.id);
+
+      // Verify notification was cancelled
+    });
+
+    test('handles non-existent plant ID gracefully', async () => {
+      await expect(cancelWateringReminder(999)).resolves.not.toThrow();
+    });
+  });
+
+  describe('rescheduleWateringReminder', () => {
+    test('reschedules notification with delay', async () => {
+      const plantId = 1;
+      const delayMinutes = 60;
+
+      const notificationId = await rescheduleWateringReminder(plantId, delayMinutes);
+
+      expect(notificationId).toBeTruthy();
+    });
+
+    test('returns empty string when no permission', async () => {
+      (Notifications.getPermissionsAsync as jest.Mock).mockResolvedValue({ status: 'denied' });
+
+      const notificationId = await rescheduleWateringReminder(1, 60);
+
+      expect(notificationId).toBe('');
+    });
+
+    test('cancels existing reminder before rescheduling', async () => {
+      const plant = {
+        id: 1,
+        name: 'Spider Plant',
+        nextWateringDate: new Date(Date.now() + 86400000).toISOString(),
+      };
+
+      await scheduleWateringReminder(plant);
+      await rescheduleWateringReminder(plant.id, 60);
+
+      // Verify old notification was cancelled and new one scheduled
+    });
+  });
+
+  describe('setupWateringReminderCategories', () => {
+    test('sets up notification categories with actions', async () => {
+      await setupWateringReminderCategories();
+
+      // Verify categories were set up
+      expect(Notifications.setNotificationCategoryAsync).toHaveBeenCalledWith(
+        'watering-reminder',
+        expect.arrayContaining([
+          expect.objectContaining({ identifier: 'water-now' }),
+          expect.objectContaining({ identifier: 'snooze-1h' }),
+          expect.objectContaining({ identifier: 'dismiss' }),
+        ])
+      );
+    });
+
+    test('handles errors gracefully', async () => {
+      (Notifications.setNotificationCategoryAsync as jest.Mock).mockRejectedValue(
+        new Error('Setup failed')
+      );
+
+      await expect(setupWateringReminderCategories()).resolves.not.toThrow();
+    });
+  });
+
+  describe('handleWateringReminderResponse', () => {
+    test('extracts action and plant ID from response', () => {
+      const response = {
+        actionIdentifier: 'water-now',
+        notification: {
+          request: {
+            content: {
+              data: {
+                plantId: 1,
+                type: 'watering-reminder',
+              },
+            },
+          },
+        },
+      } as any;
+
+      const result = handleWateringReminderResponse(response);
+
+      expect(result).toEqual({
+        action: 'water-now',
+        plantId: 1,
+      });
+    });
+
+    test('returns null for non-watering-reminder notifications', () => {
+      const response = {
+        actionIdentifier: 'some-action',
+        notification: {
+          request: {
+            content: {
+              data: {
+                plantId: 1,
+                type: 'other-type',
+              },
+            },
+          },
+        },
+      } as any;
+
+      const result = handleWateringReminderResponse(response);
+
+      expect(result).toBeNull();
+    });
+
+    test('returns null when plant ID is missing', () => {
+      const response = {
+        actionIdentifier: 'water-now',
+        notification: {
+          request: {
+            content: {
+              data: {
+                type: 'watering-reminder',
+              },
+            },
+          },
+        },
+      } as any;
+
+      const result = handleWateringReminderResponse(response);
+
+      expect(result).toBeNull();
+    });
+
+    test('handles errors gracefully', () => {
+      const response = null as any;
+
+      const result = handleWateringReminderResponse(response);
+
+      expect(result).toBeNull();
     });
   });
 });

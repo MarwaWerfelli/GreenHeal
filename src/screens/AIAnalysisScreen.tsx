@@ -178,7 +178,7 @@ export default function AIAnalysisScreen({ route, navigation }: AIAnalysisScreen
               <Text style={styles.plantName}>{plant.name}</Text>
               <View style={styles.difficultyBadge}>
                 <Text style={styles.difficultyText}>
-                  {t(`careDifficulty.${plant.careDifficulty}`)}
+                  {t(`careDifficulty.${plant.careDifficulty.toLowerCase()}`)}
                 </Text>
               </View>
             </View>

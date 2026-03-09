@@ -83,6 +83,7 @@ describe('Storage Module - Error Handling', () => {
         wateringFrequencyDays: 7,
         nextWateringAt: new Date().toISOString(),
         addedAt: new Date().toISOString(),
+        wateringReminderEnabled: true,
       };
 
       await expect(savePlant(plant)).rejects.toThrow('Failed to save plant');

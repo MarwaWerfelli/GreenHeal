@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import i18n from '../i18n';
 import { useFocusEffect } from '@react-navigation/native';
 import { getJournalEntries } from '../modules/storage';
 import { COLORS } from '../utils/constants';
@@ -73,7 +74,19 @@ export default function HealingJournalScreen({ navigation }: HealingJournalScree
       } else if (diffInDays < 7) {
         return t('journal.daysAgo', `${diffInDays} days ago`, { days: diffInDays });
       } else {
-        return date.toLocaleDateString();
+        // Use i18n to get current language for localized date formatting
+        const locale = i18n.language || 'en';
+        const localeMap: Record<string, string> = {
+          en: 'en-US',
+          fr: 'fr-FR',
+          ar: 'ar-SA',
+        };
+        
+        return date.toLocaleDateString(localeMap[locale] || 'en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+        });
       }
     } catch (error) {
       console.error('Error formatting date:', error, dateString);

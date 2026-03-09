@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Text, View } from 'react-native';
+import { Text, View, StyleSheet, Platform } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { BlurView } from 'expo-blur';
+import { Ionicons } from '@expo/vector-icons';
 import { getOnboardingData, clearOnboardingData, initDatabase } from '../modules/storage';
 import { init as initI18n } from '../i18n';
 import LanguageSelectionScreen from '../screens/LanguageSelectionScreen';
@@ -19,11 +21,80 @@ import JournalEntryDetailScreen from '../screens/JournalEntryDetailScreen';
 import MyGardenScreen from '../screens/MyGardenScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import OfflineIndicator from '../components/OfflineIndicator';
-import { COLORS } from '../utils/constants';
+import FloatingActionButton from '../components/FloatingActionButton';
+import { DESIGN_SYSTEM } from '../utils/constants';
 import type { RootStackParamList, BottomTabParamList } from '../types';
+import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
 const Stack = createStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<BottomTabParamList>();
+
+// Custom floating tab bar component
+function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+  const { t } = useTranslation();
+
+  return (
+    <View style={tabBarStyles.container}>
+      <BlurView intensity={80} tint="light" style={tabBarStyles.blurContainer}>
+        <View style={tabBarStyles.tabBar}>
+          {state.routes.map((route, index) => {
+            const { options } = descriptors[route.key];
+            const isFocused = state.index === index;
+
+            const onPress = () => {
+              const event = navigation.emit({
+                type: 'tabPress',
+                target: route.key,
+                canPreventDefault: true,
+              });
+
+              if (!isFocused && !event.defaultPrevented) {
+                navigation.navigate(route.name);
+              }
+            };
+
+            // Icon mapping
+            const iconMap: Record<string, keyof typeof Ionicons.glyphMap> = {
+              Home: 'home',
+              MyGarden: 'leaf',
+              HealingJournal: 'book',
+              Settings: 'settings',
+            };
+
+            const icon = iconMap[route.name] || 'help-circle';
+            const color = isFocused ? DESIGN_SYSTEM.colors.primary : DESIGN_SYSTEM.colors.textLight;
+
+            return (
+              <View key={route.key} style={tabBarStyles.tab}>
+                <View
+                  accessible
+                  accessibilityRole="button"
+                  accessibilityState={isFocused ? { selected: true } : {}}
+                  accessibilityLabel={options.tabBarAccessibilityLabel}
+                  onTouchEnd={onPress}
+                  style={tabBarStyles.tabButton}
+                >
+                  <Ionicons name={icon} size={24} color={color} />
+                  <Text style={[tabBarStyles.tabLabel, { color }]}>
+                    {options.tabBarLabel as string}
+                  </Text>
+                </View>
+              </View>
+            );
+          })}
+        </View>
+      </BlurView>
+      
+      {/* Floating Action Button */}
+      <View style={tabBarStyles.fabContainer}>
+        <FloatingActionButton
+          onPress={() => navigation.navigate('Camera')}
+          icon="camera"
+        />
+      </View>
+    </View>
+  );
+}
 
 function MainTabs() {
   const { t } = useTranslation();
@@ -32,71 +103,56 @@ function MainTabs() {
     <>
       <OfflineIndicator />
       <Tab.Navigator
-      screenOptions={{
-        tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: COLORS.textSecondary,
-        tabBarStyle: {
-          backgroundColor: COLORS.white,
-          borderTopColor: COLORS.primary + '20',
-          paddingBottom: 8,
-          paddingTop: 8,
-          height: 60,
-        },
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '600',
-        },
-        headerStyle: {
-          backgroundColor: COLORS.background,
-        },
-        headerTintColor: COLORS.primary,
-        headerTitleStyle: {
-          fontWeight: 'bold',
-        },
-      }}
-    >
-      <Tab.Screen
-        name="Home"
-        component={HomeScreen}
-        options={{
-          title: t('home.title'),
-          tabBarLabel: t('home.title'),
-          tabBarIcon: () => <Text style={{ fontSize: 24 }}>🏠</Text>,
+        tabBar={(props) => <FloatingTabBar {...props} />}
+        screenOptions={{
+          headerStyle: {
+            backgroundColor: DESIGN_SYSTEM.colors.background,
+          },
+          headerTintColor: DESIGN_SYSTEM.colors.primary,
+          headerTitleStyle: {
+            fontWeight: 'bold',
+          },
         }}
-      />
-      <Tab.Screen
-        name="MyGarden"
-        component={MyGardenScreen}
-        options={{
-          title: t('garden.title'),
-          tabBarLabel: t('garden.title'),
-          tabBarIcon: () => <Text style={{ fontSize: 24 }}>🌱</Text>,
-        }}
-      />
-      <Tab.Screen
-        name="HealingJournal"
-        component={HealingJournalScreen}
-        options={{
-          title: t('journal.title'),
-          tabBarLabel: t('journal.title'),
-          tabBarIcon: () => <Text style={{ fontSize: 24 }}>📔</Text>,
-        }}
-      />
-      <Tab.Screen
-        name="Settings"
-        component={SettingsScreen}
-        options={{
-          title: t('settings.title'),
-          tabBarLabel: t('settings.title'),
-          tabBarIcon: () => <Text style={{ fontSize: 24 }}>⚙️</Text>,
-        }}
-      />
-    </Tab.Navigator>
+      >
+        <Tab.Screen
+          name="Home"
+          component={HomeScreen}
+          options={{
+            title: t('home.title'),
+            tabBarLabel: t('home.title'),
+          }}
+        />
+        <Tab.Screen
+          name="MyGarden"
+          component={MyGardenScreen}
+          options={{
+            title: t('garden.title'),
+            tabBarLabel: t('garden.title'),
+          }}
+        />
+        <Tab.Screen
+          name="HealingJournal"
+          component={HealingJournalScreen}
+          options={{
+            title: t('journal.title'),
+            tabBarLabel: t('journal.title'),
+          }}
+        />
+        <Tab.Screen
+          name="Settings"
+          component={SettingsScreen}
+          options={{
+            title: t('settings.title'),
+            tabBarLabel: t('settings.title'),
+          }}
+        />
+      </Tab.Navigator>
     </>
   );
 }
 
 export default function AppNavigator() {
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(true);
   const [isOnboardingComplete, setIsOnboardingComplete] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -138,20 +194,20 @@ export default function AppNavigator() {
 
   if (error) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background, padding: 20 }}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: DESIGN_SYSTEM.colors.background, padding: 20 }}>
         <Text style={{ fontSize: 24, color: 'red', marginBottom: 10 }}>⚠️</Text>
         <Text style={{ fontSize: 18, color: 'red', fontWeight: 'bold', marginBottom: 10 }}>Error</Text>
-        <Text style={{ fontSize: 14, color: COLORS.textSecondary, textAlign: 'center' }}>{error}</Text>
+        <Text style={{ fontSize: 14, color: DESIGN_SYSTEM.colors.textSecondary, textAlign: 'center' }}>{error}</Text>
       </View>
     );
   }
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background }}>
-        <Text style={{ fontSize: 24, color: COLORS.primary, marginBottom: 10 }}>🌿</Text>
-        <Text style={{ fontSize: 18, color: COLORS.primary, fontWeight: 'bold' }}>GreenHeal</Text>
-        <Text style={{ fontSize: 14, color: COLORS.textSecondary, marginTop: 10 }}>Loading...</Text>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: DESIGN_SYSTEM.colors.background }}>
+        <Text style={{ fontSize: 24, color: DESIGN_SYSTEM.colors.primary, marginBottom: 10 }}>🌿</Text>
+        <Text style={{ fontSize: 18, color: DESIGN_SYSTEM.colors.primary, fontWeight: 'bold' }}>GreenHeal</Text>
+        <Text style={{ fontSize: 14, color: DESIGN_SYSTEM.colors.textSecondary, marginTop: 10 }}>Loading...</Text>
       </View>
     );
   }
@@ -207,55 +263,55 @@ export default function AppNavigator() {
               name="AIAnalysis" 
               component={AIAnalysisScreen}
               options={{ 
-                title: 'AI Analysis',
+                title: t('aiAnalysis.title'),
                 headerStyle: {
-                  backgroundColor: COLORS.background,
+                  backgroundColor: DESIGN_SYSTEM.colors.background,
                 },
-                headerTintColor: COLORS.primary,
+                headerTintColor: DESIGN_SYSTEM.colors.primary,
               }}
             />
             <Stack.Screen 
               name="RoomVisualization" 
               component={RoomVisualizationScreen}
               options={{ 
-                title: 'Room Visualization',
+                title: t('aiAnalysis.yourRoom'),
                 headerStyle: {
-                  backgroundColor: COLORS.background,
+                  backgroundColor: DESIGN_SYSTEM.colors.background,
                 },
-                headerTintColor: COLORS.primary,
+                headerTintColor: DESIGN_SYSTEM.colors.primary,
               }}
             />
             <Stack.Screen 
               name="PlantDetail" 
               component={PlantDetailScreen}
               options={{ 
-                title: 'Plant Details',
+                title: t('plantDetail.title'),
                 headerStyle: {
-                  backgroundColor: COLORS.background,
+                  backgroundColor: DESIGN_SYSTEM.colors.background,
                 },
-                headerTintColor: COLORS.primary,
+                headerTintColor: DESIGN_SYSTEM.colors.primary,
               }}
             />
             <Stack.Screen 
               name="JournalEntryForm" 
               component={JournalEntryFormScreen}
               options={{ 
-                title: 'New Journal Entry',
+                title: t('journal.newEntryTitle'),
                 headerStyle: {
-                  backgroundColor: COLORS.background,
+                  backgroundColor: DESIGN_SYSTEM.colors.background,
                 },
-                headerTintColor: COLORS.primary,
+                headerTintColor: DESIGN_SYSTEM.colors.primary,
               }}
             />
             <Stack.Screen 
               name="JournalEntryDetail" 
               component={JournalEntryDetailScreen}
               options={{ 
-                title: 'Journal Entry',
+                title: t('journal.entryTitle'),
                 headerStyle: {
-                  backgroundColor: COLORS.background,
+                  backgroundColor: DESIGN_SYSTEM.colors.background,
                 },
-                headerTintColor: COLORS.primary,
+                headerTintColor: DESIGN_SYSTEM.colors.primary,
               }}
             />
           </>
@@ -264,3 +320,52 @@ export default function AppNavigator() {
     </NavigationContainer>
   );
 }
+
+// Floating tab bar styles - Fresh light theme
+const tabBarStyles = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingBottom: Platform.OS === 'ios' ? 20 : DESIGN_SYSTEM.spacing.md,
+    paddingHorizontal: DESIGN_SYSTEM.spacing.md,
+  },
+  blurContainer: {
+    borderRadius: DESIGN_SYSTEM.borderRadius.xlarge,
+    overflow: 'hidden',
+    ...DESIGN_SYSTEM.shadows.medium,
+    borderTopWidth: 1,
+    borderTopColor: DESIGN_SYSTEM.colors.borderSubtle,
+    backgroundColor: '#ffffff',
+  },
+  tabBar: {
+    flexDirection: 'row',
+    height: 70,
+    backgroundColor: '#ffffff',
+    borderRadius: DESIGN_SYSTEM.borderRadius.xlarge,
+    paddingHorizontal: DESIGN_SYSTEM.spacing.sm,
+  },
+  tab: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  tabButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: DESIGN_SYSTEM.spacing.sm,
+  },
+  tabLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  fabContainer: {
+    position: 'absolute',
+    bottom: Platform.OS === 'ios' ? 90 : 70,
+    left: '50%',
+    marginLeft: -32, // Half of FAB size (64/2)
+    zIndex: 10,
+  },
+});

@@ -9,24 +9,29 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#2D6A4F"
+      "backgroundColor": "#52B788"
     },
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.greenheal.app"
+      "bundleIdentifier": "com.greenheal.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "GreenHeal needs your location to find plant nurseries near you."
+      }
     },
     "android": {
       "package": "com.greenheal.app",
       "permissions": [
         "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO"
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
       ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#2D6A4F"
+        "backgroundColor": "#0d1f17"
       }
     },
     "plugins": [
@@ -42,6 +47,13 @@
           "photosPermission": "Allow GreenHeal to access your photos to upload plant images."
         }
       ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow GreenHeal to use your location to find plant nurseries near you.",
+          "locationWhenInUsePermission": "Allow GreenHeal to use your location to find plant nurseries near you."
+        }
+      ],
       "expo-notifications"
     ],
     "extra": {
@@ -49,9 +61,9 @@
       "PERENUAL_API_KEY": "sk-Prlb69aae80f17c4e15244",
       "STABILITY_API_KEY": "sk-Atj8Ocb47fjIBQNQ68CpZwnnnEh7HrSGm6cBlDyLFcvydjCa",
       "eas": {
-        "projectId": "d53d5d1b-3e29-4cce-a85e-dfe2d70ec651"
+        "projectId": "b1c87a32-dd36-4060-a9b0-0430f8dbc922"
       }
     },
-    "owner": "marwawerfelli"
+    "owner": "marwawrf"
   }
 }

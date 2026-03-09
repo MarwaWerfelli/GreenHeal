@@ -8,12 +8,14 @@ import {
   ActivityIndicator,
   Linking,
   Alert,
+  Switch,
+  Platform,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { enrichPlantData } from '../modules/plantDatabase';
-import { savePlant, initDatabase, updatePlantWateringDate, deletePlant } from '../modules/storage';
-import { schedulePlantReminder, cancelReminder } from '../modules/notifications';
-import { COLORS } from '../utils/constants';
+import { savePlant, initDatabase, updatePlantWateringDate, deletePlant, updatePlantWateringSettings } from '../modules/storage';
+import { schedulePlantReminder, cancelReminder, scheduleWateringReminder, cancelWateringReminder, hasNotificationPermissions, requestPermissions } from '../modules/notifications';
+import { COLORS, DESIGN_SYSTEM } from '../utils/constants';
 import type { PlantDetailScreenProps, EnrichedPlantData, GardenPlant } from '../types';
 
 export default function PlantDetailScreen({ route, navigation }: PlantDetailScreenProps) {
@@ -24,9 +26,21 @@ export default function PlantDetailScreen({ route, navigation }: PlantDetailScre
   const [adding, setAdding] = useState(false);
   const [watering, setWatering] = useState(false);
   const [removing, setRemoving] = useState(false);
+  const [reminderEnabled, setReminderEnabled] = useState(false);
+  const [wateringFrequency, setWateringFrequency] = useState(7);
+  const [reminderTime, setReminderTime] = useState('09:00');
+  const [hasPermission, setHasPermission] = useState(false);
 
   useEffect(() => {
     loadEnrichedData();
+    checkNotificationPermission();
+    
+    // Load watering reminder settings if viewing from garden
+    if (source === 'garden' && 'id' in plant) {
+      setReminderEnabled(plant.wateringReminderEnabled || false);
+      setWateringFrequency(plant.wateringFrequencyDays || 7);
+      setReminderTime(plant.reminderTime || '09:00');
+    }
   }, []);
 
   async function loadEnrichedData() {
@@ -38,6 +52,119 @@ export default function PlantDetailScreen({ route, navigation }: PlantDetailScre
       console.error('Error loading enriched data:', error);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function checkNotificationPermission() {
+    const permission = await hasNotificationPermissions();
+    setHasPermission(permission);
+  }
+
+  async function handleToggleReminder(value: boolean) {
+    if (!('id' in plant) || !plant.id) return;
+
+    // Check permission first
+    if (value && !hasPermission) {
+      const granted = await requestPermissions();
+      if (!granted) {
+        Alert.alert(
+          t('permissions.notifications_required'),
+          t('permissions.notifications_explanation'),
+          [
+            { text: t('common.cancel'), style: 'cancel' },
+            {
+              text: t('common.open_settings'),
+              onPress: () => {
+                if (Platform.OS === 'ios') {
+                  Linking.openURL('app-settings:');
+                } else {
+                  Linking.openSettings();
+                }
+              },
+            },
+          ]
+        );
+        return;
+      }
+      setHasPermission(true);
+    }
+
+    setReminderEnabled(value);
+
+    try {
+      await updatePlantWateringSettings(plant.id, {
+        wateringReminderEnabled: value,
+      });
+
+      if (value && plant.nextWateringDate) {
+        // Schedule reminder
+        await scheduleWateringReminder({
+          id: plant.id,
+          name: plant.name,
+          nextWateringDate: plant.nextWateringDate,
+          lastWateredDate: plant.lastWateredDate,
+          reminderTime: reminderTime,
+        });
+      } else {
+        // Cancel reminder
+        await cancelWateringReminder(plant.id);
+      }
+    } catch (error) {
+      console.error('Error toggling reminder:', error);
+      Alert.alert(t('errors.save_failed'));
+      setReminderEnabled(!value); // Revert on error
+    }
+  }
+
+  async function handleFrequencyChange(days: number) {
+    if (!('id' in plant) || !plant.id) return;
+
+    setWateringFrequency(days);
+
+    try {
+      await updatePlantWateringSettings(plant.id, {
+        wateringFrequencyDays: days,
+      });
+
+      // Reschedule reminder if enabled
+      if (reminderEnabled && plant.nextWateringDate) {
+        await scheduleWateringReminder({
+          id: plant.id,
+          name: plant.name,
+          nextWateringDate: plant.nextWateringDate,
+          lastWateredDate: plant.lastWateredDate,
+          reminderTime: reminderTime,
+        });
+      }
+    } catch (error) {
+      console.error('Error updating frequency:', error);
+      Alert.alert(t('errors.save_failed'));
+    }
+  }
+
+  async function handleTimeChange(time: string) {
+    if (!('id' in plant) || !plant.id) return;
+
+    setReminderTime(time);
+
+    try {
+      await updatePlantWateringSettings(plant.id, {
+        reminderTime: time,
+      });
+
+      // Reschedule reminder if enabled
+      if (reminderEnabled && plant.nextWateringDate) {
+        await scheduleWateringReminder({
+          id: plant.id,
+          name: plant.name,
+          nextWateringDate: plant.nextWateringDate,
+          lastWateredDate: plant.lastWateredDate,
+          reminderTime: time,
+        });
+      }
+    } catch (error) {
+      console.error('Error updating reminder time:', error);
+      Alert.alert(t('errors.save_failed'));
     }
   }
 
@@ -61,6 +188,10 @@ export default function PlantDetailScreen({ route, navigation }: PlantDetailScre
         wateringFrequencyDays: plant.wateringFrequencyDays,
         nextWateringAt: nextWatering.toISOString(),
         addedAt: now.toISOString(),
+        wateringReminderEnabled: true, // Enable reminders by default
+        lastWateredDate: now.toISOString(),
+        nextWateringDate: nextWatering.toISOString(),
+        reminderTime: '09:00', // Default reminder time
       };
 
       await savePlant(gardenPlant);
@@ -84,10 +215,39 @@ export default function PlantDetailScreen({ route, navigation }: PlantDetailScre
     }
   }
 
-  function handleFindNearMe() {
-    const searchQuery = encodeURIComponent(plant.name);
-    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${searchQuery}+plant+nursery`;
-    Linking.openURL(mapsUrl);
+  async function handleFindNearMe() {
+    try {
+      // Try to get user's location
+      const { status } = await import('expo-location').then(Location => 
+        Location.requestForegroundPermissionsAsync()
+      );
+      
+      if (status === 'granted') {
+        const Location = await import('expo-location');
+        const location = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        
+        const { latitude, longitude } = location.coords;
+        // Search for nearest plant nurseries/shops, not specific plant names
+        const searchQuery = encodeURIComponent('plant nursery');
+        
+        // Use location-based search with user's coordinates
+        const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${searchQuery}&query_place_id=&center=${latitude},${longitude}`;
+        Linking.openURL(mapsUrl);
+      } else {
+        // Fallback to generic search without location
+        const searchQuery = encodeURIComponent('plant nursery near me');
+        const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${searchQuery}`;
+        Linking.openURL(mapsUrl);
+      }
+    } catch (error) {
+      console.error('Error getting location:', error);
+      // Fallback to generic search
+      const searchQuery = encodeURIComponent('plant nursery near me');
+      const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${searchQuery}`;
+      Linking.openURL(mapsUrl);
+    }
   }
 
   async function handleMarkAsWatered() {
@@ -238,6 +398,127 @@ export default function PlantDetailScreen({ route, navigation }: PlantDetailScre
             </Text>
           )}
         </View>
+
+        {/* Watering Reminder Settings (only for garden plants) */}
+        {source === 'garden' && 'id' in plant && (
+          <View style={styles.reminderSection}>
+            <Text style={styles.sectionTitle}>💧 Watering Reminders</Text>
+            
+            <View style={styles.reminderRow}>
+              <View style={styles.reminderTextContainer}>
+                <Text style={styles.reminderLabel}>Enable Reminders</Text>
+                <Text style={styles.reminderSubtext}>
+                  Get notified when it's time to water
+                </Text>
+              </View>
+              <Switch
+                value={reminderEnabled}
+                onValueChange={handleToggleReminder}
+                trackColor={{ false: DESIGN_SYSTEM.colors.textSecondary + '40', true: DESIGN_SYSTEM.colors.primary + '60' }}
+                thumbColor={reminderEnabled ? DESIGN_SYSTEM.colors.primary : '#f4f3f4'}
+              />
+            </View>
+
+            {reminderEnabled && (
+              <>
+                <View style={styles.reminderRow}>
+                  <View style={styles.reminderTextContainer}>
+                    <Text style={styles.reminderLabel}>Watering Frequency</Text>
+                    <Text style={styles.reminderSubtext}>
+                      Water every {wateringFrequency} days
+                    </Text>
+                  </View>
+                  <View style={styles.frequencyButtons}>
+                    {[3, 5, 7, 10, 14].map(days => (
+                      <TouchableOpacity
+                        key={days}
+                        style={[
+                          styles.frequencyButton,
+                          wateringFrequency === days && styles.frequencyButtonActive,
+                        ]}
+                        onPress={() => handleFrequencyChange(days)}
+                      >
+                        <Text
+                          style={[
+                            styles.frequencyButtonText,
+                            wateringFrequency === days && styles.frequencyButtonTextActive,
+                          ]}
+                        >
+                          {days}d
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+
+                <View style={styles.reminderRow}>
+                  <View style={styles.reminderTextContainer}>
+                    <Text style={styles.reminderLabel}>Reminder Time</Text>
+                    <Text style={styles.reminderSubtext}>
+                      Daily reminder at {reminderTime}
+                    </Text>
+                  </View>
+                  <View style={styles.timeButtons}>
+                    {['09:00', '12:00', '18:00', '20:00'].map(time => (
+                      <TouchableOpacity
+                        key={time}
+                        style={[
+                          styles.timeButton,
+                          reminderTime === time && styles.timeButtonActive,
+                        ]}
+                        onPress={() => handleTimeChange(time)}
+                      >
+                        <Text
+                          style={[
+                            styles.timeButtonText,
+                            reminderTime === time && styles.timeButtonTextActive,
+                          ]}
+                        >
+                          {time}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+
+                {plant.nextWateringDate && (
+                  <View style={styles.nextWateringCard}>
+                    <Text style={styles.nextWateringLabel}>Next Watering</Text>
+                    <Text style={styles.nextWateringDate}>
+                      {new Date(plant.nextWateringDate).toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </Text>
+                  </View>
+                )}
+
+                {!hasPermission && (
+                  <View style={styles.permissionWarning}>
+                    <Text style={styles.permissionWarningText}>
+                      ⚠️ Notification permissions are required for reminders
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.permissionButton}
+                      onPress={() => {
+                        if (Platform.OS === 'ios') {
+                          Linking.openURL('app-settings:');
+                        } else {
+                          Linking.openSettings();
+                        }
+                      }}
+                    >
+                      <Text style={styles.permissionButtonText}>
+                        {t('common.open_settings')}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </>
+            )}
+          </View>
+        )}
 
         {/* Plant Details */}
         <View style={styles.detailsRow}>
@@ -408,5 +689,119 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: COLORS.primary,
+  },
+  reminderSection: {
+    backgroundColor: DESIGN_SYSTEM.colors.surface,
+    borderRadius: DESIGN_SYSTEM.borderRadius.large,
+    padding: DESIGN_SYSTEM.spacing.lg,
+    marginBottom: DESIGN_SYSTEM.spacing.lg,
+    ...DESIGN_SYSTEM.shadows.medium,
+  },
+  reminderRow: {
+    marginBottom: DESIGN_SYSTEM.spacing.lg,
+  },
+  reminderTextContainer: {
+    marginBottom: DESIGN_SYSTEM.spacing.sm,
+  },
+  reminderLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: DESIGN_SYSTEM.colors.text,
+    marginBottom: 4,
+  },
+  reminderSubtext: {
+    fontSize: 14,
+    color: DESIGN_SYSTEM.colors.textSecondary,
+  },
+  frequencyButtons: {
+    flexDirection: 'row',
+    gap: DESIGN_SYSTEM.spacing.sm,
+    flexWrap: 'wrap',
+  },
+  frequencyButton: {
+    paddingHorizontal: DESIGN_SYSTEM.spacing.md,
+    paddingVertical: DESIGN_SYSTEM.spacing.sm,
+    borderRadius: DESIGN_SYSTEM.borderRadius.medium,
+    backgroundColor: DESIGN_SYSTEM.colors.background,
+    borderWidth: 2,
+    borderColor: DESIGN_SYSTEM.colors.textSecondary + '40',
+  },
+  frequencyButtonActive: {
+    backgroundColor: DESIGN_SYSTEM.colors.primaryLight,
+    borderColor: DESIGN_SYSTEM.colors.primary,
+  },
+  frequencyButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: DESIGN_SYSTEM.colors.textSecondary,
+  },
+  frequencyButtonTextActive: {
+    color: DESIGN_SYSTEM.colors.primary,
+  },
+  timeButtons: {
+    flexDirection: 'row',
+    gap: DESIGN_SYSTEM.spacing.sm,
+    flexWrap: 'wrap',
+  },
+  timeButton: {
+    paddingHorizontal: DESIGN_SYSTEM.spacing.md,
+    paddingVertical: DESIGN_SYSTEM.spacing.sm,
+    borderRadius: DESIGN_SYSTEM.borderRadius.medium,
+    backgroundColor: DESIGN_SYSTEM.colors.background,
+    borderWidth: 2,
+    borderColor: DESIGN_SYSTEM.colors.textSecondary + '40',
+  },
+  timeButtonActive: {
+    backgroundColor: DESIGN_SYSTEM.colors.primaryLight,
+    borderColor: DESIGN_SYSTEM.colors.primary,
+  },
+  timeButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: DESIGN_SYSTEM.colors.textSecondary,
+  },
+  timeButtonTextActive: {
+    color: DESIGN_SYSTEM.colors.primary,
+  },
+  nextWateringCard: {
+    backgroundColor: DESIGN_SYSTEM.colors.primaryLight,
+    borderRadius: DESIGN_SYSTEM.borderRadius.medium,
+    padding: DESIGN_SYSTEM.spacing.md,
+    marginTop: DESIGN_SYSTEM.spacing.sm,
+  },
+  nextWateringLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: DESIGN_SYSTEM.colors.primary,
+    textTransform: 'uppercase',
+    marginBottom: 4,
+  },
+  nextWateringDate: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: DESIGN_SYSTEM.colors.primary,
+  },
+  permissionWarning: {
+    backgroundColor: '#FFF3CD',
+    borderRadius: DESIGN_SYSTEM.borderRadius.medium,
+    padding: DESIGN_SYSTEM.spacing.md,
+    marginTop: DESIGN_SYSTEM.spacing.md,
+  },
+  permissionWarningText: {
+    fontSize: 14,
+    color: '#856404',
+    marginBottom: DESIGN_SYSTEM.spacing.sm,
+  },
+  permissionButton: {
+    backgroundColor: '#856404',
+    borderRadius: DESIGN_SYSTEM.borderRadius.small,
+    paddingVertical: DESIGN_SYSTEM.spacing.sm,
+    paddingHorizontal: DESIGN_SYSTEM.spacing.md,
+    alignSelf: 'flex-start',
+  },
+  permissionButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
 });

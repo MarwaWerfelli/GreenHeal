@@ -151,7 +151,11 @@ export async function initDatabase(): Promise<void> {
         next_watering_at TEXT,
         care_instructions TEXT,
         notification_id TEXT,
-        added_at TEXT NOT NULL
+        added_at TEXT NOT NULL,
+        watering_reminder_enabled INTEGER DEFAULT 1,
+        last_watered_date TEXT,
+        next_watering_date TEXT,
+        reminder_time TEXT
       );
     `);
 
@@ -183,6 +187,9 @@ export async function initDatabase(): Promise<void> {
       CREATE INDEX IF NOT EXISTS idx_cache_expiry ON plant_cache(plant_name, expires_at);
     `);
 
+    // Migrate existing plants to add new watering reminder fields
+    await migrateWateringReminderFields();
+
     console.log('Database initialized successfully');
   } catch (error) {
     console.error('Error initializing database:', error);
@@ -198,6 +205,62 @@ function getDatabase(): SQLite.SQLiteDatabase {
     throw new Error('Database not initialized. Call initDatabase() first.');
   }
   return db;
+}
+
+/**
+ * Calculate next watering date based on last watered date and frequency
+ */
+export function calculateNextWateringDate(lastWateredDate: string, wateringFrequencyDays: number): string {
+  const lastWatered = new Date(lastWateredDate);
+  const nextWatering = new Date(lastWatered);
+  nextWatering.setDate(nextWatering.getDate() + wateringFrequencyDays);
+  return nextWatering.toISOString();
+}
+
+/**
+ * Migrate existing plants to add watering reminder fields
+ */
+async function migrateWateringReminderFields(): Promise<void> {
+  try {
+    const database = getDatabase();
+    
+    // Check if the new columns already exist
+    const tableInfo = await database.getAllAsync<{ name: string }>(
+      "PRAGMA table_info(garden_plants)"
+    );
+    
+    const columnNames = tableInfo.map(col => col.name);
+    const hasNewFields = columnNames.includes('watering_reminder_enabled');
+    
+    if (!hasNewFields) {
+      // Add new columns
+      await database.execAsync(`
+        ALTER TABLE garden_plants ADD COLUMN watering_reminder_enabled INTEGER DEFAULT 1;
+      `);
+      await database.execAsync(`
+        ALTER TABLE garden_plants ADD COLUMN last_watered_date TEXT;
+      `);
+      await database.execAsync(`
+        ALTER TABLE garden_plants ADD COLUMN next_watering_date TEXT;
+      `);
+      await database.execAsync(`
+        ALTER TABLE garden_plants ADD COLUMN reminder_time TEXT;
+      `);
+      
+      // Migrate existing data: copy last_watered_at to last_watered_date and next_watering_at to next_watering_date
+      await database.execAsync(`
+        UPDATE garden_plants 
+        SET last_watered_date = last_watered_at,
+            next_watering_date = next_watering_at
+        WHERE last_watered_at IS NOT NULL;
+      `);
+      
+      console.log('Watering reminder fields migrated successfully');
+    }
+  } catch (error) {
+    console.error('Error migrating watering reminder fields:', error);
+    // Don't throw - allow app to continue even if migration fails
+  }
 }
 
 /**
@@ -227,15 +290,15 @@ export async function saveJournalEntry(entry: JournalEntry): Promise<number> {
 export async function getJournalEntries(): Promise<JournalEntry[]> {
   try {
     const database = getDatabase();
-    const rows = await database.getAllAsync<JournalEntry>(
+    const rows = await database.getAllAsync<any>(
       'SELECT * FROM journal_entries ORDER BY created_at DESC'
     );
     return rows.map(row => ({
       id: row.id,
-      moodScore: row.moodScore,
+      moodScore: row.mood_score, // Map snake_case to camelCase
       notes: row.notes,
-      photoPath: row.photoPath,
-      createdAt: row.createdAt,
+      photoPath: row.photo_path, // Map snake_case to camelCase
+      createdAt: row.created_at, // Map snake_case to camelCase
     }));
   } catch (error) {
     console.error('Error getting journal entries:', error);
@@ -262,12 +325,21 @@ export async function deleteJournalEntry(id: number): Promise<void> {
 export async function savePlant(plant: GardenPlant): Promise<number> {
   try {
     const database = getDatabase();
+    
+    // Set default values for new fields if not provided
+    const wateringReminderEnabled = plant.wateringReminderEnabled ?? true;
+    // Only use lastWateredAt as fallback if lastWateredDate is undefined (not explicitly null)
+    const lastWateredDate = plant.lastWateredDate !== undefined ? plant.lastWateredDate : (plant.lastWateredAt || null);
+    const nextWateredDate = plant.nextWateringDate !== undefined ? plant.nextWateringDate : (plant.nextWateringAt || null);
+    const reminderTime = plant.reminderTime !== undefined ? plant.reminderTime : '09:00'; // Default to 9 AM only if undefined
+    
     const result = await database.runAsync(
       `INSERT INTO garden_plants (
         name, placement, healing_benefit, care_difficulty, estimated_cost,
         watering_frequency_days, last_watered_at, next_watering_at,
-        care_instructions, notification_id, added_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        care_instructions, notification_id, added_at,
+        watering_reminder_enabled, last_watered_date, next_watering_date, reminder_time
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         plant.name,
         plant.placement || null,
@@ -280,6 +352,10 @@ export async function savePlant(plant: GardenPlant): Promise<number> {
         plant.careInstructions || null,
         plant.notificationId || null,
         plant.addedAt,
+        wateringReminderEnabled ? 1 : 0,
+        lastWateredDate,
+        nextWateredDate,
+        reminderTime,
       ]
     );
     return result.lastInsertRowId;
@@ -311,6 +387,10 @@ export async function getGardenPlants(): Promise<GardenPlant[]> {
       careInstructions: (row.care_instructions ?? row.careInstructions) as string | undefined,
       notificationId: (row.notification_id ?? row.notificationId) as string | undefined,
       addedAt: (row.added_at ?? row.addedAt) as string,
+      wateringReminderEnabled: Boolean(row.watering_reminder_enabled ?? row.wateringReminderEnabled ?? true),
+      lastWateredDate: (row.last_watered_date ?? row.lastWateredDate) as string | undefined,
+      nextWateringDate: (row.next_watering_date ?? row.nextWateringDate) as string | undefined,
+      reminderTime: (row.reminder_time ?? row.reminderTime) as string | undefined,
     }));
   } catch (error) {
     console.error('Error getting garden plants:', error);
@@ -342,12 +422,96 @@ export async function updatePlantWateringDate(plantId: number, date: Date): Prom
     const nextWatering = nextWateringDate.toISOString();
     
     await database.runAsync(
-      'UPDATE garden_plants SET last_watered_at = ?, next_watering_at = ? WHERE id = ?',
-      [lastWatered, nextWatering, plantId]
+      'UPDATE garden_plants SET last_watered_at = ?, next_watering_at = ?, last_watered_date = ?, next_watering_date = ? WHERE id = ?',
+      [lastWatered, nextWatering, lastWatered, nextWatering, plantId]
     );
   } catch (error) {
     console.error('Error updating plant watering date:', error);
     throw new Error('Failed to update plant watering date');
+  }
+}
+
+/**
+ * Update plant watering reminder settings
+ */
+export async function updatePlantWateringSettings(
+  plantId: number,
+  settings: {
+    wateringReminderEnabled?: boolean;
+    wateringFrequencyDays?: number;
+    reminderTime?: string;
+    lastWateredDate?: string;
+  }
+): Promise<void> {
+  try {
+    const database = getDatabase();
+    
+    // Build dynamic update query based on provided settings
+    const updates: string[] = [];
+    const values: (string | number)[] = [];
+    
+    if (settings.wateringReminderEnabled !== undefined) {
+      updates.push('watering_reminder_enabled = ?');
+      values.push(settings.wateringReminderEnabled ? 1 : 0);
+    }
+    
+    if (settings.wateringFrequencyDays !== undefined) {
+      updates.push('watering_frequency_days = ?');
+      values.push(settings.wateringFrequencyDays);
+    }
+    
+    if (settings.reminderTime !== undefined) {
+      updates.push('reminder_time = ?');
+      values.push(settings.reminderTime);
+    }
+    
+    if (settings.lastWateredDate !== undefined) {
+      updates.push('last_watered_date = ?');
+      values.push(settings.lastWateredDate);
+      updates.push('last_watered_at = ?');
+      values.push(settings.lastWateredDate);
+      
+      // Calculate and update next watering date
+      const plant = await database.getFirstAsync<{ watering_frequency_days?: number }>(
+        'SELECT watering_frequency_days FROM garden_plants WHERE id = ?',
+        [plantId]
+      );
+      
+      if (plant) {
+        const days = settings.wateringFrequencyDays ?? plant.watering_frequency_days ?? 7;
+        const nextWateringDate = calculateNextWateringDate(settings.lastWateredDate, days);
+        updates.push('next_watering_date = ?');
+        values.push(nextWateringDate);
+        updates.push('next_watering_at = ?');
+        values.push(nextWateringDate);
+      }
+    } else if (settings.wateringFrequencyDays !== undefined) {
+      // If only frequency changed, recalculate next watering date based on last watered date
+      const plant = await database.getFirstAsync<{ last_watered_date?: string }>(
+        'SELECT last_watered_date FROM garden_plants WHERE id = ?',
+        [plantId]
+      );
+      
+      if (plant?.last_watered_date) {
+        const nextWateringDate = calculateNextWateringDate(plant.last_watered_date, settings.wateringFrequencyDays);
+        updates.push('next_watering_date = ?');
+        values.push(nextWateringDate);
+        updates.push('next_watering_at = ?');
+        values.push(nextWateringDate);
+      }
+    }
+    
+    if (updates.length === 0) {
+      return; // Nothing to update
+    }
+    
+    values.push(plantId);
+    const query = `UPDATE garden_plants SET ${updates.join(', ')} WHERE id = ?`;
+    
+    await database.runAsync(query, values);
+  } catch (error) {
+    console.error('Error updating plant watering settings:', error);
+    throw new Error('Failed to update plant watering settings');
   }
 }
 

@@ -55,7 +55,32 @@
     "scanRoom": "Scanner ma pièce",
     "myJourney": "Mon parcours de guérison",
     "dailyTip": "Conseil de guérison du jour",
-    "moodCheckIn": "Comment vous sentez-vous aujourd'hui ?"
+    "moodCheckIn": "Comment vous sentez-vous aujourd'hui ?",
+    "moodProgress": "Suivez votre humeur quotidiennement pour voir vos progrès ici",
+    "trackMoodDaily": "Suivez votre humeur quotidiennement pour voir vos progrès ici",
+    "goodMorning": "Bonjour",
+    "goodAfternoon": "Bon après-midi",
+    "goodEvening": "Bonsoir",
+    "yourHealingJourney": "Votre parcours de guérison",
+    "streak": "Série",
+    "days": "jours",
+    "plants": "Plantes",
+    "waterPlants": "Arroser les plantes",
+    "newEntry": "Nouvelle entrée",
+    "addPlant": "Ajouter une plante",
+    "friend": "Ami(e)",
+    "tips": {
+      "0": "La lavande peut réduire l'anxiété et améliorer la qualité du sommeil",
+      "1": "L'aloe vera purifie l'air et favorise la guérison de la peau",
+      "2": "Les plantes serpent libèrent de l'oxygène la nuit, parfaites pour les chambres",
+      "3": "Le parfum du jasmin peut réduire le stress et améliorer l'humeur",
+      "4": "Le romarin améliore la mémoire et la concentration",
+      "5": "Le thé de camomille à partir de fleurs fraîches aide à la relaxation",
+      "6": "Les feuilles de menthe peuvent soulager les maux de tête et améliorer la digestion",
+      "7": "Les lis de la paix éliminent les toxines et améliorent la qualité de l'air",
+      "8": "Les plantes araignées sont excellentes pour réduire la pollution intérieure",
+      "9": "Le basilic a des propriétés anti-inflammatoires et antibactériennes"
+    }
   },
   "camera": {
     "title": "Scanner votre pièce",
@@ -102,7 +127,8 @@
     "chooseFromGallery": "Choisir dans la galerie",
     "deleteEntry": "Supprimer l'entrée",
     "deleteConfirm": "Êtes-vous sûr de vouloir supprimer cette entrée de journal ?",
-    "noEntries": "Aucune entrée de journal pour le moment. Commencez à suivre votre parcours de guérison !"
+    "noEntries": "Aucune entrée de journal pour le moment. Commencez à suivre votre parcours de guérison !",
+    "noNotes": "Aucune note"
   },
   "garden": {
     "title": "Mon jardin",
@@ -113,7 +139,22 @@
     "markAsWatered": "Marquer comme arrosé",
     "removeFromGarden": "Retirer du jardin",
     "removeConfirm": "Êtes-vous sûr de vouloir retirer cette plante de votre jardin ?",
-    "watered": "Plante arrosée !"
+    "watered": "Plante arrosée !",
+    "searchPlaceholder": "Rechercher des plantes...",
+    "filterBy": "Filtrer par",
+    "sortBy": "Trier par",
+    "emptyTitle": "Votre jardin est vide",
+    "emptyMessage": "Commencez votre parcours de guérison en scannant une pièce pour découvrir des plantes qui peuvent vous aider",
+    "filter": {
+      "all": "Toutes les plantes",
+      "needsWater": "Besoin d'eau",
+      "healthy": "En bonne santé"
+    },
+    "sort": {
+      "name": "Nom",
+      "nextWatering": "Prochain arrosage",
+      "recentlyAdded": "Récemment ajouté"
+    }
   },
   "settings": {
     "title": "Paramètres",

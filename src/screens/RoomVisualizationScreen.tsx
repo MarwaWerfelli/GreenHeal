@@ -130,8 +130,8 @@ export default function RoomVisualizationScreen({
       setAiImageUrl(imageUrl);
       
       Alert.alert(
-        t('common.success', 'Success'),
-        t('aiAnalysis.visualizationSuccess', 'Your AI example is ready!'),
+        t('common.success'),
+        t('aiAnalysis.visualizationSuccess'),
         [{ text: t('common.ok') }]
       );
     } catch (error: any) {
@@ -156,10 +156,10 @@ export default function RoomVisualizationScreen({
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
       <Text style={styles.title}>
-        {t('aiAnalysis.yourRoom', 'Your Room')}
+        {t('aiAnalysis.yourRoom')}
       </Text>
       <Text style={styles.subtitle}>
-        {t('aiAnalysis.placementSuggestions', 'Here are the suggested placement locations for your healing plants')}
+        {t('aiAnalysis.placementSuggestions')}
       </Text>
 
       {/* Room Photo with Plant Icons Overlay */}
@@ -197,7 +197,7 @@ export default function RoomVisualizationScreen({
       {/* Plant Placement Details */}
       <View style={styles.suggestionsContainer}>
         <Text style={styles.suggestionsTitle}>
-          📍 {t('aiAnalysis.suggestedPlacements', 'Suggested Placements')}
+          📍 {t('aiAnalysis.suggestedPlacements')}
         </Text>
         {recommendations.map((plant, index) => (
           <View key={index} style={styles.suggestionItem}>
@@ -213,10 +213,10 @@ export default function RoomVisualizationScreen({
       {/* AI Example Generation */}
       <View style={styles.aiSection}>
         <Text style={styles.aiTitle}>
-          ✨ {t('aiAnalysis.aiExampleTitle', 'AI Example')}
+          ✨ {t('aiAnalysis.aiExampleTitle')}
         </Text>
         <Text style={styles.aiSubtitle}>
-          {t('aiAnalysis.aiExampleSubtitle', 'Generate an AI example of a similar room with these plants to inspire your setup')}
+          {t('aiAnalysis.aiExampleSubtitle')}
         </Text>
         
         <TouchableOpacity
@@ -228,7 +228,7 @@ export default function RoomVisualizationScreen({
             <>
               <ActivityIndicator size="small" color={COLORS.white} style={{ marginRight: 8 }} />
               <Text style={styles.generateButtonText}>
-                {t('aiAnalysis.generating', 'Generating...')}
+                {t('aiAnalysis.generating')}
               </Text>
             </>
           ) : (
@@ -236,8 +236,8 @@ export default function RoomVisualizationScreen({
               <Text style={styles.generateButtonIcon}>🎨</Text>
               <Text style={styles.generateButtonText}>
                 {aiImageUrl
-                  ? t('aiAnalysis.regenerateExample', 'Generate New Example')
-                  : t('aiAnalysis.generateExample', 'Generate AI Example')}
+                  ? t('aiAnalysis.regenerateExample')
+                  : t('aiAnalysis.generateExample')}
               </Text>
             </>
           )}
@@ -246,7 +246,7 @@ export default function RoomVisualizationScreen({
         {aiImageUrl && (
           <View style={styles.aiImageContainer}>
             <Text style={styles.aiImageLabel}>
-              {t('aiAnalysis.aiGeneratedExample', 'AI-Generated Example:')}
+              {t('aiAnalysis.aiGeneratedExample')}
             </Text>
             <Image
               source={{ uri: aiImageUrl }}
@@ -254,7 +254,7 @@ export default function RoomVisualizationScreen({
               resizeMode="cover"
             />
             <Text style={styles.aiImageNote}>
-              {t('aiAnalysis.exampleNote', 'This is an AI-generated example for inspiration. Your actual room may look different.')}
+              {t('aiAnalysis.exampleNote')}
             </Text>
           </View>
         )}

@@ -52,6 +52,8 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scrollX = useRef(new Animated.Value(0)).current;
+  // One stable Animated.Value per mood button — must NOT be inside .map()
+  const bounceAnims = useRef(MOOD_EMOJIS.map(() => new Animated.Value(1))).current;
 
   useEffect(() => {
     // Fade in animation on mount
@@ -304,7 +306,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                 {MOOD_EMOJIS.map((emoji, index) => {
                   const moodScore = index + 1;
                   const isSelected = selectedMood === moodScore;
-                  const bounceAnim = useRef(new Animated.Value(1)).current;
+                  const bounceAnim = bounceAnims[index];
 
                   const handlePress = () => {
                     // Bounce animation

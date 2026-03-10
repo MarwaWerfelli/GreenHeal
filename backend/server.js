@@ -147,14 +147,11 @@ app.post('/api/visualize', upload.single('image'), async (req, res) => {
       'https://api.decor8.ai/generate_designs_for_room',
       {
         input_image_url: imageUrl,
-        room_type: roomType,
-        design_style: 'modern', // Modern style works well with plants
+        room_type: roomType,      // required by Decor8 even with custom prompt
+        design_style: 'modern',   // required by Decor8 even with custom prompt
         num_images: 1,
-        scale_factor: 2, // Free tier (up to 1536px)
-        prompt: prompt, // Custom prompt overrides room_type and design_style
-        design_creativity: 0.3, // Lower creativity = more similar to original
-        guidance_scale: 12, // Follow prompt closely
-        num_inference_steps: 40, // Good quality
+        scale_factor: 2,
+        prompt: prompt,
       },
       {
         headers: {
@@ -189,10 +186,17 @@ app.post('/api/visualize', upload.single('image'), async (req, res) => {
     if (error.response) {
       console.error('[BACKEND] API error status:', error.response.status);
       console.error('[BACKEND] API error data:', JSON.stringify(error.response.data));
-      
+
+      // Surface the actual Decor8 error message, not the generic axios string
+      const decor8Msg =
+        error.response.data?.detail ||
+        error.response.data?.message ||
+        error.response.data?.error ||
+        JSON.stringify(error.response.data);
+
       return res.status(error.response.status).json({
         error: 'Decor8 AI API error',
-        message: error.response.data?.message || error.message,
+        message: decor8Msg,
         details: error.response.data,
       });
     }

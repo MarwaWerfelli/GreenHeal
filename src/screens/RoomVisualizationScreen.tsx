@@ -177,7 +177,7 @@ const sliderStyles = StyleSheet.create({
 export default function RoomVisualizationScreen({
   route,
 }: RoomVisualizationScreenProps) {
-  const { imageUri, recommendations } = route.params;
+  const { imageUri = '', recommendations = [] } = route.params ?? {};
   const { t } = useTranslation();
   const [aiImageUrl, setAiImageUrl] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);

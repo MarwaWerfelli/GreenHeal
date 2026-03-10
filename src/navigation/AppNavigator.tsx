@@ -166,9 +166,14 @@ export default function AppNavigator() {
         await initI18n();
         console.log('i18n initialized');
 
-        // Initialize SQLite database early so it's ready for Add to Garden, Journal, etc.
-        await initDatabase();
-        console.log('Database initialized');
+        // Initialize SQLite database — non-fatal: app still opens if DB fails
+        // (garden/journal features will show their own error when accessed)
+        try {
+          await initDatabase();
+          console.log('Database initialized');
+        } catch (dbError) {
+          console.warn('Database init failed (non-fatal):', dbError);
+        }
 
         // Check if onboarding is complete
         try {

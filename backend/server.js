@@ -10,7 +10,8 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Configure multer for file uploads
 const upload = multer({
@@ -27,124 +28,159 @@ app.get('/health', (req, res) => {
 
 // Test API key endpoint
 app.get('/test-api-key', (req, res) => {
-  const hasKey = !!process.env.STABILITY_API_KEY;
-  const keyPreview = process.env.STABILITY_API_KEY 
-    ? `${process.env.STABILITY_API_KEY.substring(0, 10)}...` 
+  const hasKey = !!process.env.DECOR8_API_KEY;
+  const keyPreview = process.env.DECOR8_API_KEY 
+    ? `${process.env.DECOR8_API_KEY.substring(0, 20)}...` 
     : 'NOT SET';
   
   res.json({ 
     hasApiKey: hasKey,
     keyPreview: keyPreview,
-    message: hasKey ? 'API key is configured' : 'API key is missing'
+    message: hasKey ? 'Decor8 API key is configured' : 'Decor8 API key is missing'
   });
 });
 
-// Visualization endpoint
+// Upload image to temporary hosting (for Decor8 AI to access)
+// Primary: litterbox.catbox.moe (free, no API key, 72h expiry)
+// Fallback: catbox.moe (free, permanent)
+async function uploadImageToHost(imageBuffer, mimetype) {
+  // --- Primary: litterbox (72h temporary) ---
+  try {
+    console.log('[BACKEND] Uploading to litterbox.catbox.moe...');
+    const formData = new FormData();
+    formData.append('reqtype', 'fileupload');
+    formData.append('time', '72h');
+    formData.append('fileToUpload', imageBuffer, {
+      filename: 'room.jpg',
+      contentType: mimetype || 'image/jpeg',
+    });
+    const res = await axios.post(
+      'https://litterbox.catbox.moe/resources/internals/api.php',
+      formData,
+      { headers: formData.getHeaders(), timeout: 30000 }
+    );
+    const url = (res.data || '').trim();
+    if (url.startsWith('http')) {
+      console.log('[BACKEND] litterbox upload OK:', url);
+      return url;
+    }
+    throw new Error(`Unexpected litterbox response: ${url}`);
+  } catch (err) {
+    console.error('[BACKEND] litterbox failed:', err.message);
+  }
+
+  // --- Fallback: catbox.moe (permanent) ---
+  try {
+    console.log('[BACKEND] Trying catbox.moe fallback...');
+    const fb = new FormData();
+    fb.append('reqtype', 'fileupload');
+    fb.append('fileToUpload', imageBuffer, {
+      filename: 'room.jpg',
+      contentType: mimetype || 'image/jpeg',
+    });
+    const fbRes = await axios.post(
+      'https://catbox.moe/user/api.php',
+      fb,
+      { headers: fb.getHeaders(), timeout: 30000 }
+    );
+    const url = (fbRes.data || '').trim();
+    if (url.startsWith('http')) {
+      console.log('[BACKEND] catbox.moe OK:', url);
+      return url;
+    }
+    throw new Error(`Unexpected catbox response: ${url}`);
+  } catch (err) {
+    console.error('[BACKEND] catbox.moe failed:', err.message);
+    throw new Error('Failed to upload image to any hosting service');
+  }
+}
+
+// Visualization endpoint using Decor8 AI
 app.post('/api/visualize', upload.single('image'), async (req, res) => {
   try {
     console.log('[BACKEND] Received visualization request');
+    console.log('[BACKEND] Headers:', req.headers);
+    console.log('[BACKEND] Body keys:', Object.keys(req.body));
+    console.log('[BACKEND] File:', req.file ? 'Present' : 'Missing');
     
     // Check API key
-    if (!process.env.OPENAI_API_KEY) {
-      console.error('[BACKEND] OPENAI_API_KEY is not set!');
-      return res.status(500).json({ error: 'API key not configured' });
+    if (!process.env.DECOR8_API_KEY) {
+      console.error('[BACKEND] DECOR8_API_KEY is not set!');
+      return res.status(500).json({ error: 'Decor8 API key not configured' });
     }
-    console.log('[BACKEND] API key is set:', process.env.OPENAI_API_KEY.substring(0, 15) + '...');
+    console.log('[BACKEND] Decor8 API key is set');
     
     // Validate request
     if (!req.file) {
       console.error('[BACKEND] No image file provided');
-      return res.status(400).json({ error: 'No image file provided' });
+      console.error('[BACKEND] Request body:', req.body);
+      return res.status(400).json({ 
+        error: 'No image file provided',
+        details: 'The image field is missing or empty. Make sure you are sending a file with the key "image".'
+      });
     }
 
-    if (!req.body.prompt) {
-      console.error('[BACKEND] No prompt provided');
-      return res.status(400).json({ error: 'No prompt provided' });
+    if (!req.body.plantDescriptions) {
+      console.error('[BACKEND] No plant descriptions provided');
+      return res.status(400).json({ error: 'No plant descriptions provided' });
     }
 
-    const { prompt } = req.body;
+    const { plantDescriptions, roomType = 'livingroom' } = req.body;
 
     console.log('[BACKEND] Image size:', req.file.size, 'bytes');
-    console.log('[BACKEND] Prompt:', prompt);
+    console.log('[BACKEND] Image mimetype:', req.file.mimetype);
+    console.log('[BACKEND] Plant descriptions:', plantDescriptions);
+    console.log('[BACKEND] Room type:', roomType);
 
-    // Step 1: Use GPT-4 Vision to describe the room
-    const base64Image = req.file.buffer.toString('base64');
+    // Upload image to get public URL (Decor8 AI requires accessible URL)
+    console.log('[BACKEND] Uploading image to temporary hosting...');
+    const imageUrl = await uploadImageToHost(req.file.buffer, req.file.mimetype);
+    console.log('[BACKEND] Image uploaded:', imageUrl);
+
+    // Create custom prompt for adding plants
+    const prompt = `Same room with these healing plants added naturally: ${plantDescriptions}. Place plants in decorative pots on tables, shelves, corners, and hanging on walls. Keep all existing furniture, walls, floor, and lighting exactly the same. Only add the plants. Natural, photorealistic interior photography.`;
+
+    console.log('[BACKEND] Calling Decor8 AI API...');
     
-    console.log('[BACKEND] Calling GPT-4 Vision to describe room...');
-    const descriptionResponse = await axios.post(
-      'https://api.openai.com/v1/chat/completions',
+    // Call Decor8 AI API
+    const decor8Response = await axios.post(
+      'https://api.decor8.ai/generate_designs_for_room',
       {
-        model: 'gpt-4o',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are an interior design expert. Describe this room in extreme detail: layout, furniture, colors, materials, lighting, flooring, walls, windows, doors, and any existing objects. Be very specific about spatial relationships and exact positions. Keep it under 200 words.',
-          },
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'image_url',
-                image_url: {
-                  url: `data:image/jpeg;base64,${base64Image}`,
-                },
-              },
-            ],
-          },
-        ],
-        max_tokens: 300,
+        input_image_url: imageUrl,
+        room_type: roomType,
+        design_style: 'modern', // Modern style works well with plants
+        num_images: 1,
+        scale_factor: 2, // Free tier (up to 1536px)
+        prompt: prompt, // Custom prompt overrides room_type and design_style
+        design_creativity: 0.3, // Lower creativity = more similar to original
+        guidance_scale: 12, // Follow prompt closely
+        num_inference_steps: 40, // Good quality
       },
       {
         headers: {
+          'Authorization': `Bearer ${process.env.DECOR8_API_KEY}`,
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
         },
+        timeout: 60000, // 60 second timeout
       }
     );
 
-    const roomDescription = descriptionResponse.data.choices[0]?.message?.content;
-    if (!roomDescription) {
-      console.error('[BACKEND] Failed to get room description');
-      throw new Error('Failed to get room description');
+    console.log('[BACKEND] Decor8 AI response status:', decor8Response.status);
+
+    if (!decor8Response.data || !decor8Response.data.generated_images || decor8Response.data.generated_images.length === 0) {
+      console.error('[BACKEND] No images generated');
+      throw new Error('No images generated by Decor8 AI');
     }
 
-    console.log('[BACKEND] Room description received:', roomDescription.substring(0, 100) + '...');
+    // Get the generated image URL
+    const generatedImageUrl = decor8Response.data.generated_images[0];
 
-    // Step 2: Generate image with DALL-E 3 based on description + plants
-    const dallePrompt = `Professional interior design photograph: ${roomDescription} Now add these healing plants in modern decorative pots: ${prompt}. The plants should be placed naturally as described. Maintain the exact same room layout, furniture, colors, and lighting. Photorealistic, high quality, natural lighting.`;
-
-    console.log('[BACKEND] Calling DALL-E 3 to generate visualization...');
-    console.log('[BACKEND] DALL-E prompt:', dallePrompt.substring(0, 150) + '...');
-    
-    const imageResponse = await axios.post(
-      'https://api.openai.com/v1/images/generations',
-      {
-        model: 'dall-e-3',
-        prompt: dallePrompt,
-        n: 1,
-        size: '1024x1024',
-        quality: 'standard',
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        },
-      }
-    );
-
-    const imageUrl = imageResponse.data.data[0]?.url;
-    if (!imageUrl) {
-      console.error('[BACKEND] No image URL in response');
-      throw new Error('No image URL in response');
-    }
-
-    console.log('[BACKEND] DALL-E 3 image generated successfully');
-    console.log('[BACKEND] Image URL:', imageUrl);
+    console.log('[BACKEND] Image generated successfully');
 
     res.json({
       success: true,
-      imageUrl: imageUrl,
+      imageUrl: generatedImageUrl,
+      credits_used: decor8Response.data.credits_used || 1,
     });
 
   } catch (error) {
@@ -155,8 +191,8 @@ app.post('/api/visualize', upload.single('image'), async (req, res) => {
       console.error('[BACKEND] API error data:', JSON.stringify(error.response.data));
       
       return res.status(error.response.status).json({
-        error: 'AI API error',
-        message: error.response.data?.error?.message || error.message,
+        error: 'Decor8 AI API error',
+        message: error.response.data?.message || error.message,
         details: error.response.data,
       });
     }

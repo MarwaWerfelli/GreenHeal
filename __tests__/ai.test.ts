@@ -14,21 +14,25 @@ import {
   getAIRequestCount,
 } from '../src/modules/storage';
 import { getCurrentLanguage } from '../src/i18n';
+import { resizeForStabilityAI } from '../src/modules/image';
 
 // Mock dependencies
 jest.mock('axios');
 jest.mock('../src/modules/storage');
 jest.mock('../src/i18n');
+jest.mock('../src/modules/image');
 
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 const mockedGetOnboardingData = getOnboardingData as jest.MockedFunction<typeof getOnboardingData>;
 const mockedGetCurrentLanguage = getCurrentLanguage as jest.MockedFunction<typeof getCurrentLanguage>;
 const mockedSaveAIRequestCount = saveAIRequestCount as jest.MockedFunction<typeof saveAIRequestCount>;
 const mockedGetAIRequestCount = getAIRequestCount as jest.MockedFunction<typeof getAIRequestCount>;
+const mockedResizeForStabilityAI = resizeForStabilityAI as jest.MockedFunction<typeof resizeForStabilityAI>;
 
 describe('AI Analysis Module', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockedResizeForStabilityAI.mockResolvedValue('file://test-image-resized.jpg');
     // Mock FileReader for base64 conversion
     global.FileReader = jest.fn().mockImplementation(function(this: any) {
       this.readAsDataURL = jest.fn(function(this: any) {
@@ -57,39 +61,35 @@ describe('AI Analysis Module', () => {
       
       const mockResponse = {
         data: {
-          choices: [{
-            message: {
-              content: JSON.stringify([
-                {
-                  name: 'Lavender',
-                  placement: 'Near the window',
-                  healingBenefit: 'Reduces stress and anxiety',
-                  careDifficulty: 'easy',
-                  estimatedCost: '15 TND',
-                  wateringFrequency: 7,
-                  encouragingMessage: 'You got this!',
-                },
-                {
-                  name: 'Snake Plant',
-                  placement: 'Corner of the room',
-                  healingBenefit: 'Improves air quality',
-                  careDifficulty: 'easy',
-                  estimatedCost: '20 TND',
-                  wateringFrequency: 14,
-                  encouragingMessage: 'Great choice!',
-                },
-                {
-                  name: 'Peace Lily',
-                  placement: 'On the desk',
-                  healingBenefit: 'Promotes calmness',
-                  careDifficulty: 'medium',
-                  estimatedCost: '25 TND',
-                  wateringFrequency: 5,
-                  encouragingMessage: 'Perfect for you!',
-                },
-              ]),
+          content: JSON.stringify([
+            {
+              name: 'Lavender',
+              placement: 'Near the window',
+              healingBenefit: 'Reduces stress and anxiety',
+              careDifficulty: 'easy',
+              estimatedCost: '15 TND',
+              wateringFrequency: 7,
+              encouragingMessage: 'You got this!',
             },
-          }],
+            {
+              name: 'Snake Plant',
+              placement: 'Corner of the room',
+              healingBenefit: 'Improves air quality',
+              careDifficulty: 'easy',
+              estimatedCost: '20 TND',
+              wateringFrequency: 14,
+              encouragingMessage: 'Great choice!',
+            },
+            {
+              name: 'Peace Lily',
+              placement: 'On the desk',
+              healingBenefit: 'Promotes calmness',
+              careDifficulty: 'medium',
+              estimatedCost: '25 TND',
+              wateringFrequency: 5,
+              encouragingMessage: 'Perfect for you!',
+            },
+          ]),
         },
       };
       
@@ -102,6 +102,31 @@ describe('AI Analysis Module', () => {
       expect(result[1].name).toBe('Snake Plant');
       expect(result[2].name).toBe('Peace Lily');
       expect(mockedSaveAIRequestCount).toHaveBeenCalled();
+    });
+
+    test('Resizes image before converting it to base64', async () => {
+      mockedGetAIRequestCount.mockResolvedValue({ count: 0, resetAt: new Date(Date.now() + 86400000).toISOString() });
+      mockedGetOnboardingData.mockResolvedValue({
+        healingGoal: 'stress',
+        budget: 'under10',
+        completedAt: new Date().toISOString(),
+      });
+      mockedGetCurrentLanguage.mockResolvedValue('en');
+      mockedResizeForStabilityAI.mockResolvedValue('file://resized-upload.jpg');
+      mockedAxios.post.mockResolvedValue({
+        data: {
+          content: JSON.stringify([
+            { name: 'Lavender', placement: 'Near the window', healingBenefit: 'Reduces stress', careDifficulty: 'easy', estimatedCost: '15 TND', wateringFrequency: 7, encouragingMessage: 'You got this!' },
+            { name: 'Snake Plant', placement: 'Corner of the room', healingBenefit: 'Improves air quality', careDifficulty: 'easy', estimatedCost: '20 TND', wateringFrequency: 14, encouragingMessage: 'Great choice!' },
+            { name: 'Peace Lily', placement: 'On the desk', healingBenefit: 'Promotes calmness', careDifficulty: 'medium', estimatedCost: '25 TND', wateringFrequency: 5, encouragingMessage: 'Perfect for you!' },
+          ]),
+        },
+      });
+
+      await analyzeRoom('file://test-image.jpg');
+
+      expect(mockedResizeForStabilityAI).toHaveBeenCalledWith('file://test-image.jpg');
+      expect(global.fetch).toHaveBeenCalledWith('file://resized-upload.jpg');
     });
 
     test('Throws error when daily limit is reached', async () => {
@@ -160,7 +185,7 @@ describe('AI Analysis Module', () => {
       mockedGetCurrentLanguage.mockResolvedValue('en');
       
       mockedAxios.post.mockResolvedValue({
-        data: { choices: [{ message: { content: '' } }] },
+        data: { content: '' },
       });
 
       await expect(analyzeRoom('file://test-image.jpg')).rejects.toThrow('Empty response from AI');
@@ -177,13 +202,9 @@ describe('AI Analysis Module', () => {
       
       mockedAxios.post.mockResolvedValue({
         data: {
-          choices: [{
-            message: {
-              content: JSON.stringify([
-                { name: 'Plant 1', placement: 'Here', healingBenefit: 'Good', careDifficulty: 'easy', estimatedCost: '10', wateringFrequency: 7, encouragingMessage: 'Nice!' },
-              ]),
-            },
-          }],
+          content: JSON.stringify([
+            { name: 'Plant 1', placement: 'Here', healingBenefit: 'Good', careDifficulty: 'easy', estimatedCost: '10', wateringFrequency: 7, encouragingMessage: 'Nice!' },
+          ]),
         },
       });
 
@@ -214,15 +235,11 @@ describe('AI Analysis Module', () => {
             
             const mockResponse = {
               data: {
-                choices: [{
-                  message: {
-                    content: JSON.stringify([
-                      { name: 'Plant 1', placement: 'Here', healingBenefit: 'Good', careDifficulty: 'easy', estimatedCost: '10', wateringFrequency: 7, encouragingMessage: 'Nice!' },
-                      { name: 'Plant 2', placement: 'There', healingBenefit: 'Better', careDifficulty: 'medium', estimatedCost: '20', wateringFrequency: 14, encouragingMessage: 'Great!' },
-                      { name: 'Plant 3', placement: 'Everywhere', healingBenefit: 'Best', careDifficulty: 'hard', estimatedCost: '30', wateringFrequency: 3, encouragingMessage: 'Perfect!' },
-                    ]),
-                  },
-                }],
+                content: JSON.stringify([
+                  { name: 'Plant 1', placement: 'Here', healingBenefit: 'Good', careDifficulty: 'easy', estimatedCost: '10', wateringFrequency: 7, encouragingMessage: 'Nice!' },
+                  { name: 'Plant 2', placement: 'There', healingBenefit: 'Better', careDifficulty: 'medium', estimatedCost: '20', wateringFrequency: 14, encouragingMessage: 'Great!' },
+                  { name: 'Plant 3', placement: 'Everywhere', healingBenefit: 'Best', careDifficulty: 'hard', estimatedCost: '30', wateringFrequency: 3, encouragingMessage: 'Perfect!' },
+                ]),
               },
             };
             
@@ -233,10 +250,17 @@ describe('AI Analysis Module', () => {
             // Verify the API was called with correct payload
             expect(mockedAxios.post).toHaveBeenCalled();
             const callArgs = mockedAxios.post.mock.calls[0];
-            const systemPrompt = callArgs[1].messages[0].content;
+            const requestUrl = callArgs[0];
+            const requestBody = callArgs[1];
+            const systemPrompt = requestBody.systemPrompt;
             
             // System prompt should include language name
             const languageName = language === 'en' ? 'English' : language === 'ar' ? 'Arabic' : 'French';
+            expect(requestUrl).toContain('/api/analyze-room');
+            expect(requestBody.healingGoal).toBe(healingGoal);
+            expect(requestBody.budget).toBe(budget);
+            expect(requestBody.language).toBe(language);
+            expect(requestBody.imageBase64).toBe('mockBase64Data');
             expect(systemPrompt).toContain(languageName);
             expect(systemPrompt).toContain('healing from');
           }
@@ -274,11 +298,7 @@ describe('AI Analysis Module', () => {
             
             mockedAxios.post.mockResolvedValue({
               data: {
-                choices: [{
-                  message: {
-                    content: JSON.stringify(plants),
-                  },
-                }],
+                content: JSON.stringify(plants),
               },
             });
 

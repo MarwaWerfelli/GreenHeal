@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
-  Image,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { analyzeRoom, getRemainingRequests, PlantRecommendation } from '../modules/ai';
@@ -22,6 +21,9 @@ export default function AIAnalysisScreen({ route, navigation }: AIAnalysisScreen
   const [error, setError] = useState<string | null>(null);
   const [recommendations, setRecommendations] = useState<PlantRecommendation[]>([]);
   const [remainingRequests, setRemainingRequests] = useState<number>(5);
+  const [selectedPlantIndex, setSelectedPlantIndex] = useState<number>(0);
+
+  const selectedPlant = recommendations[selectedPlantIndex] ?? null;
 
   useEffect(() => {
     checkConnectivityAndAnalyze();
@@ -54,6 +56,7 @@ export default function AIAnalysisScreen({ route, navigation }: AIAnalysisScreen
     try {
       const results = await analyzeRoom(imageUri);
       setRecommendations(results);
+      setSelectedPlantIndex(0);
       await loadRemainingRequests();
     } catch (err: any) {
       console.error('AI analysis error:', err);
@@ -79,7 +82,7 @@ export default function AIAnalysisScreen({ route, navigation }: AIAnalysisScreen
   }
 
   function handleGenerateVisualization() {
-    if (!recommendations.length) {
+    if (!recommendations.length || !selectedPlant) {
       Alert.alert(
         t('aiAnalysis.visualizationError'),
         t('aiAnalysis.visualizationErrorMessage'),
@@ -91,6 +94,7 @@ export default function AIAnalysisScreen({ route, navigation }: AIAnalysisScreen
     navigation.navigate('RoomVisualization', {
       imageUri,
       recommendations,
+      selectedPlant,
     });
   }
 
@@ -156,6 +160,11 @@ export default function AIAnalysisScreen({ route, navigation }: AIAnalysisScreen
           <Text style={styles.visualizationTitle}>
             ✨ {t('aiAnalysis.yourRoomWithPlants')}
           </Text>
+          <Text style={styles.visualizationHint}>
+            {selectedPlant
+              ? `${t('aiAnalysis.selectedForPreview')}: ${selectedPlant.name}`
+              : t('aiAnalysis.choosePlantForPreview')}
+          </Text>
           <TouchableOpacity
             style={styles.generateButton}
             onPress={handleGenerateVisualization}
@@ -170,7 +179,10 @@ export default function AIAnalysisScreen({ route, navigation }: AIAnalysisScreen
         {recommendations.map((plant, index) => (
           <TouchableOpacity
             key={index}
-            style={styles.plantCard}
+            style={[
+              styles.plantCard,
+              index === selectedPlantIndex && styles.selectedPlantCard,
+            ]}
             onPress={() => handlePlantPress(plant)}
             testID={`plant-card-${index}`}
           >
@@ -196,6 +208,26 @@ export default function AIAnalysisScreen({ route, navigation }: AIAnalysisScreen
             </View>
 
             <Text style={styles.encouragingMessage}>{plant.encouragingMessage}</Text>
+
+            <TouchableOpacity
+              style={[
+                styles.selectButton,
+                index === selectedPlantIndex && styles.selectButtonActive,
+              ]}
+              onPress={() => setSelectedPlantIndex(index)}
+              testID={`select-plant-${index}`}
+            >
+              <Text
+                style={[
+                  styles.selectButtonText,
+                  index === selectedPlantIndex && styles.selectButtonTextActive,
+                ]}
+              >
+                {index === selectedPlantIndex
+                  ? t('aiAnalysis.selectedForPreview')
+                  : t('aiAnalysis.previewThisPlant')}
+              </Text>
+            </TouchableOpacity>
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -287,6 +319,10 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  selectedPlantCard: {
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+  },
   plantHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -345,6 +381,25 @@ const styles = StyleSheet.create({
     color: COLORS.secondary,
     textAlign: 'center',
   },
+  selectButton: {
+    marginTop: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    alignItems: 'center',
+  },
+  selectButtonActive: {
+    backgroundColor: COLORS.primary,
+  },
+  selectButtonText: {
+    color: COLORS.primary,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  selectButtonTextActive: {
+    color: COLORS.white,
+  },
   generateButton: {
     backgroundColor: COLORS.primary,
     flexDirection: 'row',
@@ -383,8 +438,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: COLORS.primary,
-    marginBottom: 12,
+    marginBottom: 8,
     textAlign: 'center',
+  },
+  visualizationHint: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    marginBottom: 12,
   },
   visualizationImage: {
     width: '100%',

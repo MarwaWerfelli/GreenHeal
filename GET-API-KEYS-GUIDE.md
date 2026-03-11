@@ -86,40 +86,36 @@ This guide will walk you through getting both API keys needed for GreenHeal's AI
 
 ---
 
-## 📝 3. Add Keys to Your App
+## 📝 3. Add Keys to Your Backend
 
-### Option A: Add to .env File (For Testing)
+Do **not** add provider keys to `app.json`, Expo `extra`, or a mobile client `.env`.
 
-1. Open the `.env` file in your project folder
-2. Replace the empty values with your keys:
+### Option A: Local Backend
+
+1. Open `backend/.env`
+2. Add your keys there:
 
 ```env
-OPENAI_API_KEY=sk-proj-your-actual-openai-key-here
-PERENUAL_API_KEY=sk-your-actual-perenual-key-here
+OPENAI_API_KEY=your-openai-api-key-here
+PERENUAL_API_KEY=your-perenual-api-key-here
+STABILITY_API_KEY=your-stability-api-key-here
 ```
 
-3. Save the file
-4. The keys will be included when you build the APK
+3. Start the backend from the `backend` folder
+4. Point the mobile app at that backend by updating `expo.extra.BACKEND_URL` in `app.json` if needed
 
-### Option B: Add to app.json (Alternative)
+### Option B: Hosted Backend
 
-1. Open `app.json`
-2. Find the `extra` section
-3. Add your keys:
-
-```json
-"extra": {
-  "eas": {
-    "projectId": "3efdec26-ca09-420c-a6d7-d2cf3f924762"
-  },
-  "OPENAI_API_KEY": "sk-proj-your-key",
-  "PERENUAL_API_KEY": "sk-your-key"
-}
-```
+1. Open your backend hosting dashboard
+2. Add the same three environment variables there
+3. Redeploy the backend
+4. Keep the mobile app pointed at that backend URL
 
 ---
 
 ## ✅ 4. Test Your Keys
+
+You can test provider keys directly before adding them to the backend, but the shipped mobile app should never contain them.
 
 ### Test OpenAI Key (Windows PowerShell)
 
@@ -170,7 +166,7 @@ If it works, you'll see a JSON response with plant data!
 - Keep your API keys secret
 - Set spending limits on OpenAI
 - Monitor usage regularly
-- Use `.env` file (already in `.gitignore`)
+- Store provider keys in backend environment variables only
 - Delete keys if compromised
 
 ### ❌ DON'T:
@@ -178,6 +174,7 @@ If it works, you'll see a JSON response with plant data!
 - Commit keys to GitHub
 - Leave unlimited spending enabled
 - Use same keys for multiple apps
+- Put provider keys in `app.json`, Expo `extra`, or the mobile bundle
 
 ---
 

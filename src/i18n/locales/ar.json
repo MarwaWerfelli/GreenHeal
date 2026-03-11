@@ -12,7 +12,8 @@
     "retry": "إعادة المحاولة",
     "complete": "إكمال",
     "open_settings": "فتح الإعدادات",
-    "loading": "جاري التحميل..."
+    "loading": "جاري التحميل...",
+    "success": "تم بنجاح"
   },
   "languages": {
     "english": "الإنجليزية",
@@ -52,7 +53,7 @@
   },
   "home": {
     "title": "GreenHeal",
-    "scanRoom": "مسح غرفتي",
+    "scanRoom": "مسح أو رفع صورة للغرفة",
     "myJourney": "رحلة الشفاء",
     "dailyTip": "نصيحة الشفاء اليومية",
     "moodCheckIn": "كيف تشعر اليوم؟",
@@ -83,11 +84,12 @@
     }
   },
   "camera": {
-    "title": "مسح غرفتك",
-    "capture": "التقاط",
+    "title": "مسح أو رفع صورة لغرفتك",
+    "capture": "التقاط صورة",
+    "chooseFromGallery": "اختر من المعرض",
     "usePhoto": "استخدم هذه الصورة",
     "retake": "إعادة التقاط",
-    "permissionDenied": "يتطلب الوصول إلى الكاميرا لمسح غرفتك والتقاط صور النباتات.",
+    "permissionDenied": "إذن الكاميرا مطلوب فقط لالتقاط صورة جديدة. ما زال بإمكانك اختيار صورة من المعرض.",
     "permissionTitle": "الوصول إلى الكاميرا مطلوب"
   },
   "aiAnalysis": {
@@ -97,12 +99,20 @@
     "limitReached": "تم الوصول إلى الحد اليومي",
     "limitMessage": "لقد وصلت إلى الحد اليومي البالغ {{limit}} تحليلات. يتم إعادة التعيين في {{resetTime}}.",
     "remainingRequests": "{{count}} تحليلات متبقية اليوم",
-    "error": "غير قادر على تحليل غرفتك. يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.",
+    "error": "يتعذر تحليل غرفتك الآن. قد تكون خدمة التحليل غير متاحة مؤقتًا. يرجى المحاولة مرة أخرى لاحقًا.",
     "generateVisualization": "إنشاء تصور للغرفة مع النباتات",
     "generatingVisualization": "جاري إنشاء التصور...",
     "yourRoomWithPlants": "غرفتك مع النباتات",
     "visualizationError": "خطأ في التصور",
-    "visualizationErrorMessage": "غير قادر على إنشاء تصور الغرفة. يرجى المحاولة مرة أخرى."
+    "visualizationErrorMessage": "غير قادر على إنشاء تصور الغرفة. يرجى المحاولة مرة أخرى.",
+    "choosePlantForPreview": "اختر أي نبات موصى به تريد معاينته داخل غرفتك.",
+    "previewThisPlant": "عاين هذا النبات",
+    "selectedForPreview": "تم اختياره للمعاينة",
+    "selectedPlantTitle": "النبات المختار للمعاينة",
+    "sameRoomSubtitle": "نحافظ على صورة غرفتك الأصلية ونضيف نباتاً واحداً مختاراً بشكل حديث وواقعي.",
+    "sameRoomSuccess": "أصبحت معاينة النبات في نفس الغرفة جاهزة! 🌿",
+    "generateSelectedPlant": "أنشئ معاينة لنفس الغرفة",
+    "regenerateSelectedPlant": "أنشئ معاينة أخرى"
   },
   "plantDetail": {
     "title": "تفاصيل النبات",
@@ -166,7 +176,7 @@
   },
   "permissions": {
     "camera_required": "الوصول إلى الكاميرا مطلوب",
-    "camera_explanation": "يحتاج GreenHeal إلى الوصول إلى الكاميرا لمسح غرفتك والتقاط صور النباتات لرحلة الشفاء الخاصة بك.",
+    "camera_explanation": "يمكن لتطبيق GreenHeal استخدام الكاميرا لمسح غرفتك، أو يمكنك اختيار صورة للغرفة من المعرض.",
     "notifications_required": "الوصول إلى الإشعارات",
     "notifications_explanation": "قم بتمكين الإشعارات لتلقي تذكيرات العناية بالنباتات."
   },

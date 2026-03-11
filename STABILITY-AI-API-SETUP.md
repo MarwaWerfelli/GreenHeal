@@ -28,20 +28,20 @@ This is enough to test the inpainting feature multiple times before you need to 
 Once you have the API key, add it to your `.env` file:
 
 ```
-OPENAI_API_KEY=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
-PERENUAL_API_KEY=sk-Prlb69aae80f17c4e15244
+OPENAI_API_KEY=your-openai-api-key-here
+PERENUAL_API_KEY=your-perenual-api-key-here
 STABILITY_API_KEY=your-stability-api-key-here
 ```
 
-And to `app.json`:
+For the current secure architecture, keep these keys on the backend only. Do **not** add them to `app.json`.
+
+The mobile app should only expose `BACKEND_URL`:
 
 ```json
 {
   "expo": {
     "extra": {
-      "OPENAI_API_KEY": "sk-proj-...",
-      "PERENUAL_API_KEY": "sk-Prlb69aae80f17c4e15244",
-      "STABILITY_API_KEY": "your-stability-api-key-here"
+      "BACKEND_URL": "https://greenhealbackend.vercel.app"
     }
   }
 }

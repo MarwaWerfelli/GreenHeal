@@ -54,7 +54,7 @@ This time it should:
 ## API Key Configured
 
 ```
-STABILITY_API_KEY=sk-Atj8Ocb47fjIBQNQ68CpZwnnnEh7HrSGm6cBlDyLFcvydjCa
+STABILITY_API_KEY=your-stability-api-key-here
 ```
 
 ## Download Link

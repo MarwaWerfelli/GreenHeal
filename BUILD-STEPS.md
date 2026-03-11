@@ -3,7 +3,7 @@
 ## Prerequisites Check
 
 Your project is already configured with:
-- ✅ EAS project ID: `3efdec26-ca09-420c-a6d7-d2cf3f924762`
+- ✅ EAS project ID: `1a0cc7a9-b380-41f8-96d1-9e1205873bec`
 - ✅ Package name: `com.greenheal.app`
 - ✅ eas.json configured for APK builds
 - ✅ All permissions configured
@@ -22,9 +22,18 @@ npm install -g eas-cli
 eas login
 ```
 
-Use your Expo account credentials (marwawerfellis-organization).
+Use your Expo account credentials for the current project owner.
 
-### Step 3: Start the Build
+### Step 3: Verify Backend Configuration
+
+Before building, make sure the backend that the app will call is ready:
+
+- backend has `OPENAI_API_KEY`
+- backend has `PERENUAL_API_KEY`
+- backend has `STABILITY_API_KEY`
+- `app.json` `expo.extra.BACKEND_URL` points to that backend
+
+### Step 4: Start the Build
 
 For a preview APK (recommended for testing):
 
@@ -38,14 +47,14 @@ Or for production APK:
 eas build --platform android --profile production
 ```
 
-### Step 4: Wait for Build
+### Step 5: Wait for Build
 
 The build process will:
 1. Upload your project to Expo servers
 2. Build the APK (takes 10-20 minutes)
 3. Provide a download link when complete
 
-### Step 5: Download and Install
+### Step 6: Download and Install
 
 1. You'll get a URL like: `https://expo.dev/artifacts/...`
 2. Open this URL on your Android phone
@@ -62,37 +71,30 @@ During the build, you'll see:
 
 ## Environment Variables
 
-⚠️ **IMPORTANT**: Your `.env` file with API keys is NOT included in the build by default.
+⚠️ **IMPORTANT**: Provider API keys are backend-only.
 
-You have two options:
+Do **not** add `OPENAI_API_KEY`, `PERENUAL_API_KEY`, or `STABILITY_API_KEY` to the mobile build.
 
-### Option A: Add secrets to EAS (Recommended)
+The mobile app only needs `BACKEND_URL` in `app.json`:
 
-```bash
-eas secret:create --scope project --name OPENAI_API_KEY --value "your-key-here"
-eas secret:create --scope project --name PERENUAL_API_KEY --value "your-key-here"
-```
-
-### Option B: Use app.json extra config
-
-Add to `app.json`:
 ```json
 "extra": {
-  "OPENAI_API_KEY": "your-key-here",
-  "PERENUAL_API_KEY": "your-key-here"
+  "BACKEND_URL": "https://greenhealbackend.vercel.app"
 }
 ```
 
-Then access in code with:
-```typescript
-import Constants from 'expo-constants';
-const apiKey = Constants.expoConfig?.extra?.OPENAI_API_KEY;
-```
+Configure provider keys on the backend itself via `backend/.env` or your hosting provider's environment-variable dashboard.
 
 ## Troubleshooting
 
 ### Build fails with "No credentials"
 Run: `eas credentials`
+
+### Build fails with authentication error
+Run: `eas login`
+
+### APK installs but AI features fail
+Check the backend environment variables and confirm `BACKEND_URL` points to the correct deployed backend
 
 ### Build fails with "Invalid package name"
 Check `app.json` android.package is set correctly
@@ -110,4 +112,4 @@ Enable "Install from unknown sources" in Android settings
 ## Build Status
 
 Check your build status at:
-https://expo.dev/accounts/marwawerfellis-organization/projects/greenheal/builds
+https://expo.dev/accounts/marwata/projects/greenheal-new/builds

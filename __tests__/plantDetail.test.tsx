@@ -167,7 +167,7 @@ describe('PlantDetailScreen', () => {
       });
 
       expect(Linking.openURL).toHaveBeenCalledWith(
-        'https://www.google.com/maps/search/?api=1&query=Lavender+plant+nursery'
+        'https://www.google.com/maps/search/?api=1&query=plant%20nursery%20near%20me'
       );
     });
 
@@ -217,7 +217,11 @@ describe('PlantDetailScreen', () => {
       });
 
       await waitFor(() => {
-        expect(Alert.alert).toHaveBeenCalledWith('errors.save_failed');
+        expect(Alert.alert).toHaveBeenCalledWith(
+          'errors.save_failed',
+          expect.any(String),
+          expect.any(Array)
+        );
       });
     });
   });

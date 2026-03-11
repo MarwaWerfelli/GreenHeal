@@ -1,84 +1,67 @@
-# API Keys Setup for APK Build
+# Backend API Keys Setup for APK Build
 
-You have **TWO OPTIONS** to add your API keys for the APK build:
+GreenHeal no longer embeds provider secrets in the mobile app.
 
-## Option 1: Add Keys to app.json (EASIEST)
+## Important Rule
 
-1. Open `app.json`
-2. Find the `extra` section
-3. Add your API keys:
+Do **not** add `OPENAI_API_KEY`, `PERENUAL_API_KEY`, or `STABILITY_API_KEY` to:
+
+- `app.json`
+- Expo `extra`
+- EAS secrets for the mobile build
+- any client-side `.env` consumed by the app bundle
+
+Those keys must live on the **backend only**.
+
+## What the APK Actually Needs
+
+The APK only needs a working backend URL.
+
+Current mobile config:
 
 ```json
 "extra": {
+  "BACKEND_URL": "https://greenhealbackend.vercel.app",
   "eas": {
-    "projectId": "3efdec26-ca09-420c-a6d7-d2cf3f924762"
-  },
-  "OPENAI_API_KEY": "sk-your-actual-openai-key-here",
-  "PERENUAL_API_KEY": "sk-your-actual-perenual-key-here"
+    "projectId": "1a0cc7a9-b380-41f8-96d1-9e1205873bec"
+  }
 }
 ```
 
-4. Save the file
-5. Run the build
+## Backend Secrets You Must Configure
 
-⚠️ **Note**: Don't commit this file to Git with your keys! Add app.json to .gitignore if sharing code.
+Set these on the backend that the app will call:
 
-## Option 2: Use EAS Secrets (MORE SECURE)
-
-Run these commands in your terminal:
-
-```bash
-eas secret:create --scope project --name OPENAI_API_KEY --value "sk-your-actual-openai-key"
-eas secret:create --scope project --name PERENUAL_API_KEY --value "sk-your-actual-perenual-key"
+```env
+OPENAI_API_KEY=your-openai-api-key-here
+PERENUAL_API_KEY=your-perenual-api-key-here
+STABILITY_API_KEY=your-stability-api-key-here
+PORT=3000
 ```
 
-To view your secrets:
-```bash
-eas secret:list
-```
+## Local Backend Setup
 
-To delete a secret:
-```bash
-eas secret:delete --name OPENAI_API_KEY
-```
+1. Copy `backend/.env.example` to `backend/.env`
+2. Add the three provider keys above
+3. Start the backend with `cd backend && npm run dev`
+4. If you want the mobile app to use the local backend, update `app.json` `expo.extra.BACKEND_URL`
 
-## Getting Your API Keys
+## Hosted Backend Setup
 
-### OpenAI API Key
-1. Go to https://platform.openai.com/api-keys
-2. Sign in or create an account
-3. Click "Create new secret key"
-4. Copy the key (starts with `sk-`)
+If you deploy the backend to Vercel, Railway, or Render, add the same three environment variables in the hosting dashboard and redeploy.
 
-### Perenual API Key
-1. Go to https://perenual.com/docs/api
-2. Sign up for a free account
-3. Get your API key from the dashboard
-4. Copy the key (starts with `sk-`)
+## Build After Backend Setup
 
-## Which Option Should I Use?
-
-- **Use Option 1 (app.json)** if:
-  - You want the quickest setup
-  - You're not sharing your code publicly
-  - You're building for personal use
-
-- **Use Option 2 (EAS Secrets)** if:
-  - You're sharing code on GitHub
-  - You want better security
-  - You're building for production/distribution
-
-## After Adding Keys
-
-Run the build command:
+Once the backend is configured, run:
 
 ```bash
 eas build --platform android --profile preview
 ```
 
-Or simply run:
+Or use:
+
 ```bash
-./build-apk.bat
+build-apk.bat
 ```
 
-The build will take 10-20 minutes and you'll get a download link when complete!
+The build will take roughly 10-20 minutes and will return a download link when complete.

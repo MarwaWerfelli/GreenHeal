@@ -61,7 +61,7 @@ vercel
    - Go to Vercel dashboard
    - Select your project
    - Settings → Environment Variables
-   - Add: `STABILITY_API_KEY` = `sk-Atj8Ocb47fjIBQNQ68CpZwnnnEh7HrSGm6cBlDyLFcvydjCa`
+   - Add: `STABILITY_API_KEY` = `your-stability-api-key-here`
    - Redeploy
 
 5. **Get your URL**:

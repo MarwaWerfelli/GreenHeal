@@ -38,14 +38,14 @@ describe('Plant Database Module', () => {
 
       mockedAxios.get.mockResolvedValue({
         data: {
-          data: [mockPlantData],
+          plant: mockPlantData,
         },
       });
 
       const result = await searchPlant('Lavender');
 
       expect(result).toEqual(mockPlantData);
-      expect(mockedCachePlantData).toHaveBeenCalledWith('Lavender', JSON.stringify(mockPlantData));
+      expect(mockedCachePlantData).toHaveBeenCalledWith('Lavender', mockPlantData, expect.any(Date));
     });
 
     test('Returns cached data when cache is valid', async () => {
@@ -61,12 +61,7 @@ describe('Plant Database Module', () => {
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
 
-      mockedGetCachedPlantData.mockResolvedValue({
-        plantName: 'Snake Plant',
-        apiResponse: JSON.stringify(mockPlantData),
-        cachedAt: yesterday.toISOString(),
-        expiresAt: new Date(yesterday.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-      });
+      mockedGetCachedPlantData.mockResolvedValue(mockPlantData as any);
 
       const result = await searchPlant('Snake Plant');
 
@@ -78,7 +73,7 @@ describe('Plant Database Module', () => {
       mockedGetCachedPlantData.mockResolvedValue(null);
       mockedAxios.get.mockResolvedValue({
         data: {
-          data: [],
+          plant: null,
         },
       });
 
@@ -119,7 +114,7 @@ describe('Plant Database Module', () => {
 
       mockedAxios.get.mockResolvedValue({
         data: {
-          data: [mockPlantData],
+          plant: mockPlantData,
         },
       });
 
@@ -141,7 +136,7 @@ describe('Plant Database Module', () => {
       mockedGetCachedPlantData.mockResolvedValue(null);
       mockedAxios.get.mockResolvedValue({
         data: {
-          data: [],
+          plant: null,
         },
       });
 
@@ -166,7 +161,7 @@ describe('Plant Database Module', () => {
 
       mockedAxios.get.mockResolvedValue({
         data: {
-          data: [mockPlantData],
+          plant: mockPlantData,
         },
       });
 
@@ -191,7 +186,7 @@ describe('Plant Database Module', () => {
 
       mockedAxios.get.mockResolvedValue({
         data: {
-          data: [mockPlantData],
+          plant: mockPlantData,
         },
       });
 
@@ -216,7 +211,7 @@ describe('Plant Database Module', () => {
 
       mockedAxios.get.mockResolvedValue({
         data: {
-          data: [mockPlantData],
+          plant: mockPlantData,
         },
       });
 
@@ -286,21 +281,21 @@ describe('Plant Database Module', () => {
       mockedGetCachedPlantData.mockResolvedValue(null);
       mockedAxios.get.mockResolvedValue({
         data: {
-          data: [{
+          plant: {
             id: 1,
             common_name: 'Lavender',
             scientific_name: ['Lavandula'],
             family: 'Lamiaceae',
             watering: 'Moderate',
             sunlight: ['full sun'],
-          }],
+          },
         },
       });
 
       await searchPlant('Lavender');
 
       expect(mockedAxios.get).toHaveBeenCalledWith(
-        expect.stringContaining('perenual.com/api/species-list'),
+        expect.stringContaining('/api/plants/search'),
         expect.objectContaining({
           params: expect.objectContaining({
             q: 'Lavender',
@@ -323,7 +318,7 @@ describe('Plant Database Module', () => {
 
       mockedAxios.get.mockResolvedValue({
         data: {
-          data: [mockPlantData],
+          plant: mockPlantData,
         },
       });
 

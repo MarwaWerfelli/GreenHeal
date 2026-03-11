@@ -7,15 +7,15 @@ The "please check your internet connection" error was happening because the API 
 ### Changes Made:
 
 1. **Updated `src/modules/ai.ts`**
-   - Now reads `OPENAI_API_KEY` from `Constants.expoConfig.extra`
-   - Properly configured to use API keys in the build
+   - Historical note: an older version read client config directly
+   - Current code now calls the backend via `BACKEND_URL`
 
 2. **Updated `src/modules/plantDatabase.ts`**
-   - Now reads `PERENUAL_API_KEY` from `Constants.expoConfig.extra`
-   - Properly configured for plant database queries
+   - Historical note: an older version read client config directly
+   - Current code now calls the backend via `BACKEND_URL`
 
 3. **Added API keys to `app.json`**
-   - Keys are now embedded in the app configuration
+   - This step is obsolete and should not be reused
    - Will be included in the APK build
 
 ## New Build Status
@@ -49,9 +49,9 @@ The first APK had the API keys hardcoded as empty strings:
 const OPENAI_API_KEY = ''; // ❌ Empty!
 ```
 
-The new build properly reads from app config:
+The current secure build uses the backend URL instead of embedding provider keys in the app:
 ```typescript
-const OPENAI_API_KEY = Constants.expoConfig?.extra?.OPENAI_API_KEY || ''; // ✅ Correct!
+const backendUrl = Constants.expoConfig?.extra?.BACKEND_URL || ''; // ✅ Current pattern
 ```
 
 ## How to Check Build Progress

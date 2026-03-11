@@ -118,6 +118,7 @@ describe('Internationalization Module', () => {
         'home.scanRoom',
         'home.myJourney',
         'camera.capture',
+        'camera.chooseFromGallery',
         'camera.usePhoto',
         'camera.retake',
         'plantDetail.addToGarden',

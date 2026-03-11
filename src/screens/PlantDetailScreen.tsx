@@ -171,8 +171,11 @@ export default function PlantDetailScreen({ route, navigation }: PlantDetailScre
   async function handleAddToGarden() {
     setAdding(true);
     try {
+      console.log('[PLANT_DETAIL] Starting to add plant to garden...');
+      
       // Initialize database if needed
       await initDatabase();
+      console.log('[PLANT_DETAIL] Database initialized');
 
       // Calculate next watering date
       const now = new Date();
@@ -194,7 +197,9 @@ export default function PlantDetailScreen({ route, navigation }: PlantDetailScre
         reminderTime: '09:00', // Default reminder time
       };
 
+      console.log('[PLANT_DETAIL] Saving plant:', gardenPlant.name);
       await savePlant(gardenPlant);
+      console.log('[PLANT_DETAIL] Plant saved successfully');
 
       Alert.alert(
         t('plantDetail.added'),
@@ -207,9 +212,15 @@ export default function PlantDetailScreen({ route, navigation }: PlantDetailScre
         ]
       );
     } catch (error) {
-      console.error('Error adding plant to garden:', error);
+      console.error('[PLANT_DETAIL] Error adding plant to garden:', error);
       const message = error instanceof Error ? error.message : String(error);
-      Alert.alert(t('errors.save_failed'), __DEV__ ? message : undefined);
+      console.error('[PLANT_DETAIL] Error details:', message);
+      
+      Alert.alert(
+        t('errors.save_failed'),
+        __DEV__ ? `Error: ${message}` : t('errors.generic'),
+        [{ text: t('common.ok') }]
+      );
     } finally {
       setAdding(false);
     }

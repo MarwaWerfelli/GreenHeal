@@ -32,7 +32,7 @@ This is the professional way to handle complex API operations!
 2. Click "Settings" → "Environment Variables"
 3. Add new variable:
    - Key: `STABILITY_API_KEY`
-   - Value: `sk-Atj8Ocb47fjIBQNQ68CpZwnnnEh7HrSGm6cBlDyLFcvydjCa`
+   - Value: `your-stability-api-key-here`
    - Select all environments (Production, Preview, Development)
 4. Click "Save"
 5. Go to "Deployments" → Click (...) on latest → "Redeploy"

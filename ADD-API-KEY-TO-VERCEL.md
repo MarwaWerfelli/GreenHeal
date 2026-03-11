@@ -15,7 +15,7 @@ Your backend is deployed but it needs the Stability API key to work.
 
 5. **Add New Variable**:
    - Key: `STABILITY_API_KEY`
-   - Value: `sk-Atj8Ocb47fjIBQNQ68CpZwnnnEh7HrSGm6cBlDyLFcvydjCa`
+   - Value: `your-stability-api-key-here`
    - Environment: Select "Production", "Preview", and "Development"
    - Click "Save"
 

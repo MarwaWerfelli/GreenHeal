@@ -53,7 +53,7 @@
   },
   "home": {
     "title": "GreenHeal",
-    "scanRoom": "Scan My Room",
+    "scanRoom": "Scan or Upload Room",
     "myJourney": "My Healing Journey",
     "dailyTip": "Daily Healing Tip",
     "moodCheckIn": "How are you feeling today?",
@@ -84,11 +84,12 @@
     }
   },
   "camera": {
-    "title": "Scan Your Room",
-    "capture": "Capture",
+    "title": "Scan or Upload Your Room",
+    "capture": "Take Photo",
+    "chooseFromGallery": "Choose from Gallery",
     "usePhoto": "Use this photo",
     "retake": "Retake",
-    "permissionDenied": "Camera permission is required to scan your room and capture plant photos.",
+    "permissionDenied": "Camera permission is only needed to take a new photo. You can still choose one from your gallery.",
     "permissionTitle": "Camera Access Required"
   },
   "aiAnalysis": {
@@ -98,7 +99,7 @@
     "limitReached": "Daily limit reached",
     "limitMessage": "You've reached your daily limit of {{limit}} AI analyses. Resets at {{resetTime}}.",
     "remainingRequests": "{{count}} analyses remaining today",
-    "error": "Unable to analyze your room. Please check your internet connection and try again.",
+    "error": "Unable to analyze your room right now. The analysis service may be temporarily unavailable. Please try again later.",
     "generateVisualization": "See Your Room with Plants",
     "generatingVisualization": "Creating your design...",
     "yourRoomWithPlants": "Your Room with Healing Plants",
@@ -107,12 +108,20 @@
     "visualizationSuccess": "Your AI example is ready!",
     "yourRoom": "Your Room",
     "placementSuggestions": "Here are the suggested placement locations for your healing plants",
+    "choosePlantForPreview": "Choose which recommended plant you want to preview in your room.",
+    "previewThisPlant": "Preview this plant",
+    "selectedForPreview": "Selected for preview",
+    "selectedPlantTitle": "Selected Plant for Preview",
+    "sameRoomSubtitle": "We keep your original room photo and stage one selected plant in a modern, realistic way.",
+    "sameRoomSuccess": "Your same-room plant preview is ready! 🌿",
     "suggestedPlacements": "Suggested Placements",
     "aiExampleTitle": "AI Example",
     "aiExampleSubtitle": "Generate an AI example of a similar room with these plants to inspire your setup",
     "generating": "Generating...",
     "generateExample": "Generate AI Example",
     "regenerateExample": "Generate New Example",
+    "generateSelectedPlant": "Generate Same-Room Preview",
+    "regenerateSelectedPlant": "Generate Another Preview",
     "aiGeneratedExample": "AI-Generated Example:",
     "exampleNote": "This is an AI-generated example for inspiration. Your actual room may look different."
   },
@@ -188,7 +197,7 @@
   },
   "permissions": {
     "camera_required": "Camera Access Required",
-    "camera_explanation": "GreenHeal needs camera access to scan your room and capture plant photos for your healing journey.",
+    "camera_explanation": "GreenHeal can use your camera to scan your room, or you can choose a room photo from your gallery.",
     "notifications_required": "Notification Access",
     "notifications_explanation": "Enable notifications to receive plant care reminders."
   },

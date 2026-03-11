@@ -106,7 +106,11 @@ export type RootStackParamList = {
   MainTabs: undefined;
   Camera: undefined;
   AIAnalysis: { imageUri: string };
-  RoomVisualization: { imageUri: string; recommendations: PlantRecommendation[] };
+  RoomVisualization: {
+    imageUri: string;
+    recommendations: PlantRecommendation[];
+    selectedPlant?: PlantRecommendation;
+  };
   PlantDetail: { plant: PlantRecommendation | GardenPlant; source: 'ai' | 'garden' };
   JournalEntryForm: { entryId?: number };
   JournalEntryDetail: { entryId: number };

@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "GreenHeal",
-    "slug": "greenheal",
+    "slug": "greenheal-new",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
@@ -57,13 +57,11 @@
       "expo-notifications"
     ],
     "extra": {
-      "OPENAI_API_KEY": "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",
-      "PERENUAL_API_KEY": "sk-Prlb69aae80f17c4e15244",
-      "STABILITY_API_KEY": "sk-Atj8Ocb47fjIBQNQ68CpZwnnnEh7HrSGm6cBlDyLFcvydjCa",
+      "BACKEND_URL": "https://greenhealbackend.vercel.app",
       "eas": {
-        "projectId": "b1c87a32-dd36-4060-a9b0-0430f8dbc922"
+        "projectId": "1a0cc7a9-b380-41f8-96d1-9e1205873bec"
       }
     },
-    "owner": "marwawrf"
+    "owner": "marwata"
   }
 }

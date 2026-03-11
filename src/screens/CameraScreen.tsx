@@ -13,6 +13,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useTranslation } from 'react-i18next';
 import { COLORS } from '../utils/constants';
 import type { CameraScreenProps } from '../types';
+import { pickFromGallery } from '../modules/image';
 
 export default function CameraScreen({ navigation }: CameraScreenProps) {
   const { t } = useTranslation();
@@ -63,6 +64,19 @@ export default function CameraScreen({ navigation }: CameraScreenProps) {
     }
   };
 
+  // Pick photo from gallery
+  const handleChooseFromGallery = async () => {
+    try {
+      const results = await pickFromGallery(false);
+      if (results.length > 0) {
+        setCapturedPhoto(results[0]);
+      }
+    } catch (error) {
+      console.error('Error picking photo from gallery:', error);
+      Alert.alert(t('errors.generic'));
+    }
+  };
+
   // Retake photo
   const handleRetake = () => {
     setCapturedPhoto(null);
@@ -97,6 +111,15 @@ export default function CameraScreen({ navigation }: CameraScreenProps) {
           >
             <Text style={styles.permissionButtonText}>
               {t('common.open_settings')}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.permissionButton, styles.galleryButton]}
+            onPress={handleChooseFromGallery}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.permissionButtonText}>
+              {t('camera.chooseFromGallery')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -139,6 +162,15 @@ export default function CameraScreen({ navigation }: CameraScreenProps) {
           </Text>
         </View>
         <View style={styles.cameraControls}>
+          <TouchableOpacity
+            style={styles.galleryActionButton}
+            onPress={handleChooseFromGallery}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.galleryActionButtonText}>
+              {t('camera.chooseFromGallery')}
+            </Text>
+          </TouchableOpacity>
           <TouchableOpacity
             style={styles.captureButton}
             onPress={handleCapture}
@@ -187,6 +219,10 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 12,
   },
+  galleryButton: {
+    marginTop: 12,
+    backgroundColor: COLORS.textSecondary,
+  },
   permissionButtonText: {
     fontSize: 16,
     fontWeight: '600',
@@ -215,6 +251,18 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     alignItems: 'center',
     paddingBottom: 40,
+  },
+  galleryActionButton: {
+    marginBottom: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 999,
+    backgroundColor: COLORS.black + '77',
+  },
+  galleryActionButtonText: {
+    color: COLORS.white,
+    fontSize: 14,
+    fontWeight: '600',
   },
   captureButton: {
     width: 80,

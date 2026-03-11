@@ -4,9 +4,28 @@ const multer = require('multer');
 const axios = require('axios');
 const FormData = require('form-data');
 require('dotenv').config();
+const {
+  detectPlacementMode,
+  buildVisualizationPrompt,
+  buildMaskConfig,
+  getImageDimensions,
+  getMaskCanvasSize,
+  createPlacementMaskPng,
+} = require('./visualization');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
+const PERENUAL_SEARCH_URL = 'https://perenual.com/api/species-list';
+
+function getUpstreamErrorMessage(error) {
+  return (
+    error.response?.data?.error?.message ||
+    error.response?.data?.message ||
+    error.response?.data?.errors?.[0] ||
+    JSON.stringify(error.response?.data || {})
+  );
+}
 
 // Middleware
 app.use(cors());
@@ -42,6 +61,126 @@ app.get('/test-api-key', (req, res) => {
   });
 });
 
+app.post('/api/analyze-room', async (req, res) => {
+  try {
+    const { imageBase64, systemPrompt, imageMimeType } = req.body || {};
+
+    if (!process.env.OPENAI_API_KEY) {
+      return res.status(500).json({
+        error: 'OpenAI API key not configured',
+        code: 'OPENAI_API_KEY_NOT_CONFIGURED',
+      });
+    }
+
+    if (!imageBase64 || !systemPrompt) {
+      return res.status(400).json({
+        error: 'imageBase64 and systemPrompt are required',
+      });
+    }
+
+    const normalizedMimeType =
+      typeof imageMimeType === 'string' && imageMimeType.startsWith('image/')
+        ? imageMimeType
+        : 'image/jpeg';
+    const normalizedBase64 = String(imageBase64).replace(/^data:image\/[a-zA-Z0-9.+-]+;base64,/, '');
+
+    const openaiResponse = await axios.post(
+      OPENAI_API_URL,
+      {
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'system',
+            content: systemPrompt,
+          },
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'image_url',
+                image_url: {
+                  url: `data:${normalizedMimeType};base64,${normalizedBase64}`,
+                },
+              },
+            ],
+          },
+        ],
+        max_tokens: 1500,
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        },
+        timeout: 45000,
+      }
+    );
+
+    res.json({
+      content: openaiResponse.data?.choices?.[0]?.message?.content || '',
+    });
+  } catch (error) {
+    console.error('[BACKEND] Analyze room error:', error.message);
+
+    if (error.response) {
+      return res.status(error.response.status).json({
+        error: 'OpenAI API error',
+        message: getUpstreamErrorMessage(error),
+      });
+    }
+
+    res.status(500).json({
+      error: 'Internal server error',
+      message: error.message,
+    });
+  }
+});
+
+app.get('/api/plants/search', async (req, res) => {
+  try {
+    const plantName = String(req.query.q || '').trim();
+
+    if (!process.env.PERENUAL_API_KEY) {
+      return res.status(500).json({
+        error: 'Perenual API key not configured',
+        code: 'PERENUAL_API_KEY_NOT_CONFIGURED',
+      });
+    }
+
+    if (!plantName) {
+      return res.status(400).json({ error: 'Query parameter q is required' });
+    }
+
+    const plantResponse = await axios.get(PERENUAL_SEARCH_URL, {
+      params: {
+        key: process.env.PERENUAL_API_KEY,
+        q: plantName,
+      },
+      timeout: 20000,
+    });
+
+    const plant = Array.isArray(plantResponse.data?.data) && plantResponse.data.data.length > 0
+      ? plantResponse.data.data[0]
+      : null;
+
+    res.json({ plant });
+  } catch (error) {
+    console.error('[BACKEND] Plant search error:', error.message);
+
+    if (error.response) {
+      return res.status(error.response.status).json({
+        error: 'Perenual API error',
+        message: getUpstreamErrorMessage(error),
+      });
+    }
+
+    res.status(500).json({
+      error: 'Internal server error',
+      message: error.message,
+    });
+  }
+});
+
 // Visualization endpoint using Stability AI structure control
 // - Accepts the room image directly (no third-party hosting needed)
 // - Uses /v2beta/stable-image/control/structure to preserve room layout
@@ -70,31 +209,72 @@ app.post('/api/visualize', upload.single('image'), async (req, res) => {
       return res.status(400).json({ error: 'No plant descriptions provided' });
     }
 
-    const { plantDescriptions } = req.body;
+    const {
+      plantDescriptions,
+      selectedPlantName,
+      selectedPlacement,
+      placementMode,
+      renderStyle,
+      maskCenterX,
+      maskCenterY,
+      maskWidth,
+      maskHeight,
+    } = req.body;
 
     console.log('[BACKEND] Plant descriptions:', plantDescriptions);
 
-    // Build prompt: add plants while keeping the room exactly as-is
-    const prompt =
-      `Interior room photo with healing plants added naturally: ${plantDescriptions}. ` +
-      `Place plants in decorative ceramic pots on tables, shelves, window sills, and floor corners. ` +
-      `Keep all existing furniture, walls, floor, ceiling, and lighting exactly the same. ` +
-      `Only add the plants. Photorealistic, high quality interior photography.`;
+    const prompt = buildVisualizationPrompt({
+      plantDescriptions,
+      selectedPlantName,
+      selectedPlacement,
+      placementMode,
+    });
 
-    console.log('[BACKEND] Calling Stability AI structure control...');
+    const resolvedPlacementMode = placementMode || detectPlacementMode(selectedPlacement || plantDescriptions);
+    const useMaskedInpaint = renderStyle === 'same-room-single-plant' && !!selectedPlantName;
 
-    // Build multipart form — Stability AI accepts the image directly
+    console.log('[BACKEND] Using masked inpaint:', useMaskedInpaint);
+
     const formData = new FormData();
     formData.append('image', req.file.buffer, {
       filename: 'room.jpg',
       contentType: req.file.mimetype || 'image/jpeg',
     });
     formData.append('prompt', prompt);
-    formData.append('control_strength', '0.7'); // 0 = ignore structure, 1 = copy exactly
     formData.append('output_format', 'jpeg');
 
+    let endpoint = 'https://api.stability.ai/v2beta/stable-image/control/structure';
+
+    if (useMaskedInpaint) {
+      const originalDimensions = getImageDimensions(req.file.buffer, req.file.mimetype);
+      const maskCanvas = getMaskCanvasSize(originalDimensions);
+      const maskConfig = buildMaskConfig({
+        placementMode: resolvedPlacementMode,
+        maskCenterX,
+        maskCenterY,
+        maskWidth,
+        maskHeight,
+      });
+      const maskBuffer = createPlacementMaskPng({
+        width: maskCanvas.width,
+        height: maskCanvas.height,
+        maskConfig,
+      });
+
+      console.log('[BACKEND] Mask canvas:', maskCanvas, 'config:', maskConfig);
+
+      formData.append('mask', maskBuffer, {
+        filename: 'mask.png',
+        contentType: 'image/png',
+      });
+      formData.append('strength', '0.35');
+      endpoint = 'https://api.stability.ai/v2beta/stable-image/edit/inpaint';
+    } else {
+      formData.append('control_strength', selectedPlantName ? '0.9' : '0.78');
+    }
+
     const stabilityResponse = await axios.post(
-      'https://api.stability.ai/v2beta/stable-image/control/structure',
+      endpoint,
       formData,
       {
         headers: {
@@ -123,6 +303,8 @@ app.post('/api/visualize', upload.single('image'), async (req, res) => {
     res.json({
       success: true,
       imageUrl,
+      placementMode: resolvedPlacementMode,
+      masked: useMaskedInpaint,
     });
 
   } catch (error) {

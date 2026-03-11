@@ -37,25 +37,35 @@ npm install --legacy-peer-deps
 
 Note: The `--legacy-peer-deps` flag is required due to React 19 peer dependency conflicts.
 
-### 3. Configure Environment Variables
+### 3. Configure Backend Access
 
-Create a `.env` file in the root directory:
+GreenHeal now keeps provider API keys on the **backend only**. Do **not** put OpenAI, Perenual, or Stability keys in `app.json`, Expo `extra`, or the mobile client.
+
+#### Backend setup
+
+Create a backend env file:
 
 ```bash
-cp .env.example .env
+cp backend/.env.example backend/.env
 ```
 
-Edit `.env` and add your API keys:
+Then edit `backend/.env` and add your backend-only secrets:
 
 ```env
-OPENAI_API_KEY=your_openai_api_key_here
-PERENUAL_API_KEY=your_perenual_api_key_here
+OPENAI_API_KEY=your-openai-api-key-here
+PERENUAL_API_KEY=your-perenual-api-key-here
+STABILITY_API_KEY=your-stability-api-key-here
 ```
 
-**Getting API Keys:**
+#### Mobile app setup
 
-- **OpenAI API Key**: Sign up at [platform.openai.com](https://platform.openai.com/) and create an API key
-- **Perenual API Key**: Sign up at [perenual.com/docs/api](https://perenual.com/docs/api) for plant database access
+The mobile app only needs `BACKEND_URL`, which is already exposed in `app.json`.
+
+- default deployed backend: `https://greenhealbackend.vercel.app`
+- local Android emulator backend: `http://10.0.2.2:3000`
+- local physical-device backend: `http://YOUR_LAN_IP:3000`
+
+If you want to test against a different backend, update `expo.extra.BACKEND_URL` in `app.json`.
 
 ### 4. Start the Development Server
 

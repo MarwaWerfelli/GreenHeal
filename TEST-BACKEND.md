@@ -1,53 +1,78 @@
 # Test Backend Visualization API
 
-## Quick Test
+## Local smoke test
 
-You can test the backend API directly using this curl command (replace `IMAGE_PATH` with an actual image file):
+Start the backend locally first:
 
 ```bash
-curl -X POST https://greenhealbackend.vercel.app/api/visualize \
-  -F "image=@IMAGE_PATH" \
-  -F "prompt=Aloe Vera in a modern pot on the windowsill, Snake Plant in a modern pot in the corner, Peace Lily in a modern pot on the table"
+cd backend
+npm run dev
 ```
 
-## What to Check
+Then, in another terminal, run the visualization smoke test with a real room image:
 
-1. **Backend Health**: https://greenhealbackend.vercel.app/health
-   - Should return: `{"status":"ok","message":"GreenHeal Backend API is running"}`
+```bash
+cd backend
+npm run smoke -- ../path/to/room.jpg --plant="Monstera" --placement="table corner"
+```
 
-2. **Environment Variables on Vercel**:
-   - Go to: https://vercel.com/marwawerfellideveloper-1339s-projects/greenheal_backend/settings/environment-variables
-   - Make sure `OPENAI_API_KEY` is set
+The helper will:
 
-## Expected Flow
+1. call the existing `POST /api/visualize` endpoint
+2. use the current **same-room single-plant** request shape
+3. save the returned preview next to your source image as `*.greenheal-preview.jpg`
 
-1. Mobile app takes room photo
-2. AI analyzes room and suggests 3 plants
-3. User taps "Generate AI photo" button
-4. App calls: `https://greenhealbackend.vercel.app/api/visualize`
-5. Backend uses GPT-4 Vision to describe the room
-6. Backend uses DALL-E 3 to generate similar room with plants
-7. Backend returns image URL
-8. App displays the generated image
+## Test against a deployed backend
 
-## Debugging
+```bash
+cd backend
+npm run smoke -- ../path/to/room.jpg --base-url=https://greenhealbackend.vercel.app --plant="Snake Plant" --placement="corner floor"
+```
 
-If visualization fails, check the logs in the new APK:
-- Look for `[VISUALIZATION]` and `[ROOM_VIZ]` prefixed messages
-- These will show exactly where the process fails
+## Health check
 
-## Common Issues
+- Local: `http://localhost:3000/health`
+- Deployed: `https://greenhealbackend.vercel.app/health`
 
-1. **"Unable to generate room visualization"**
-   - Check if OPENAI_API_KEY is set on Vercel
-   - Check backend logs for errors
-   - Verify image size is reasonable (< 10MB)
+Expected response:
 
-2. **Old icon showing**
-   - Uninstall old APK completely
-   - Install new APK
-   - Clear app data if needed
+```json
+{"status":"ok","message":"GreenHeal Backend API is running"}
+```
 
-3. **Plants not showing as emojis**
-   - This is fixed in the new build
-   - You should see 🪴 emojis that you can drag around
+## Requirements
+
+- `STABILITY_API_KEY` must be set for the backend you are calling
+- image should be a real room photo
+- image size should stay under the backend upload limit (`10MB`)
+
+## Current request shape
+
+The smoke helper sends the same main fields used by the app:
+
+- `image`
+- `plantDescriptions`
+- `selectedPlantName`
+- `selectedPlacement`
+- `placementMode`
+- `renderStyle=same-room-single-plant`
+
+The backend then decides whether to use:
+
+- **masked inpaint** for selected single-plant previews
+- **structure control** as the fallback path
+
+## What to check in the result
+
+1. the room layout stays the same
+2. only the selected plant is added
+3. the placement matches the chosen location
+4. the saved preview looks modern and realistic
+5. the console prints `Masked flow: yes`
+
+## If it fails
+
+- check backend logs for `[BACKEND]` messages
+- verify `STABILITY_API_KEY` is present
+- try a smaller/lighter room image
+- try a clearer placement, such as `table corner`, `window sill`, or `wall hanging planter`

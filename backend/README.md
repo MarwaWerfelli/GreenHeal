@@ -1,6 +1,6 @@
 # GreenHeal Backend API
 
-Simple Node.js backend for handling image visualization with Stability AI.
+Node.js backend that keeps provider API keys off the mobile client and handles room analysis, plant lookup, and room visualization.
 
 ## Setup
 
@@ -10,10 +10,18 @@ cd backend
 npm install
 ```
 
-2. Configure environment variables:
+2. Configure backend-only environment variables:
 ```bash
 cp .env.example .env
-# Edit .env and add your STABILITY_API_KEY
+```
+
+Edit `backend/.env` and add:
+
+```env
+OPENAI_API_KEY=your-openai-api-key-here
+PERENUAL_API_KEY=your-perenual-api-key-here
+STABILITY_API_KEY=your-stability-api-key-here
+PORT=3000
 ```
 
 3. Run locally:
@@ -31,6 +39,22 @@ GET /health
 ```
 
 Returns server status.
+
+### Analyze Room
+```
+POST /api/analyze-room
+Content-Type: application/json
+
+Fields:
+- imageBase64: Base64 image string (required)
+- imageMimeType: MIME type (optional)
+- systemPrompt: Analysis prompt override (optional)
+```
+
+### Plant Search
+```
+GET /api/plants/search?q=snake%20plant
+```
 
 ### Generate Visualization
 ```
@@ -66,7 +90,9 @@ cd backend
 vercel
 ```
 
-3. Add environment variable in Vercel dashboard:
+3. Add environment variables in Vercel dashboard:
+   - OPENAI_API_KEY
+   - PERENUAL_API_KEY
    - STABILITY_API_KEY
 
 ### Option 2: Railway (Free tier available)
@@ -75,7 +101,7 @@ vercel
 2. Create new project
 3. Connect your GitHub repo
 4. Set root directory to `/backend`
-5. Add STABILITY_API_KEY environment variable
+5. Add OPENAI_API_KEY, PERENUAL_API_KEY, and STABILITY_API_KEY environment variables
 6. Deploy
 
 ### Option 3: Render (Free tier available)
@@ -86,7 +112,7 @@ vercel
 4. Set root directory to `backend`
 5. Build command: `npm install`
 6. Start command: `npm start`
-7. Add STABILITY_API_KEY environment variable
+7. Add OPENAI_API_KEY, PERENUAL_API_KEY, and STABILITY_API_KEY environment variables
 8. Deploy
 
 ## Testing
@@ -108,7 +134,7 @@ curl -X POST http://localhost:3000/api/visualize \
 
 ## Security
 
-- API keys are stored in environment variables (not in code)
+- API keys are stored in backend environment variables (not in the mobile app)
 - CORS enabled for your mobile app
 - File size limits (10MB max)
 - Request timeout (60 seconds)

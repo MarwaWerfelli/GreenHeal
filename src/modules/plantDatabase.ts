@@ -3,36 +3,42 @@ import Constants from 'expo-constants';
 import { cachePlantData, getCachedPlantData } from './storage';
 import type { PlantAPIResponse, EnrichedPlantData } from '../types';
 
-// Get API key from app config
-const PERENUAL_API_KEY = Constants.expoConfig?.extra?.PERENUAL_API_KEY || '';
-const PERENUAL_BASE_URL = 'https://perenual.com/api';
 const CACHE_DURATION_DAYS = 7;
+const DEFAULT_BACKEND_URL = 'https://greenhealbackend.vercel.app';
+const BACKEND_URL =
+  Constants.expoConfig?.extra?.BACKEND_URL ||
+  (__DEV__ ? 'http://localhost:3000' : DEFAULT_BACKEND_URL);
 
 /**
  * Search for a plant in the Perenual API
  */
 export async function searchPlant(plantName: string): Promise<PlantAPIResponse | null> {
   try {
-    // Check cache first
-    const cached = await getCachedPlantData(plantName);
-    if (cached && isCacheValid(cached.cachedAt)) {
-      return JSON.parse(cached.apiResponse);
+    const normalizedPlantName = plantName.trim();
+    if (!normalizedPlantName) {
+      return null;
     }
 
-    // Search API
-    const response = await axios.get(`${PERENUAL_BASE_URL}/species-list`, {
+    // Check cache first
+    const cached = await getCachedPlantData(normalizedPlantName);
+    if (cached) {
+      return cached;
+    }
+
+    // Search backend API
+    const response = await axios.get(`${BACKEND_URL}/api/plants/search`, {
       params: {
-        key: PERENUAL_API_KEY,
-        q: plantName,
+        q: normalizedPlantName,
       },
+      timeout: 20000,
     });
 
-    if (response.data.data && response.data.data.length > 0) {
-      const plantData = response.data.data[0];
-      
-      // Cache the result
-      await cachePlantData(plantName, JSON.stringify(plantData));
-      
+    const plantData = response.data?.plant as PlantAPIResponse | null | undefined;
+    if (plantData) {
+      const expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + CACHE_DURATION_DAYS);
+
+      await cachePlantData(normalizedPlantName, plantData, expiryDate);
       return plantData;
     }
 

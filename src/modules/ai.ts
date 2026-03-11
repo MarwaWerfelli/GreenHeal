@@ -7,10 +7,10 @@ import type { PlantRecommendation } from '../types';
 
 export type { PlantRecommendation };
 
-// Get API keys from app config
-const OPENAI_API_KEY = Constants.expoConfig?.extra?.OPENAI_API_KEY || '';
-const PERENUAL_API_KEY = Constants.expoConfig?.extra?.PERENUAL_API_KEY || '';
-const STABILITY_API_KEY = Constants.expoConfig?.extra?.STABILITY_API_KEY || '';
+const DEFAULT_BACKEND_URL = 'https://greenhealbackend.vercel.app';
+const BACKEND_URL =
+  Constants.expoConfig?.extra?.BACKEND_URL ||
+  (__DEV__ ? 'http://localhost:3000' : DEFAULT_BACKEND_URL);
 const DAILY_LIMIT = 5;
 
 interface AIRequestCount {
@@ -54,43 +54,33 @@ export async function analyzeRoom(imageUri: string): Promise<PlantRecommendation
   const systemPrompt = `You are a therapeutic interior designer and plant therapist. Respond in ${languageName}. Analyze this room photo. Consider the lighting, available surfaces, room type, and empty spaces. The user is healing from ${healingGoal}. Suggest 3 specific healing plants tailored to their condition, each with: plant name, exact placement in the room, the specific healing benefit for their condition (cite real science briefly), care difficulty (easy/medium/hard), estimated cost in TND, watering frequency in days, and an encouraging message. Keep the tone warm, supportive, and hopeful. Format your response as JSON array with fields: name, placement, healingBenefit, careDifficulty, estimatedCost, wateringFrequency, encouragingMessage.`;
 
   try {
-    // Convert image to base64
-    const base64Image = await convertImageToBase64(imageUri);
+    // Resize large images before upload so camera photos stay within provider limits
+    const resizedImageUri = await resizeForStabilityAI(imageUri);
 
-    // Call OpenAI API
+    // Convert resized image to base64
+    const base64Image = await convertImageToBase64(resizedImageUri);
+
+    // Call backend API
     const response = await axios.post(
-      'https://api.openai.com/v1/chat/completions',
+      `${BACKEND_URL}/api/analyze-room`,
       {
-        model: 'gpt-4o',
-        messages: [
-          {
-            role: 'system',
-            content: systemPrompt,
-          },
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'image_url',
-                image_url: {
-                  url: `data:image/jpeg;base64,${base64Image}`,
-                },
-              },
-            ],
-          },
-        ],
-        max_tokens: 1500,
+        imageBase64: base64Image,
+        imageMimeType: 'image/jpeg',
+        systemPrompt,
+        healingGoal: onboardingData.healingGoal,
+        budget: onboardingData.budget,
+        language,
       },
       {
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${OPENAI_API_KEY}`,
         },
+        timeout: 45000,
       }
     );
 
     // Parse response
-    const content = response.data.choices[0]?.message?.content;
+    const content = response.data?.content;
     if (!content) {
       throw new Error('Empty response from AI');
     }
@@ -102,7 +92,11 @@ export async function analyzeRoom(imageUri: string): Promise<PlantRecommendation
 
     return recommendations;
   } catch (error: any) {
-    if (error.response?.status === 401) {
+    if (
+      error.response?.status === 401 ||
+      error.response?.status === 403 ||
+      error.response?.data?.code === 'OPENAI_API_KEY_NOT_CONFIGURED'
+    ) {
       throw new Error('API_AUTH_ERROR');
     }
     if (error.message === 'DAILY_LIMIT_REACHED' || 
@@ -278,10 +272,6 @@ export async function generateRoomVisualization(
     formData.append('prompt', prompt);
 
     // Call backend API
-    const BACKEND_URL = __DEV__ 
-      ? 'http://localhost:3000' 
-      : 'https://greenhealbackend.vercel.app';
-
     console.log('[VISUALIZATION] Calling backend API:', BACKEND_URL);
     const apiResponse = await axios.post(
       `${BACKEND_URL}/api/visualize`,

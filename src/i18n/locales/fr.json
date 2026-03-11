@@ -12,7 +12,8 @@
     "retry": "Réessayer",
     "complete": "Terminer",
     "open_settings": "Ouvrir les paramètres",
-    "loading": "Chargement..."
+    "loading": "Chargement...",
+    "success": "Succès"
   },
   "languages": {
     "english": "Anglais",
@@ -52,7 +53,7 @@
   },
   "home": {
     "title": "GreenHeal",
-    "scanRoom": "Scanner ma pièce",
+    "scanRoom": "Scanner ou importer une pièce",
     "myJourney": "Mon parcours de guérison",
     "dailyTip": "Conseil de guérison du jour",
     "moodCheckIn": "Comment vous sentez-vous aujourd'hui ?",
@@ -83,11 +84,12 @@
     }
   },
   "camera": {
-    "title": "Scanner votre pièce",
-    "capture": "Capturer",
+    "title": "Scanner ou importer votre pièce",
+    "capture": "Prendre une photo",
+    "chooseFromGallery": "Choisir dans la galerie",
     "usePhoto": "Utiliser cette photo",
     "retake": "Reprendre",
-    "permissionDenied": "L'accès à la caméra est requis pour scanner votre pièce et capturer des photos de plantes.",
+    "permissionDenied": "L'accès à la caméra est nécessaire seulement pour prendre une nouvelle photo. Vous pouvez toujours choisir une image depuis votre galerie.",
     "permissionTitle": "Accès à la caméra requis"
   },
   "aiAnalysis": {
@@ -97,12 +99,20 @@
     "limitReached": "Limite quotidienne atteinte",
     "limitMessage": "Vous avez atteint votre limite quotidienne de {{limit}} analyses. Réinitialisation à {{resetTime}}.",
     "remainingRequests": "{{count}} analyses restantes aujourd'hui",
-    "error": "Impossible d'analyser votre pièce. Veuillez vérifier votre connexion Internet et réessayer.",
+    "error": "Impossible d'analyser votre pièce pour le moment. Le service d'analyse est peut-être temporairement indisponible. Veuillez réessayer plus tard.",
     "generateVisualization": "Voir votre pièce avec des plantes",
     "generatingVisualization": "Création de votre design...",
     "yourRoomWithPlants": "Votre pièce avec des plantes thérapeutiques",
     "visualizationError": "Erreur de visualisation",
-    "visualizationErrorMessage": "Impossible de générer la visualisation de la pièce. Veuillez réessayer plus tard."
+    "visualizationErrorMessage": "Impossible de générer la visualisation de la pièce. Veuillez réessayer plus tard.",
+    "choosePlantForPreview": "Choisissez la plante recommandée que vous voulez visualiser dans votre pièce.",
+    "previewThisPlant": "Prévisualiser cette plante",
+    "selectedForPreview": "Sélectionnée pour l'aperçu",
+    "selectedPlantTitle": "Plante sélectionnée pour l'aperçu",
+    "sameRoomSubtitle": "Nous conservons votre photo d'origine et ajoutons une seule plante choisie de manière moderne et réaliste.",
+    "sameRoomSuccess": "Votre aperçu avec la même pièce est prêt ! 🌿",
+    "generateSelectedPlant": "Générer l'aperçu de la même pièce",
+    "regenerateSelectedPlant": "Générer un autre aperçu"
   },
   "plantDetail": {
     "title": "Détails de la plante",
@@ -166,7 +176,7 @@
   },
   "permissions": {
     "camera_required": "Accès à la caméra requis",
-    "camera_explanation": "GreenHeal a besoin d'accéder à la caméra pour scanner votre pièce et capturer des photos de plantes pour votre parcours de guérison.",
+    "camera_explanation": "GreenHeal peut utiliser votre caméra pour scanner votre pièce, ou vous pouvez choisir une photo de la pièce depuis votre galerie.",
     "notifications_required": "Accès aux notifications",
     "notifications_explanation": "Activez les notifications pour recevoir des rappels d'entretien des plantes."
   },

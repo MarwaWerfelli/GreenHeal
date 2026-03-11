@@ -221,6 +221,60 @@ describe('AIAnalysisScreen', () => {
       });
     });
 
+    test('Generates visualization with the selected plant', async () => {
+      const mockRecommendations: PlantRecommendation[] = [
+        {
+          name: 'Lavender',
+          placement: 'Near the window',
+          healingBenefit: 'Reduces stress',
+          careDifficulty: 'easy',
+          estimatedCost: '15 TND',
+          wateringFrequencyDays: 7,
+          encouragingMessage: 'Great choice!',
+        },
+        {
+          name: 'Snake Plant',
+          placement: 'Corner',
+          healingBenefit: 'Improves air quality',
+          careDifficulty: 'easy',
+          estimatedCost: '20 TND',
+          wateringFrequencyDays: 14,
+          encouragingMessage: 'Perfect!',
+        },
+        {
+          name: 'Peace Lily',
+          placement: 'Desk',
+          healingBenefit: 'Promotes calmness',
+          careDifficulty: 'medium',
+          estimatedCost: '25 TND',
+          wateringFrequencyDays: 5,
+          encouragingMessage: 'You got this!',
+        },
+      ];
+
+      mockedAnalyzeRoom.mockResolvedValue(mockRecommendations);
+
+      const { getByTestId, getByText } = render(
+        <AIAnalysisScreen navigation={mockNavigation} route={mockRoute} />
+      );
+
+      await waitFor(() => {
+        expect(getByTestId('select-plant-1')).toBeTruthy();
+      });
+
+      fireEvent.press(getByTestId('select-plant-1'));
+      expect(mockNavigation.navigate).not.toHaveBeenCalled();
+
+      fireEvent.press(getByText('aiAnalysis.generateVisualization'));
+
+      expect(mockNavigation.navigate).toHaveBeenCalledTimes(1);
+      expect(mockNavigation.navigate).toHaveBeenCalledWith('RoomVisualization', {
+        imageUri: 'file://test-image.jpg',
+        recommendations: mockRecommendations,
+        selectedPlant: mockRecommendations[1],
+      });
+    });
+
     test('Displays remaining requests count', async () => {
       mockedGetRemainingRequests.mockResolvedValue(3);
       mockedAnalyzeRoom.mockResolvedValue([

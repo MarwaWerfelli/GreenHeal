@@ -17,9 +17,82 @@ import { useTranslation } from 'react-i18next';
 import type { RoomVisualizationScreenProps } from '../types';
 import { DESIGN_SYSTEM } from '../utils/constants';
 import Constants from 'expo-constants';
+import { resizeForStabilityAI } from '../modules/image';
 
 const BACKEND_URL =
   Constants.expoConfig?.extra?.BACKEND_URL || 'http://localhost:3000';
+
+function getPlacementPreview(placement: string) {
+  const normalized = placement.toLowerCase();
+
+  if (normalized.includes('wall') || normalized.includes('hanging')) {
+    return {
+      left: '78%',
+      top: '20%',
+      mode: 'wall',
+      guidance: 'Wall-mounted placement with a clean, modern hanging planter.',
+      maskCenterX: 0.78,
+      maskCenterY: 0.22,
+      maskWidth: 0.2,
+      maskHeight: 0.28,
+    };
+  }
+
+  if (normalized.includes('shelf') || normalized.includes('bookcase') || normalized.includes('ledge')) {
+    return {
+      left: '70%',
+      top: '32%',
+      mode: 'shelf',
+      guidance: 'Styled on an elevated surface with realistic scale and shadow.',
+      maskCenterX: 0.7,
+      maskCenterY: 0.34,
+      maskWidth: 0.22,
+      maskHeight: 0.24,
+    };
+  }
+
+  if (
+    normalized.includes('table') ||
+    normalized.includes('desk') ||
+    normalized.includes('counter') ||
+    normalized.includes('nightstand')
+  ) {
+    return {
+      left: '58%',
+      top: '52%',
+      mode: 'table',
+      guidance: 'Placed on furniture with a realistic tabletop footprint.',
+      maskCenterX: 0.58,
+      maskCenterY: 0.56,
+      maskWidth: 0.22,
+      maskHeight: 0.24,
+    };
+  }
+
+  if (normalized.includes('window') || normalized.includes('sill')) {
+    return {
+      left: '24%',
+      top: '28%',
+      mode: 'window',
+      guidance: 'Positioned near natural light while preserving the original room.',
+      maskCenterX: 0.24,
+      maskCenterY: 0.32,
+      maskWidth: 0.2,
+      maskHeight: 0.28,
+    };
+  }
+
+  return {
+    left: '78%',
+    top: '72%',
+    mode: 'corner',
+    guidance: 'Placed as a floor plant in a free corner with soft contact shadows.',
+    maskCenterX: 0.78,
+    maskCenterY: 0.74,
+    maskWidth: 0.24,
+    maskHeight: 0.34,
+  };
+}
 
 // ─── Before / After Slider ───────────────────────────────────────────────────
 function BeforeAfterSlider({
@@ -177,20 +250,15 @@ const sliderStyles = StyleSheet.create({
 export default function RoomVisualizationScreen({
   route,
 }: RoomVisualizationScreenProps) {
-  const { imageUri = '', recommendations = [] } = route.params ?? {};
+  const { imageUri = '', recommendations = [], selectedPlant } = route.params ?? {};
   const { t } = useTranslation();
   const [aiImageUrl, setAiImageUrl] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
-
-  // Fixed positions for plant icons overlay
-  const plantPositions: Array<{ left: string; top: string }> = [
-    { left: '15%', top: '25%' },
-    { left: '65%', top: '40%' },
-    { left: '25%', top: '70%' },
-  ];
+  const previewPlant = selectedPlant ?? recommendations[0] ?? null;
+  const previewPlacement = getPlacementPreview(previewPlant?.placement ?? '');
 
   async function handleGenerateAIVisualization() {
-    if (!recommendations.length) {
+    if (!previewPlant) {
       Alert.alert(t('common.error'), 'No plant recommendations available', [
         { text: t('common.ok') },
       ]);
@@ -201,19 +269,26 @@ export default function RoomVisualizationScreen({
       console.log('[ROOM_VIZ] Starting AI visualization...');
       setGenerating(true);
 
-      const plantDescriptions = recommendations
-        .map((p) => `${p.name} (${p.placement})`)
-        .join(', ');
+      console.log('[ROOM_VIZ] Resizing image before upload...');
+      const resizedImageUri = await resizeForStabilityAI(imageUri);
 
-      // Send image + plant info to the backend which uploads to a host then calls Decor8
+      const plantDescriptions = `${previewPlant.name} (${previewPlant.placement})`;
+
       const formData = new FormData();
       formData.append('image', {
-        uri: imageUri,
+        uri: resizedImageUri,
         type: 'image/jpeg',
         name: 'room.jpg',
       } as any);
       formData.append('plantDescriptions', plantDescriptions);
-      formData.append('roomType', 'livingroom');
+      formData.append('selectedPlantName', previewPlant.name);
+      formData.append('selectedPlacement', previewPlant.placement);
+      formData.append('placementMode', previewPlacement.mode);
+      formData.append('renderStyle', 'same-room-single-plant');
+      formData.append('maskCenterX', String(previewPlacement.maskCenterX));
+      formData.append('maskCenterY', String(previewPlacement.maskCenterY));
+      formData.append('maskWidth', String(previewPlacement.maskWidth));
+      formData.append('maskHeight', String(previewPlacement.maskHeight));
 
       console.log('[ROOM_VIZ] Posting to backend /api/visualize...');
 
@@ -242,7 +317,7 @@ export default function RoomVisualizationScreen({
 
       Alert.alert(
         t('common.success'),
-        'Your room has been beautifully redesigned with healing plants! 🌿',
+        t('aiAnalysis.sameRoomSuccess'),
         [{ text: t('common.ok') }]
       );
     } catch (error: any) {
@@ -268,7 +343,7 @@ export default function RoomVisualizationScreen({
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
       <Text style={styles.title}>{t('aiAnalysis.yourRoom')}</Text>
-      <Text style={styles.subtitle}>{t('aiAnalysis.placementSuggestions')}</Text>
+      <Text style={styles.subtitle}>{t('aiAnalysis.sameRoomSubtitle')}</Text>
 
       {/* Room Photo with Plant Icons Overlay */}
       <View style={styles.imageWrapper}>
@@ -277,47 +352,60 @@ export default function RoomVisualizationScreen({
           style={styles.roomImage}
           imageStyle={styles.roomImageStyle}
         >
-          {recommendations.slice(0, 3).map((plant, index) => {
-            const pos = plantPositions[index] || plantPositions[0];
-            return (
+          {previewPlant && (
+            <View
+              style={[
+                styles.maskTarget,
+                {
+                  left: `${(previewPlacement.maskCenterX - previewPlacement.maskWidth / 2) * 100}%` as any,
+                  top: `${(previewPlacement.maskCenterY - previewPlacement.maskHeight / 2) * 100}%` as any,
+                  width: `${previewPlacement.maskWidth * 100}%` as any,
+                  height: `${previewPlacement.maskHeight * 100}%` as any,
+                },
+              ]}
+            />
+          )}
+          {previewPlant && (
               <View
-                key={index}
-                style={[styles.plantIcon, { left: pos.left as any, top: pos.top as any }]}
+                style={[
+                  styles.plantIcon,
+                  { left: previewPlacement.left as any, top: previewPlacement.top as any },
+                ]}
               >
                 <View style={styles.plantIconCircle}>
                   <Text style={styles.plantEmoji}>🪴</Text>
                 </View>
                 <View style={styles.plantLabelContainer}>
                   <Text style={styles.plantLabel} numberOfLines={1}>
-                    {plant.name}
+                    {previewPlant.name}
                   </Text>
                 </View>
               </View>
-            );
-          })}
+          )}
         </ImageBackground>
       </View>
 
       {/* Plant Placement Details */}
       <View style={styles.suggestionsContainer}>
         <Text style={styles.suggestionsTitle}>
-          📍 {t('aiAnalysis.suggestedPlacements')}
+          🪴 {t('aiAnalysis.selectedPlantTitle')}
         </Text>
-        {recommendations.map((plant, index) => (
-          <View key={index} style={styles.suggestionItem}>
+        {previewPlant && (
+          <View style={styles.suggestionItem}>
             <Text style={styles.suggestionEmoji}>🪴</Text>
             <View style={styles.suggestionTextContainer}>
-              <Text style={styles.plantName}>{plant.name}</Text>
-              <Text style={styles.plantPlacement}>{plant.placement}</Text>
+              <Text style={styles.plantName}>{previewPlant.name}</Text>
+              <Text style={styles.plantPlacement}>{previewPlant.placement}</Text>
+              <Text style={styles.placementGuidance}>{previewPlacement.guidance}</Text>
             </View>
           </View>
-        ))}
+        )}
       </View>
 
       {/* AI Visualization Section */}
       <View style={styles.aiSection}>
         <Text style={styles.aiTitle}>✨ {t('aiAnalysis.aiExampleTitle')}</Text>
-        <Text style={styles.aiSubtitle}>{t('aiAnalysis.aiExampleSubtitle')}</Text>
+        <Text style={styles.aiSubtitle}>{t('aiAnalysis.sameRoomSubtitle')}</Text>
 
         <TouchableOpacity
           style={[styles.generateButton, generating && styles.generateButtonDisabled]}
@@ -340,8 +428,8 @@ export default function RoomVisualizationScreen({
               <Text style={styles.generateButtonIcon}>🎨</Text>
               <Text style={styles.generateButtonText}>
                 {aiImageUrl
-                  ? t('aiAnalysis.regenerateExample')
-                  : t('aiAnalysis.generateExample')}
+                  ? t('aiAnalysis.regenerateSelectedPlant')
+                  : t('aiAnalysis.generateSelectedPlant')}
               </Text>
             </>
           )}
@@ -409,6 +497,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     alignItems: 'center',
     transform: [{ translateX: -30 }, { translateY: -30 }],
+  },
+  maskTarget: {
+    position: 'absolute',
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: 'rgba(45, 106, 79, 0.7)',
+    backgroundColor: 'rgba(45, 106, 79, 0.12)',
+    borderRadius: 999,
   },
   plantIconCircle: {
     width: 60,
@@ -484,6 +580,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: DESIGN_SYSTEM.colors.textSecondary,
     lineHeight: 20,
+  },
+  placementGuidance: {
+    fontSize: 13,
+    color: DESIGN_SYSTEM.colors.textSecondary,
+    lineHeight: 18,
+    marginTop: 8,
   },
   aiSection: {
     backgroundColor: DESIGN_SYSTEM.colors.bgSurface,

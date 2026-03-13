@@ -23,11 +23,39 @@ import SettingsScreen from '../screens/SettingsScreen';
 import OfflineIndicator from '../components/OfflineIndicator';
 import FloatingActionButton from '../components/FloatingActionButton';
 import { DESIGN_SYSTEM } from '../utils/constants';
-import type { RootStackParamList, BottomTabParamList } from '../types';
+import type { RootStackParamList, BottomTabParamList, OnboardingData, HealingGoal, Budget } from '../types';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
 const Stack = createStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<BottomTabParamList>();
+const VALID_HEALING_GOALS: HealingGoal[] = ['stress', 'physical', 'depression', 'sleep', 'wellness'];
+const VALID_BUDGETS: Budget[] = ['under10', '10to30', 'over30', 'have_plants'];
+
+function isValidOnboardingData(data: unknown): data is OnboardingData {
+  if (!data || typeof data !== 'object') {
+    return false;
+  }
+
+  const candidate = data as Partial<OnboardingData>;
+  const hasValidHealingGoal =
+    typeof candidate.healingGoal === 'string' &&
+    VALID_HEALING_GOALS.includes(candidate.healingGoal as HealingGoal);
+  const hasValidBudget =
+    typeof candidate.budget === 'string' &&
+    VALID_BUDGETS.includes(candidate.budget as Budget);
+  const hasValidCompletedAt =
+    typeof candidate.completedAt === 'string' &&
+    candidate.completedAt.length > 0 &&
+    !Number.isNaN(Date.parse(candidate.completedAt));
+  const hasValidExistingPlantPhotos =
+    candidate.existingPlantPhotos === undefined ||
+    (
+      Array.isArray(candidate.existingPlantPhotos) &&
+      candidate.existingPlantPhotos.every(photo => typeof photo === 'string')
+    );
+
+  return hasValidHealingGoal && hasValidBudget && hasValidCompletedAt && hasValidExistingPlantPhotos;
+}
 
 // Custom floating tab bar component
 function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
@@ -178,8 +206,18 @@ export default function AppNavigator() {
         // Check if onboarding is complete
         try {
           const onboardingData = await getOnboardingData();
-          console.log('Onboarding data:', onboardingData ? 'exists' : 'not found');
-          setIsOnboardingComplete(!!onboardingData);
+          const hasValidOnboarding = isValidOnboardingData(onboardingData);
+          console.log(
+            'Onboarding data:',
+            hasValidOnboarding ? 'valid' : onboardingData ? 'invalid' : 'not found'
+          );
+
+          if (onboardingData && !hasValidOnboarding) {
+            console.warn('Invalid onboarding data detected, clearing stored onboarding state');
+            await clearOnboardingData();
+          }
+
+          setIsOnboardingComplete(hasValidOnboarding);
         } catch (storageError) {
           // If there's a storage error (e.g., corrupted data), clear it and start fresh
           console.warn('Storage error detected, clearing corrupted data:', storageError);

@@ -15,9 +15,16 @@ function MoodChart() {
   const [average, setAverage] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const animatedValues = useRef<Animated.Value[]>([]).current;
+  const animationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     loadMoodData();
+
+    return () => {
+      if (animationTimeoutRef.current) {
+        clearTimeout(animationTimeoutRef.current);
+      }
+    };
   }, []);
 
   const loadMoodData = async () => {
@@ -83,7 +90,7 @@ function MoodChart() {
         });
         
         // Animate bars after state is set
-        setTimeout(() => {
+        animationTimeoutRef.current = setTimeout(() => {
           if (animatedValues.length > 0) {
             Animated.stagger(
               100,
@@ -92,7 +99,7 @@ function MoodChart() {
                   toValue: 1,
                   friction: 4,
                   tension: 40,
-                  useNativeDriver: true,
+                  useNativeDriver: false,
                 })
               )
             ).start();

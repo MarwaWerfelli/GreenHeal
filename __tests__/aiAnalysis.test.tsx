@@ -7,6 +7,9 @@ import type { PlantRecommendation } from '../src/types';
 
 // Mock dependencies
 jest.mock('../src/modules/ai');
+jest.mock('../src/modules/connectivity', () => ({
+  isConnected: jest.fn().mockResolvedValue(true),
+}));
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, params?: any) => {
@@ -15,6 +18,9 @@ jest.mock('react-i18next', () => ({
       }
       if (key === 'aiAnalysis.remainingRequests') {
         return `${params?.count} analyses remaining today`;
+      }
+      if (key === 'aiAnalysis.planSelectedCount') {
+        return `Room plan: ${params?.count} selected`;
       }
       return key;
     },
@@ -47,7 +53,7 @@ describe('AIAnalysisScreen', () => {
     test('Shows loading state initially', () => {
       mockedAnalyzeRoom.mockImplementation(() => new Promise(() => {})); // Never resolves
 
-      const { getByText } = render(
+      const { getAllByText, getByText } = render(
         <AIAnalysisScreen navigation={mockNavigation} route={mockRoute} />
       );
 
@@ -87,21 +93,21 @@ describe('AIAnalysisScreen', () => {
 
       mockedAnalyzeRoom.mockResolvedValue(mockRecommendations);
 
-      const { getByText } = render(
+      const { getAllByText } = render(
         <AIAnalysisScreen navigation={mockNavigation} route={mockRoute} />
       );
 
       await waitFor(() => {
-        expect(getByText('Lavender')).toBeTruthy();
-        expect(getByText('Snake Plant')).toBeTruthy();
-        expect(getByText('Peace Lily')).toBeTruthy();
+        expect(getAllByText('Lavender').length).toBeGreaterThan(0);
+        expect(getAllByText('Snake Plant').length).toBeGreaterThan(0);
+        expect(getAllByText('Peace Lily').length).toBeGreaterThan(0);
       });
     });
 
     test('Shows error message when analysis fails', async () => {
       mockedAnalyzeRoom.mockRejectedValue(new Error('Network error'));
 
-      const { getByText } = render(
+      const { getAllByText, getByText } = render(
         <AIAnalysisScreen navigation={mockNavigation} route={mockRoute} />
       );
 
@@ -154,7 +160,7 @@ describe('AIAnalysisScreen', () => {
         },
       ]);
 
-      const { getByText } = render(
+      const { getAllByText, getByText } = render(
         <AIAnalysisScreen navigation={mockNavigation} route={mockRoute} />
       );
 
@@ -166,7 +172,7 @@ describe('AIAnalysisScreen', () => {
       fireEvent.press(retryButton);
 
       await waitFor(() => {
-        expect(getByText('Test Plant')).toBeTruthy();
+        expect(getAllByText('Test Plant').length).toBeGreaterThan(0);
       });
 
       expect(mockedAnalyzeRoom).toHaveBeenCalledTimes(2);
@@ -221,7 +227,7 @@ describe('AIAnalysisScreen', () => {
       });
     });
 
-    test('Generates visualization with the selected plant', async () => {
+    test('Generates visualization with the selected plant and room plan', async () => {
       const mockRecommendations: PlantRecommendation[] = [
         {
           name: 'Lavender',
@@ -272,6 +278,7 @@ describe('AIAnalysisScreen', () => {
         imageUri: 'file://test-image.jpg',
         recommendations: mockRecommendations,
         selectedPlant: mockRecommendations[1],
+        selectedPlants: [mockRecommendations[0], mockRecommendations[1]],
       });
     });
 

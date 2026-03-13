@@ -1,7 +1,8 @@
 import * as fc from 'fast-check';
 import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
-import { manipulateAsync } from 'expo-image-manipulator';
+import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
+import { Image } from 'react-native';
 import {
   saveImage,
   deleteImage,
@@ -11,6 +12,8 @@ import {
   capturePhoto,
   pickFromGallery,
   compressImage,
+  prepareImageForAnalysisUpload,
+  prepareImageForVisualizationUpload,
 } from '../src/modules/image';
 import type { ImageDirectory } from '../src/modules/image';
 
@@ -29,6 +32,10 @@ jest.mock('expo-image-manipulator');
  */
 describe('Image Management Module', () => {
   let mockFileSystem: Record<string, { exists: boolean; size: number; uri: string }>;
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -202,6 +209,53 @@ describe('Image Management Module', () => {
       
       expect(size).toBeGreaterThan(0);
       expect(typeof size).toBe('number');
+    });
+
+    test('Analysis upload preparation retries with smaller output when camera image is still too large', async () => {
+      jest.spyOn(Image, 'getSize').mockImplementation((_uri, success) => {
+        success(4000, 3000);
+      });
+
+      const originalUri = 'file:///mock/camera.jpg';
+      const firstAttemptUri = 'file:///mock/camera-analysis-1.jpg';
+      const secondAttemptUri = 'file:///mock/camera-analysis-2.jpg';
+
+      mockFileSystem[originalUri] = { exists: true, size: 6_500_000, uri: originalUri };
+      mockFileSystem[firstAttemptUri] = { exists: true, size: 2_400_000, uri: firstAttemptUri };
+      mockFileSystem[secondAttemptUri] = { exists: true, size: 1_200_000, uri: secondAttemptUri };
+
+      (manipulateAsync as jest.Mock)
+        .mockResolvedValueOnce({ uri: firstAttemptUri })
+        .mockResolvedValueOnce({ uri: secondAttemptUri });
+
+      const result = await prepareImageForAnalysisUpload(originalUri);
+
+      expect(result).toBe(secondAttemptUri);
+      expect(manipulateAsync).toHaveBeenCalledTimes(2);
+      expect((manipulateAsync as jest.Mock).mock.calls[0][1]).toEqual([{ resize: { width: 1600 } }]);
+      expect((manipulateAsync as jest.Mock).mock.calls[1][1]).toEqual([{ resize: { width: 1440 } }]);
+      expect((manipulateAsync as jest.Mock).mock.calls[0][2]).toEqual({
+        compress: 0.72,
+        format: SaveFormat.JPEG,
+      });
+      expect((manipulateAsync as jest.Mock).mock.calls[1][2]).toEqual({
+        compress: 0.6,
+        format: SaveFormat.JPEG,
+      });
+    });
+
+    test('Visualization upload preparation preserves small images without recompressing them', async () => {
+      jest.spyOn(Image, 'getSize').mockImplementation((_uri, success) => {
+        success(1400, 1000);
+      });
+
+      const originalUri = 'file:///mock/room-small.jpg';
+      mockFileSystem[originalUri] = { exists: true, size: 900_000, uri: originalUri };
+
+      const result = await prepareImageForVisualizationUpload(originalUri);
+
+      expect(result).toBe(originalUri);
+      expect(manipulateAsync).not.toHaveBeenCalled();
     });
   });
 

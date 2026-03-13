@@ -3,6 +3,38 @@ import * as FileSystem from 'expo-file-system';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { Image } from 'react-native';
 
+interface ImageDimensions {
+  width: number;
+  height: number;
+}
+
+interface UploadPreparationProfile {
+  maxDimension: number;
+  quality: number;
+}
+
+interface UploadPreparationOptions {
+  maxBytes: number;
+  profiles: UploadPreparationProfile[];
+  logLabel: string;
+}
+
+const ANALYSIS_UPLOAD_PROFILES: UploadPreparationProfile[] = [
+  { maxDimension: 1600, quality: 0.72 },
+  { maxDimension: 1440, quality: 0.6 },
+  { maxDimension: 1280, quality: 0.52 },
+  { maxDimension: 1024, quality: 0.42 },
+];
+
+const VISUALIZATION_UPLOAD_PROFILES: UploadPreparationProfile[] = [
+  { maxDimension: 2048, quality: 0.82 },
+  { maxDimension: 1600, quality: 0.72 },
+  { maxDimension: 1280, quality: 0.6 },
+];
+
+const ANALYSIS_UPLOAD_MAX_BYTES = 1_800_000;
+const VISUALIZATION_UPLOAD_MAX_BYTES = 3_500_000;
+
 /**
  * Image directory types
  */
@@ -125,49 +157,117 @@ export async function compressImage(uri: string, quality: number = 0.7): Promise
   }
 }
 
-/**
- * Resize image for Stability AI API (max 3072x3072 pixels = 9.4 megapixels)
- * Returns the URI of the resized image
- */
-export async function resizeForStabilityAI(uri: string): Promise<string> {
+async function getImageDimensions(uri: string): Promise<ImageDimensions | null> {
   try {
-    const MAX_DIMENSION = 3072; // Stability AI max dimension
-    
-    // Get original image dimensions
-    const { width, height } = await new Promise<{ width: number; height: number }>((resolve, reject) => {
+    return await new Promise<ImageDimensions>((resolve, reject) => {
       Image.getSize(
         uri,
-        (w, h) => resolve({ width: w, height: h }),
+        (width, height) => resolve({ width, height }),
         reject
       );
     });
+  } catch (error) {
+    console.warn('Unable to read image dimensions, falling back to quality-only compression:', error);
+    return null;
+  }
+}
 
-    // If already within bounds, don't resize
-    if (width <= MAX_DIMENSION && height <= MAX_DIMENSION) {
-      console.log(`Image already within bounds: ${width}x${height}`);
+function isWithinMaxDimension(dimensions: ImageDimensions | null, maxDimension: number): boolean {
+  if (!dimensions) {
+    return false;
+  }
+
+  return dimensions.width <= maxDimension && dimensions.height <= maxDimension;
+}
+
+function buildResizeOperations(
+  dimensions: ImageDimensions | null,
+  maxDimension: number
+): { resize: { width?: number; height?: number } }[] {
+  if (!dimensions || isWithinMaxDimension(dimensions, maxDimension)) {
+    return [];
+  }
+
+  return dimensions.width >= dimensions.height
+    ? [{ resize: { width: maxDimension } }]
+    : [{ resize: { height: maxDimension } }];
+}
+
+async function prepareImageForUpload(
+  uri: string,
+  { maxBytes, profiles, logLabel }: UploadPreparationOptions
+): Promise<string> {
+  try {
+    const originalSize = await getImageSize(uri);
+    const dimensions = await getImageDimensions(uri);
+    const firstProfile = profiles[0];
+
+    if (
+      originalSize > 0 &&
+      originalSize <= maxBytes &&
+      isWithinMaxDimension(dimensions, firstProfile.maxDimension)
+    ) {
       return uri;
     }
 
-    // Resize based on the larger dimension to avoid upscaling
-    const operations = width >= height
-      ? [{ resize: { width: MAX_DIMENSION } }]
-      : [{ resize: { height: MAX_DIMENSION } }];
+    let latestUri = uri;
 
-    console.log(`Resizing image from ${width}x${height} to fit ${MAX_DIMENSION}px`);
-    
-    const manipResult = await manipulateAsync(
-      uri,
-      operations,
-      { compress: 0.8, format: SaveFormat.JPEG }
-    );
+    for (const profile of profiles) {
+      const operations = buildResizeOperations(dimensions, profile.maxDimension);
+      const manipResult = await manipulateAsync(uri, operations, {
+        compress: profile.quality,
+        format: SaveFormat.JPEG,
+      });
 
-    console.log(`Image resized successfully`);
-    return manipResult.uri;
+      latestUri = manipResult.uri;
+      const candidateSize = await getImageSize(latestUri);
+
+      console.log(
+        `[IMAGE] Prepared ${logLabel}: ${candidateSize || 'unknown'} bytes at ${profile.maxDimension}px / q=${profile.quality}`
+      );
+
+      if (candidateSize === 0 || candidateSize <= maxBytes) {
+        return latestUri;
+      }
+    }
+
+    return latestUri;
   } catch (error) {
-    console.error('Error resizing image for Stability AI:', error);
-    // Return original URI if resize fails
+    console.error(`Error preparing ${logLabel}:`, error);
     return uri;
   }
+}
+
+/**
+ * Prepare an image for analysis upload.
+ * This path is more aggressive because the request body uses base64 JSON.
+ */
+export async function prepareImageForAnalysisUpload(uri: string): Promise<string> {
+  return prepareImageForUpload(uri, {
+    maxBytes: ANALYSIS_UPLOAD_MAX_BYTES,
+    profiles: ANALYSIS_UPLOAD_PROFILES,
+    logLabel: 'analysis upload',
+  });
+}
+
+/**
+ * Prepare an image for visualization upload.
+ * This path still compresses, but keeps a bit more detail for multipart uploads.
+ */
+export async function prepareImageForVisualizationUpload(uri: string): Promise<string> {
+  return prepareImageForUpload(uri, {
+    maxBytes: VISUALIZATION_UPLOAD_MAX_BYTES,
+    profiles: VISUALIZATION_UPLOAD_PROFILES,
+    logLabel: 'visualization upload',
+  });
+}
+
+/**
+ * Legacy helper kept for compatibility with existing call sites.
+ * Uses the visualization upload profile to keep Stability AI uploads smaller and safer.
+ */
+export async function resizeForStabilityAI(uri: string): Promise<string> {
+  return prepareImageForVisualizationUpload(uri);
 }
 
 /**

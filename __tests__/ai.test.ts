@@ -14,7 +14,7 @@ import {
   getAIRequestCount,
 } from '../src/modules/storage';
 import { getCurrentLanguage } from '../src/i18n';
-import { resizeForStabilityAI } from '../src/modules/image';
+import { prepareImageForAnalysisUpload } from '../src/modules/image';
 
 // Mock dependencies
 jest.mock('axios');
@@ -27,12 +27,13 @@ const mockedGetOnboardingData = getOnboardingData as jest.MockedFunction<typeof 
 const mockedGetCurrentLanguage = getCurrentLanguage as jest.MockedFunction<typeof getCurrentLanguage>;
 const mockedSaveAIRequestCount = saveAIRequestCount as jest.MockedFunction<typeof saveAIRequestCount>;
 const mockedGetAIRequestCount = getAIRequestCount as jest.MockedFunction<typeof getAIRequestCount>;
-const mockedResizeForStabilityAI = resizeForStabilityAI as jest.MockedFunction<typeof resizeForStabilityAI>;
+const mockedPrepareImageForAnalysisUpload =
+  prepareImageForAnalysisUpload as jest.MockedFunction<typeof prepareImageForAnalysisUpload>;
 
 describe('AI Analysis Module', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockedResizeForStabilityAI.mockResolvedValue('file://test-image-resized.jpg');
+    mockedPrepareImageForAnalysisUpload.mockResolvedValue('file://test-image-resized.jpg');
     // Mock FileReader for base64 conversion
     global.FileReader = jest.fn().mockImplementation(function(this: any) {
       this.readAsDataURL = jest.fn(function(this: any) {
@@ -112,7 +113,7 @@ describe('AI Analysis Module', () => {
         completedAt: new Date().toISOString(),
       });
       mockedGetCurrentLanguage.mockResolvedValue('en');
-      mockedResizeForStabilityAI.mockResolvedValue('file://resized-upload.jpg');
+      mockedPrepareImageForAnalysisUpload.mockResolvedValue('file://resized-upload.jpg');
       mockedAxios.post.mockResolvedValue({
         data: {
           content: JSON.stringify([
@@ -125,8 +126,36 @@ describe('AI Analysis Module', () => {
 
       await analyzeRoom('file://test-image.jpg');
 
-      expect(mockedResizeForStabilityAI).toHaveBeenCalledWith('file://test-image.jpg');
+      expect(mockedPrepareImageForAnalysisUpload).toHaveBeenCalledWith('file://test-image.jpg');
       expect(global.fetch).toHaveBeenCalledWith('file://resized-upload.jpg');
+    });
+
+    test('Builds analysis prompt with anchored modern placement guidance', async () => {
+      mockedGetAIRequestCount.mockResolvedValue({ count: 0, resetAt: new Date(Date.now() + 86400000).toISOString() });
+      mockedGetOnboardingData.mockResolvedValue({
+        healingGoal: 'stress',
+        budget: 'under10',
+        completedAt: new Date().toISOString(),
+      });
+      mockedGetCurrentLanguage.mockResolvedValue('en');
+      mockedAxios.post.mockResolvedValue({
+        data: {
+          content: JSON.stringify([
+            { name: 'Lavender', placement: 'window ledge', healingBenefit: 'Reduces stress', careDifficulty: 'easy', estimatedCost: '15 TND', wateringFrequency: 7, encouragingMessage: 'You got this!' },
+            { name: 'Snake Plant', placement: 'geometric wall planter', healingBenefit: 'Improves air quality', careDifficulty: 'easy', estimatedCost: '20 TND', wateringFrequency: 14, encouragingMessage: 'Great choice!' },
+            { name: 'Pothos', placement: 'ceiling hanging planter', healingBenefit: 'Feels uplifting', careDifficulty: 'easy', estimatedCost: '18 TND', wateringFrequency: 7, encouragingMessage: 'Fresh and calming!' },
+          ]),
+        },
+      });
+
+      await analyzeRoom('file://test-image.jpg');
+
+      const [, requestBody] = mockedAxios.post.mock.calls[0];
+
+      expect(requestBody.systemPrompt).toContain('real support surface or mounting method');
+      expect(requestBody.systemPrompt).toContain('geometric wall-mounted planter');
+      expect(requestBody.systemPrompt).toContain('ceiling hanging planter');
+      expect(requestBody.systemPrompt).toContain('Avoid vague or unrealistic placements like floating in mid-air');
     });
 
     test('Throws error when daily limit is reached', async () => {

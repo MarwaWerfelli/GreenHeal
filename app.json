@@ -59,9 +59,9 @@
     "extra": {
       "BACKEND_URL": "https://greenhealbackend.vercel.app",
       "eas": {
-        "projectId": "1a0cc7a9-b380-41f8-96d1-9e1205873bec"
+        "projectId": "55e72d27-e0f5-4f94-b1e0-0fbf91d25144"
       }
     },
-    "owner": "marwata"
+    "owner": "bochra_expo"
   }
 }

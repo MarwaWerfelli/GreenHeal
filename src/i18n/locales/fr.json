@@ -70,6 +70,26 @@
     "newEntry": "Nouvelle entrée",
     "addPlant": "Ajouter une plante",
     "friend": "Ami(e)",
+    "focusLabel": "Objectif de rétablissement",
+    "supportEyebrow": "Plan de maison thérapeutique",
+    "supportReadyTitle": "Gardez votre espace thérapeutique calme et régulier",
+    "supportReadyBody": "Vous avez déjà des plantes dans votre routine. Actualisez votre plan de pièce, testez de nouveaux emplacements et gardez un bon rythme d'arrosage.",
+    "supportEmptyTitle": "Commencez à recréer le confort végétal du centre",
+    "supportEmptyBody": "Scannez ou importez votre pièce, choisissez les plantes adaptées à votre rétablissement et créez un espace apaisant vers lequel revenir chaque jour.",
+    "primaryAction": "Créer le plan de pièce",
+    "secondaryAction": "Voir l'entretien",
+    "nextActionsTitle": "Vos prochaines actions thérapeutiques",
+    "actionHintScan": "Analysez votre pièce et créez un design inspiré du centre",
+    "actionHintCare": "Voyez ce qui a besoin d'eau et gardez un rythme stable",
+    "actionHintJourney": "Réfléchissez à vos progrès, déclencheurs et moments apaisants",
+    "actionHintGarden": "Passez en revue vos plantes et développez votre soutien végétal",
+    "healingPathTitle": "Votre parcours thérapeutique",
+    "stepOneTitle": "1. Scannez votre pièce",
+    "stepOneBody": "Importez une vraie photo de votre espace pour que GreenHeal conçoive autour de votre maison réelle, pas d'un modèle générique.",
+    "stepTwoTitle": "2. Construisez votre plan végétal",
+    "stepTwoBody": "Choisissez plusieurs plantes qui recréent l'atmosphère apaisante du centre spécialisé et correspondent à votre objectif de rétablissement.",
+    "stepThreeTitle": "3. Entretenez votre routine verte",
+    "stepThreeBody": "Suivez les rappels d'arrosage et les conseils simples d'entretien pour que la pièce reste réparatrice dans le temps.",
     "tips": {
       "0": "La lavande peut réduire l'anxiété et améliorer la qualité du sommeil",
       "1": "L'aloe vera purifie l'air et favorise la guérison de la peau",
@@ -93,26 +113,67 @@
     "permissionTitle": "Accès à la caméra requis"
   },
   "aiAnalysis": {
-    "title": "Analyse de votre espace",
+    "title": "Plan de pièce thérapeutique",
     "analyzing": "Recherche des plantes parfaites pour votre parcours de guérison...",
-    "recommendations": "Recommandations de plantes",
+    "recommendations": "Construisez votre plan de pièce thérapeutique",
     "limitReached": "Limite quotidienne atteinte",
     "limitMessage": "Vous avez atteint votre limite quotidienne de {{limit}} analyses. Réinitialisation à {{resetTime}}.",
     "remainingRequests": "{{count}} analyses restantes aujourd'hui",
     "error": "Impossible d'analyser votre pièce pour le moment. Le service d'analyse est peut-être temporairement indisponible. Veuillez réessayer plus tard.",
-    "generateVisualization": "Voir votre pièce avec des plantes",
+    "generateVisualization": "Prévisualiser ma pièce thérapeutique",
     "generatingVisualization": "Création de votre design...",
-    "yourRoomWithPlants": "Votre pièce avec des plantes thérapeutiques",
+    "yourRoomWithPlants": "Aperçu de votre espace thérapeutique",
     "visualizationError": "Erreur de visualisation",
     "visualizationErrorMessage": "Impossible de générer la visualisation de la pièce. Veuillez réessayer plus tard.",
+    "yourRoom": "Aperçu de la pièce thérapeutique",
+    "planSelectionHint": "Choisissez une ou plusieurs plantes pour votre plan de pièce, puis sélectionnez celle à prévisualiser d'abord dans votre propre espace.",
     "choosePlantForPreview": "Choisissez la plante recommandée que vous voulez visualiser dans votre pièce.",
     "previewThisPlant": "Prévisualiser cette plante",
     "selectedForPreview": "Sélectionnée pour l'aperçu",
+    "selectedForPlan": "Dans votre plan",
+    "addToPlan": "Ajouter au plan",
+    "removeFromPlan": "Retirer du plan",
+    "planSelectedCount": "Plan de pièce : {{count}} sélectionné(s)",
+    "planRequiredTitle": "Choisissez au moins une plante",
+    "planRequiredMessage": "Sélectionnez une ou plusieurs plantes pour votre plan thérapeutique avant de générer l'aperçu.",
+    "viewPlantDetails": "Touchez pour voir les détails complets de la plante",
     "selectedPlantTitle": "Plante sélectionnée pour l'aperçu",
     "sameRoomSubtitle": "Nous conservons votre photo d'origine et ajoutons une seule plante choisie de manière moderne et réaliste.",
+    "multiPlantSubtitle": "Nous conservons votre photo d'origine et organisons ensemble les plantes sélectionnées dans une composition moderne et réaliste.",
     "sameRoomSuccess": "Votre aperçu avec la même pièce est prêt ! 🌿",
+    "multiPlantSuccess": "Votre aperçu organisé avec plusieurs plantes est prêt ! 🌿",
+    "companionPlants": "Plantes compagnes",
+    "companionPlantsHint": "Ces plantes de soutien peuvent compléter l'atmosphère calme inspirée du centre autour de votre plante d'aperçu.",
+    "multiPlantIncludedTitle": "Plantes incluses dans ce rendu",
+    "multiPlantIncludedHint": "Ces plantes sélectionnées seront organisées ensemble dans une composition calme et réaliste.",
+    "stylePresetLabel": "Style d'organisation",
+    "stylePresetHint": "Choisissez l'arrangement moderne vers lequel l'IA doit orienter le rendu tout en gardant votre pièce réaliste.",
     "generateSelectedPlant": "Générer l'aperçu de la même pièce",
-    "regenerateSelectedPlant": "Générer un autre aperçu"
+    "regenerateSelectedPlant": "Générer un autre aperçu",
+    "generateMultiPlant": "Générer un aperçu organisé de la pièce",
+    "regenerateMultiPlant": "Générer un autre aperçu organisé",
+    "stylePresets": {
+      "balancedModern": {
+        "label": "Moderne équilibré",
+        "description": "Des espacements propres, des hauteurs variées et une présence apaisante."
+      },
+      "wallGrid": {
+        "label": "Grille murale",
+        "description": "Une mise en scène murale nette avec des jardinières compactes et bien alignées."
+      },
+      "hanging": {
+        "label": "Suspension mixte",
+        "description": "Une composition aérienne avec une suspension compacte et des plantes d'appui au sol."
+      },
+      "shelfStyling": {
+        "label": "Style étagère",
+        "description": "Des étagères et rebords mis en scène avec des hauteurs variées et de l'espace visuel."
+      },
+      "cornerRetreat": {
+        "label": "Coin refuge",
+        "description": "Un petit groupe doux et ancré pour un coin lecture ou un angle apaisant."
+      }
+    }
   },
   "plantDetail": {
     "title": "Détails de la plante",

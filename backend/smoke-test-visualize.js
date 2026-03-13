@@ -15,8 +15,9 @@ const {
 } = require('./smokeTest');
 
 function printHelp() {
-  console.log('Usage: npm run smoke -- <imagePath> [--base-url=http://localhost:3000] [--plant=Snake Plant] [--placement=corner floor] [--descriptions=text] [--out=output.jpg]');
-  console.log('Example: npm run smoke -- ../room.jpg --plant="Monstera" --placement="table corner"');
+  console.log('Usage: npm run smoke -- <imagePath> [--base-url=http://localhost:3000] [--mode=single|multi] [--plant=Snake Plant] [--placement=corner floor] [--descriptions=text] [--style-preset=balancedModern] [--out=output.jpg]');
+  console.log('Single example: npm run smoke -- ../room.jpg --plant="Monstera" --placement="table corner"');
+  console.log('Multi example: npm run smoke -- ../room.jpg --mode=multi --descriptions="Snake Plant (corner floor), Pothos (window sill)" --style-preset=wallGrid');
 }
 
 async function main() {
@@ -43,12 +44,20 @@ async function main() {
     contentType: mimeType,
   });
   Object.entries(fields).forEach(([key, value]) => {
-    formData.append(key, value);
+    if (value !== undefined && value !== null && value !== '') {
+      formData.append(key, value);
+    }
   });
 
   console.log(`[SMOKE] Posting to ${url}`);
-  console.log(`[SMOKE] Plant: ${fields.selectedPlantName}`);
-  console.log(`[SMOKE] Placement: ${fields.selectedPlacement} (${fields.placementMode})`);
+  console.log(`[SMOKE] Render style: ${fields.renderStyle}`);
+  console.log(`[SMOKE] Style preset: ${fields.stylePreset || 'balancedModern'}`);
+  if (fields.selectedPlantName) {
+    console.log(`[SMOKE] Plant: ${fields.selectedPlantName}`);
+    console.log(`[SMOKE] Placement: ${fields.selectedPlacement} (${fields.placementMode})`);
+  } else {
+    console.log(`[SMOKE] Plants: ${fields.plantDescriptions}`);
+  }
 
   const response = await axios.post(url, formData, {
     headers: formData.getHeaders(),

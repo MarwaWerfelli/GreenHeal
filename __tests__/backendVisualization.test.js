@@ -1,4 +1,5 @@
 const {
+  detectPlacementMode,
   buildVisualizationPrompt,
   buildMaskConfig,
   getMaskCanvasSize,
@@ -18,6 +19,38 @@ describe('backend visualization helpers', () => {
     expect(prompt).toContain('Edit this exact room photo and preserve the room as-is.');
     expect(prompt).toContain('Add only Snake Plant in a modern planter.');
     expect(prompt).toContain('table corner');
+    expect(prompt).toContain('must physically rest on a real floor, shelf, table, ledge, sill, or stand');
+  });
+
+  test('detects modern wall and hanging placement modes', () => {
+    expect(detectPlacementMode('geometric wall planter frame above the sofa')).toBe('wall');
+    expect(detectPlacementMode('ceiling hanging planter near the window')).toBe('hanging');
+    expect(detectPlacementMode('floating shelf planter by the reading nook')).toBe('shelf');
+  });
+
+  test('builds hanging prompts with visible support instructions', () => {
+    const prompt = buildVisualizationPrompt({
+      plantDescriptions: 'Pothos (ceiling hanging planter above the sofa)',
+      selectedPlantName: 'Pothos',
+      selectedPlacement: 'ceiling hanging planter above the sofa',
+      placementMode: 'hanging',
+    });
+
+    expect(prompt).toContain('visible cords or rod anchored to the ceiling');
+    expect(prompt).toContain('Do not make the plant oversized, dominant, floating, pasted-on, unsupported');
+  });
+
+  test('builds multi-plant prompts with style preset guidance', () => {
+    const prompt = buildVisualizationPrompt({
+      plantDescriptions: 'Snake Plant (table corner), Peace Lily (reading nook), Pothos (window sill)',
+      renderStyle: 'same-room-multi-plant',
+      stylePreset: 'shelfStyling',
+    });
+
+    expect(prompt).toContain('Add only these healing plants: Snake Plant (table corner), Peace Lily (reading nook), Pothos (window sill).');
+    expect(prompt).toContain('Arrange them together as one cohesive, restrained composition');
+    expect(prompt).toContain('Steer the styling toward curated shelf and ledge styling');
+    expect(prompt).toContain('Do not duplicate plants or add extra planters beyond the listed plants.');
   });
 
   test('builds bounded mask config from defaults and overrides', () => {

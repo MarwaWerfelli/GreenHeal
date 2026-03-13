@@ -2,7 +2,10 @@ import axios from 'axios';
 import Constants from 'expo-constants';
 import { getOnboardingData, saveAIRequestCount, getAIRequestCount } from './storage';
 import { getCurrentLanguage } from '../i18n';
-import { resizeForStabilityAI } from './image';
+import {
+  prepareImageForAnalysisUpload,
+  prepareImageForVisualizationUpload,
+} from './image';
 import type { PlantRecommendation } from '../types';
 
 export type { PlantRecommendation };
@@ -51,11 +54,22 @@ export async function analyzeRoom(imageUri: string): Promise<PlantRecommendation
   const languageName = LANGUAGE_MAP[language] || 'English';
 
   // Build system prompt
-  const systemPrompt = `You are a therapeutic interior designer and plant therapist. Respond in ${languageName}. Analyze this room photo. Consider the lighting, available surfaces, room type, and empty spaces. The user is healing from ${healingGoal}. Suggest 3 specific healing plants tailored to their condition, each with: plant name, exact placement in the room, the specific healing benefit for their condition (cite real science briefly), care difficulty (easy/medium/hard), estimated cost in TND, watering frequency in days, and an encouraging message. Keep the tone warm, supportive, and hopeful. Format your response as JSON array with fields: name, placement, healingBenefit, careDifficulty, estimatedCost, wateringFrequency, encouragingMessage.`;
+  const systemPrompt = [
+    `You are a therapeutic interior designer and plant therapist. Respond in ${languageName}.`,
+    'Analyze this room photo. Consider the lighting, available surfaces, room type, and empty spaces.',
+    `The user is healing from ${healingGoal}.`,
+    'Suggest 3 specific healing plants tailored to their condition.',
+    'For each recommendation, give an exact realistic placement that names a real support surface or mounting method.',
+    'Prefer modern organization styles when they fit the room, such as a geometric wall-mounted planter, a ceiling hanging planter, a floating shelf planter, a slim side-table planter, or a restrained corner floor planter.',
+    'Avoid vague or unrealistic placements like floating in mid-air, oversized plants dominating the room, blocking doors, or covering major furniture.',
+    'Each recommendation must include: plant name, exact placement in the room, the specific healing benefit for their condition (cite real science briefly), care difficulty (easy/medium/hard), estimated cost in TND, watering frequency in days, and an encouraging message.',
+    'Keep the tone warm, supportive, and hopeful.',
+    'Format your response as JSON array with fields: name, placement, healingBenefit, careDifficulty, estimatedCost, wateringFrequency, encouragingMessage.',
+  ].join(' ');
 
   try {
-    // Resize large images before upload so camera photos stay within provider limits
-    const resizedImageUri = await resizeForStabilityAI(imageUri);
+    // Prepare large images before upload so camera photos stay within request limits
+    const resizedImageUri = await prepareImageForAnalysisUpload(imageUri);
 
     // Convert resized image to base64
     const base64Image = await convertImageToBase64(resizedImageUri);
@@ -249,10 +263,10 @@ export async function generateRoomVisualization(
     console.log('[VISUALIZATION] Original image URI:', originalImageUri);
     console.log('[VISUALIZATION] Recommendations count:', recommendations.length);
     
-    // Resize image to meet Stability AI requirements (max 9.4 megapixels)
-    console.log('[VISUALIZATION] Resizing image...');
-    const resizedImageUri = await resizeForStabilityAI(originalImageUri);
-    console.log('[VISUALIZATION] Image resized successfully');
+    // Prepare image for multipart upload with a safer size budget
+    console.log('[VISUALIZATION] Preparing image...');
+    const resizedImageUri = await prepareImageForVisualizationUpload(originalImageUri);
+    console.log('[VISUALIZATION] Image prepared successfully');
 
     // Build a detailed prompt describing what to add
     const plantDescriptions = recommendations.map((plant) => 

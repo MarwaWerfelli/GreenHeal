@@ -215,6 +215,7 @@ app.post('/api/visualize', upload.single('image'), async (req, res) => {
       selectedPlacement,
       placementMode,
       renderStyle,
+      stylePreset,
       maskCenterX,
       maskCenterY,
       maskWidth,
@@ -228,6 +229,8 @@ app.post('/api/visualize', upload.single('image'), async (req, res) => {
       selectedPlantName,
       selectedPlacement,
       placementMode,
+      renderStyle,
+      stylePreset,
     });
 
     const resolvedPlacementMode = placementMode || detectPlacementMode(selectedPlacement || plantDescriptions);
@@ -267,7 +270,7 @@ app.post('/api/visualize', upload.single('image'), async (req, res) => {
         filename: 'mask.png',
         contentType: 'image/png',
       });
-      formData.append('strength', '0.35');
+      formData.append('strength', '0.24');
       endpoint = 'https://api.stability.ai/v2beta/stable-image/edit/inpaint';
     } else {
       formData.append('control_strength', selectedPlantName ? '0.9' : '0.78');

@@ -4,9 +4,11 @@ const { detectPlacementMode } = require('./visualization');
 function parseSmokeArgs(argv = [], env = process.env) {
   const options = {
     baseUrl: env.GREENHEAL_BACKEND_URL || 'http://localhost:3000',
+    mode: 'single',
     plantName: 'Snake Plant',
     placement: 'corner floor',
     descriptions: '',
+    stylePreset: 'balancedModern',
     outputPath: '',
     help: false,
     imagePath: '',
@@ -15,9 +17,11 @@ function parseSmokeArgs(argv = [], env = process.env) {
   argv.forEach((arg) => {
     if (arg === '--help' || arg === '-h') options.help = true;
     else if (arg.startsWith('--base-url=')) options.baseUrl = arg.split('=').slice(1).join('=');
+    else if (arg.startsWith('--mode=')) options.mode = arg.split('=').slice(1).join('=');
     else if (arg.startsWith('--plant=')) options.plantName = arg.split('=').slice(1).join('=');
     else if (arg.startsWith('--placement=')) options.placement = arg.split('=').slice(1).join('=');
     else if (arg.startsWith('--descriptions=')) options.descriptions = arg.split('=').slice(1).join('=');
+    else if (arg.startsWith('--style-preset=')) options.stylePreset = arg.split('=').slice(1).join('=');
     else if (arg.startsWith('--out=')) options.outputPath = arg.split('=').slice(1).join('=');
     else if (!arg.startsWith('--') && !options.imagePath) options.imagePath = arg;
   });
@@ -36,7 +40,23 @@ function inferMimeType(filePath = '') {
   return 'image/jpeg';
 }
 
-function buildSmokeVisualizationFields({ plantName, placement, descriptions }) {
+function buildSmokeVisualizationFields({
+  mode = 'single',
+  plantName,
+  placement,
+  descriptions,
+  stylePreset = 'balancedModern',
+}) {
+  if (mode === 'multi') {
+    return {
+      plantDescriptions:
+        descriptions ||
+        'Snake Plant (corner floor), Pothos (window sill), Peace Lily (table corner)',
+      renderStyle: 'same-room-multi-plant',
+      stylePreset,
+    };
+  }
+
   const placementMode = detectPlacementMode(placement);
   return {
     plantDescriptions: descriptions || `${plantName} (${placement})`,
@@ -44,6 +64,7 @@ function buildSmokeVisualizationFields({ plantName, placement, descriptions }) {
     selectedPlacement: placement,
     placementMode,
     renderStyle: 'same-room-single-plant',
+    stylePreset,
   };
 }
 

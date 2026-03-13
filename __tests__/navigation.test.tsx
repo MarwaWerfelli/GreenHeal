@@ -1,10 +1,30 @@
 import React from 'react';
 import { render, waitFor } from '@testing-library/react-native';
 import AppNavigator from '../src/navigation/AppNavigator';
-import { getOnboardingData } from '../src/modules/storage';
+import { getOnboardingData, clearOnboardingData, initDatabase } from '../src/modules/storage';
 
 // Mock modules
 jest.mock('../src/modules/storage');
+jest.mock('expo-blur', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  return {
+    BlurView: ({ children }: any) => <View>{children}</View>,
+  };
+});
+jest.mock('@expo/vector-icons', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  const Ionicons = (props: any) => <View {...props} />;
+  (Ionicons as any).glyphMap = {
+    home: 'home',
+    leaf: 'leaf',
+    book: 'book',
+    settings: 'settings',
+    'help-circle': 'help-circle',
+  };
+  return { Ionicons };
+});
 jest.mock('../src/i18n', () => ({
   init: jest.fn().mockResolvedValue(undefined),
 }));
@@ -38,6 +58,102 @@ jest.mock('../src/screens/OnboardingScreen', () => {
   const { Text } = require('react-native');
   return function OnboardingScreen() {
     return <Text testID="onboarding-screen">Onboarding</Text>;
+  };
+});
+
+jest.mock('../src/screens/HomeScreen', () => {
+  const React = require('react');
+  const { Text } = require('react-native');
+  return function HomeScreen() {
+    return <Text testID="home-screen">Home</Text>;
+  };
+});
+
+jest.mock('../src/screens/CameraScreen', () => {
+  const React = require('react');
+  const { Text } = require('react-native');
+  return function CameraScreen() {
+    return <Text testID="camera-screen">Camera</Text>;
+  };
+});
+
+jest.mock('../src/screens/AIAnalysisScreen', () => {
+  const React = require('react');
+  const { Text } = require('react-native');
+  return function AIAnalysisScreen() {
+    return <Text testID="analysis-screen">AI Analysis</Text>;
+  };
+});
+
+jest.mock('../src/screens/RoomVisualizationScreen', () => {
+  const React = require('react');
+  const { Text } = require('react-native');
+  return function RoomVisualizationScreen() {
+    return <Text testID="room-visualization-screen">Room Visualization</Text>;
+  };
+});
+
+jest.mock('../src/screens/PlantDetailScreen', () => {
+  const React = require('react');
+  const { Text } = require('react-native');
+  return function PlantDetailScreen() {
+    return <Text testID="plant-detail-screen">Plant Detail</Text>;
+  };
+});
+
+jest.mock('../src/screens/HealingJournalScreen', () => {
+  const React = require('react');
+  const { Text } = require('react-native');
+  return function HealingJournalScreen() {
+    return <Text testID="healing-journal-screen">Journal</Text>;
+  };
+});
+
+jest.mock('../src/screens/JournalEntryFormScreen', () => {
+  const React = require('react');
+  const { Text } = require('react-native');
+  return function JournalEntryFormScreen() {
+    return <Text testID="journal-entry-form-screen">Journal Entry Form</Text>;
+  };
+});
+
+jest.mock('../src/screens/JournalEntryDetailScreen', () => {
+  const React = require('react');
+  const { Text } = require('react-native');
+  return function JournalEntryDetailScreen() {
+    return <Text testID="journal-entry-detail-screen">Journal Entry Detail</Text>;
+  };
+});
+
+jest.mock('../src/screens/MyGardenScreen', () => {
+  const React = require('react');
+  const { Text } = require('react-native');
+  return function MyGardenScreen() {
+    return <Text testID="my-garden-screen">My Garden</Text>;
+  };
+});
+
+jest.mock('../src/screens/SettingsScreen', () => {
+  const React = require('react');
+  const { Text } = require('react-native');
+  return function SettingsScreen() {
+    return <Text testID="settings-screen">Settings</Text>;
+  };
+});
+
+jest.mock('../src/components/OfflineIndicator', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  return function OfflineIndicator() {
+    return <View testID="offline-indicator" />;
+  };
+});
+
+jest.mock('../src/components/FloatingActionButton', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  return function FloatingActionButton() {
+    return <View testID="floating-action-button" />;
   };
 });
 
@@ -98,6 +214,8 @@ jest.mock('react-i18next', () => ({
 describe('Navigation Structure', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    (clearOnboardingData as jest.Mock).mockResolvedValue(undefined);
+    (initDatabase as jest.Mock).mockResolvedValue(undefined);
   });
 
   describe('Unit tests for navigation structure', () => {
@@ -178,6 +296,21 @@ describe('Navigation Structure', () => {
       await waitFor(() => {
         expect(getOnboardingData).toHaveBeenCalled();
       });
+    });
+
+    test('Clears invalid onboarding data and shows onboarding flow', async () => {
+      (getOnboardingData as jest.Mock).mockResolvedValue({
+        completedAt: new Date().toISOString(),
+      });
+
+      const { getByTestId, queryByTestId } = render(<AppNavigator />);
+
+      await waitFor(() => {
+        expect(getByTestId('language-selection-screen')).toBeTruthy();
+      });
+
+      expect(queryByTestId('main-tabs')).toBeNull();
+      expect(clearOnboardingData).toHaveBeenCalled();
     });
   });
 

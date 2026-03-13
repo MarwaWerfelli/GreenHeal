@@ -110,6 +110,7 @@ export type RootStackParamList = {
     imageUri: string;
     recommendations: PlantRecommendation[];
     selectedPlant?: PlantRecommendation;
+    selectedPlants?: PlantRecommendation[];
   };
   PlantDetail: { plant: PlantRecommendation | GardenPlant; source: 'ai' | 'garden' };
   JournalEntryForm: { entryId?: number };

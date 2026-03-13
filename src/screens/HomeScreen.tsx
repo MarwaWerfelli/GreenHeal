@@ -17,7 +17,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { saveMoodCheckIn, getGardenPlants, getOnboardingData } from '../modules/storage';
 import MoodChart from '../components/MoodChart';
 import { DESIGN_SYSTEM } from '../utils/constants';
-import type { HomeScreenProps } from '../types';
+import type { HealingGoal, HomeScreenProps } from '../types';
 
 // Import SVG icons
 import CameraIcon from '../../assets/camera.svg';
@@ -42,6 +42,11 @@ const DAILY_TIPS = [
 // Mood emojis for the 1-5 scale
 const MOOD_EMOJIS = ['😢', '😕', '😐', '🙂', '😊'];
 const MOOD_LABELS = ['mood.1', 'mood.2', 'mood.3', 'mood.4', 'mood.5'];
+const VALID_HEALING_GOALS: HealingGoal[] = ['stress', 'physical', 'depression', 'sleep', 'wellness'];
+
+function isHealingGoal(value: unknown): value is HealingGoal {
+  return typeof value === 'string' && VALID_HEALING_GOALS.includes(value as HealingGoal);
+}
 
 export default function HomeScreen({ navigation }: HomeScreenProps) {
   const { t } = useTranslation();
@@ -49,6 +54,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   const [plantCount, setPlantCount] = useState(0);
   const [streak, setStreak] = useState(0);
   const [userName, setUserName] = useState('Friend');
+  const [recoveryFocus, setRecoveryFocus] = useState<HealingGoal | null>(null);
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scrollX = useRef(new Animated.Value(0)).current;
@@ -82,13 +88,16 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     try {
       // Get plant count
       const plants = await getGardenPlants();
-      setPlantCount(plants.length);
+      const normalizedPlants = Array.isArray(plants) ? plants : [];
+      setPlantCount(normalizedPlants.length);
 
       // Get user name from onboarding (if available)
       const onboarding = await getOnboardingData();
-      if (onboarding) {
+      if (onboarding && isHealingGoal(onboarding.healingGoal)) {
+        setRecoveryFocus(onboarding.healingGoal);
         setUserName(t('home.friend'));
       } else {
+        setRecoveryFocus(null);
         setUserName(t('home.friend'));
       }
 
@@ -104,6 +113,14 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     if (hour < 12) return t('home.goodMorning');
     if (hour < 18) return t('home.goodAfternoon');
     return t('home.goodEvening');
+  };
+
+  const getRecoveryFocusLabel = () => {
+    if (!recoveryFocus) {
+      return t('onboarding.healingGoals.wellness');
+    }
+
+    return t(`onboarding.healingGoals.${recoveryFocus}`);
   };
 
   const handleMoodSelection = useCallback(async (moodScore: number) => {
@@ -144,9 +161,32 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     navigation.navigate('MyGarden');
   }, [navigation]);
 
-  const handleNewEntry = useCallback(() => {
-    navigation.navigate('JournalEntryForm', {});
-  }, [navigation]);
+  const supportTitle = plantCount > 0
+    ? t('home.supportReadyTitle')
+    : t('home.supportEmptyTitle');
+  const supportBody = plantCount > 0
+    ? t('home.supportReadyBody')
+    : t('home.supportEmptyBody');
+  const healingPathSteps = [
+    {
+      key: 'scan',
+      emoji: '📸',
+      title: t('home.stepOneTitle'),
+      body: t('home.stepOneBody'),
+    },
+    {
+      key: 'choose',
+      emoji: '🪴',
+      title: t('home.stepTwoTitle'),
+      body: t('home.stepTwoBody'),
+    },
+    {
+      key: 'care',
+      emoji: '💧',
+      title: t('home.stepThreeTitle'),
+      body: t('home.stepThreeBody'),
+    },
+  ];
 
   return (
     <SafeAreaView style={styles.container}>
@@ -165,6 +205,12 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             <Text style={styles.heroSubtitle}>
               {t('home.yourHealingJourney')}
             </Text>
+
+            <View style={styles.focusPill}>
+              <Text style={styles.focusPillText}>
+                {t('home.focusLabel')}: {getRecoveryFocusLabel()}
+              </Text>
+            </View>
             
             <View style={styles.statsContainer}>
               <View style={styles.statBadge}>
@@ -179,8 +225,36 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           </LinearGradient>
         </Animated.View>
 
+        <View style={styles.supportCardContainer}>
+          <View style={styles.supportCard}>
+            <Text style={styles.supportEyebrow}>{t('home.supportEyebrow')}</Text>
+            <Text style={styles.supportTitle}>{supportTitle}</Text>
+            <Text style={styles.supportDescription}>{supportBody}</Text>
+
+            <View style={styles.supportActionsRow}>
+              <TouchableOpacity
+                style={styles.supportPrimaryButton}
+                onPress={handleScanRoom}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.supportPrimaryButtonText}>{t('home.primaryAction')}</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.supportSecondaryButton}
+                onPress={handleWaterPlants}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.supportSecondaryButtonText}>{t('home.secondaryAction')}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+
         {/* Quick Actions Grid */}
         <View style={styles.quickActionsContainer}>
+          <Text style={styles.sectionTitle}>{t('home.nextActionsTitle')}</Text>
+
           <View style={styles.quickActionsRow}>
             <TouchableOpacity
               style={styles.quickActionCard}
@@ -195,6 +269,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                   style={styles.iconImage}
                 />
                 <Text style={[styles.quickActionText, styles.scanRoomText]}>{t('home.scanRoom')}</Text>
+                <Text style={styles.quickActionHint}>{t('home.actionHintScan')}</Text>
               </View>
             </TouchableOpacity>
 
@@ -211,6 +286,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                   style={styles.iconImage}
                 />
                 <Text style={[styles.quickActionText, styles.waterText]}>{t('home.waterPlants')}</Text>
+                <Text style={styles.quickActionHint}>{t('home.actionHintCare')}</Text>
               </View>
             </TouchableOpacity>
           </View>
@@ -218,7 +294,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
           <View style={styles.quickActionsRow}>
             <TouchableOpacity
               style={styles.quickActionCard}
-              onPress={handleNewEntry}
+              onPress={handleMyJourney}
               activeOpacity={0.8}
             >
               <View style={[styles.quickActionContent, styles.newEntryCard]}>
@@ -228,7 +304,8 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                   color={DESIGN_SYSTEM.colors.accentWarm}
                   style={styles.iconImage}
                 />
-                <Text style={[styles.quickActionText, styles.newEntryText]}>{t('home.newEntry')}</Text>
+                <Text style={[styles.quickActionText, styles.newEntryText]}>{t('home.myJourney')}</Text>
+                <Text style={styles.quickActionHint}>{t('home.actionHintJourney')}</Text>
               </View>
             </TouchableOpacity>
 
@@ -245,9 +322,23 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                   style={styles.iconImage}
                 />
                 <Text style={[styles.quickActionText, styles.addPlantText]}>{t('home.addPlant')}</Text>
+                <Text style={styles.quickActionHint}>{t('home.actionHintGarden')}</Text>
               </View>
             </TouchableOpacity>
           </View>
+        </View>
+
+        <View style={styles.pathwaySection}>
+          <Text style={styles.sectionTitle}>{t('home.healingPathTitle')}</Text>
+          {healingPathSteps.map((step) => (
+            <View key={step.key} style={styles.pathwayCard}>
+              <Text style={styles.pathwayEmoji}>{step.emoji}</Text>
+              <View style={styles.pathwayTextContainer}>
+                <Text style={styles.pathwayTitle}>{step.title}</Text>
+                <Text style={styles.pathwayDescription}>{step.body}</Text>
+              </View>
+            </View>
+          ))}
         </View>
 
         {/* Daily Tip Carousel */}
@@ -396,6 +487,83 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: DESIGN_SYSTEM.colors.textSecondary,
     marginBottom: DESIGN_SYSTEM.spacing.lg,
+    lineHeight: 23,
+  },
+  focusPill: {
+    alignSelf: 'flex-start',
+    backgroundColor: DESIGN_SYSTEM.colors.glassOverlay,
+    borderWidth: 1,
+    borderColor: DESIGN_SYSTEM.colors.glassBorder,
+    paddingHorizontal: DESIGN_SYSTEM.spacing.md,
+    paddingVertical: DESIGN_SYSTEM.spacing.sm,
+    borderRadius: 999,
+    marginBottom: DESIGN_SYSTEM.spacing.lg,
+  },
+  focusPillText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: DESIGN_SYSTEM.colors.primary,
+  },
+  supportCardContainer: {
+    paddingHorizontal: DESIGN_SYSTEM.spacing.md,
+    marginTop: -DESIGN_SYSTEM.spacing.md,
+    marginBottom: DESIGN_SYSTEM.spacing.lg,
+  },
+  supportCard: {
+    backgroundColor: DESIGN_SYSTEM.colors.bgSurface,
+    borderRadius: 24,
+    padding: DESIGN_SYSTEM.spacing.lg,
+    borderWidth: 1,
+    borderColor: DESIGN_SYSTEM.colors.borderSubtle,
+    ...DESIGN_SYSTEM.shadows.medium,
+  },
+  supportEyebrow: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: DESIGN_SYSTEM.colors.primary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: 8,
+  },
+  supportTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: DESIGN_SYSTEM.colors.textPrimary,
+    marginBottom: DESIGN_SYSTEM.spacing.sm,
+  },
+  supportDescription: {
+    fontSize: 14,
+    color: DESIGN_SYSTEM.colors.textSecondary,
+    lineHeight: 21,
+    marginBottom: DESIGN_SYSTEM.spacing.md,
+  },
+  supportActionsRow: {
+    flexDirection: 'row',
+    gap: DESIGN_SYSTEM.spacing.sm,
+  },
+  supportPrimaryButton: {
+    flex: 1,
+    backgroundColor: DESIGN_SYSTEM.colors.primary,
+    paddingVertical: DESIGN_SYSTEM.spacing.md,
+    borderRadius: 16,
+    alignItems: 'center',
+  },
+  supportPrimaryButtonText: {
+    color: DESIGN_SYSTEM.colors.bgSurface,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  supportSecondaryButton: {
+    flex: 1,
+    backgroundColor: DESIGN_SYSTEM.colors.primaryPale,
+    paddingVertical: DESIGN_SYSTEM.spacing.md,
+    borderRadius: 16,
+    alignItems: 'center',
+  },
+  supportSecondaryButtonText: {
+    color: DESIGN_SYSTEM.colors.primary,
+    fontSize: 14,
+    fontWeight: '700',
   },
   statsContainer: {
     flexDirection: 'row',
@@ -423,8 +591,13 @@ const styles = StyleSheet.create({
   },
   quickActionsContainer: {
     paddingHorizontal: DESIGN_SYSTEM.spacing.md,
-    marginTop: DESIGN_SYSTEM.spacing.lg,
     marginBottom: DESIGN_SYSTEM.spacing.lg,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: DESIGN_SYSTEM.colors.primary,
+    marginBottom: DESIGN_SYSTEM.spacing.md,
   },
   quickActionsRow: {
     flexDirection: 'row',
@@ -469,6 +642,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: DESIGN_SYSTEM.colors.textPrimary,
     textAlign: 'center',
+    marginBottom: 4,
+  },
+  quickActionHint: {
+    fontSize: 12,
+    color: DESIGN_SYSTEM.colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 16,
   },
   scanRoomText: {
     color: DESIGN_SYSTEM.colors.primary,
@@ -481,6 +661,40 @@ const styles = StyleSheet.create({
   },
   addPlantText: {
     color: DESIGN_SYSTEM.colors.primary,
+  },
+  pathwaySection: {
+    marginHorizontal: DESIGN_SYSTEM.spacing.md,
+    marginBottom: DESIGN_SYSTEM.spacing.lg,
+  },
+  pathwayCard: {
+    backgroundColor: DESIGN_SYSTEM.colors.bgSurface,
+    borderRadius: 18,
+    padding: DESIGN_SYSTEM.spacing.md,
+    borderWidth: 1,
+    borderColor: DESIGN_SYSTEM.colors.borderSubtle,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: DESIGN_SYSTEM.spacing.sm,
+    ...DESIGN_SYSTEM.shadows.medium,
+  },
+  pathwayEmoji: {
+    fontSize: 24,
+    marginRight: DESIGN_SYSTEM.spacing.md,
+    marginTop: 2,
+  },
+  pathwayTextContainer: {
+    flex: 1,
+  },
+  pathwayTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: DESIGN_SYSTEM.colors.textPrimary,
+    marginBottom: 4,
+  },
+  pathwayDescription: {
+    fontSize: 13,
+    color: DESIGN_SYSTEM.colors.textSecondary,
+    lineHeight: 19,
   },
   tipContainer: {
     backgroundColor: DESIGN_SYSTEM.colors.bgSurface,

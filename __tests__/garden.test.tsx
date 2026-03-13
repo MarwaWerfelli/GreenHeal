@@ -10,9 +10,29 @@ import { schedulePlantReminder, cancelReminder } from '../src/modules/notificati
 import type { GardenPlant } from '../src/types';
 
 // Mock dependencies
+jest.mock('../src/screens/MyGardenScreen', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  return function MyGardenScreen() {
+    return <View testID="my-garden-screen" />;
+  };
+});
 jest.mock('../src/modules/storage');
 jest.mock('../src/modules/plantDatabase');
 jest.mock('../src/modules/notifications');
+jest.mock('expo-linear-gradient', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  return {
+    LinearGradient: ({ children }: any) => <View>{children}</View>,
+  };
+});
+jest.mock('expo-haptics', () => ({
+  impactAsync: jest.fn(),
+  notificationAsync: jest.fn(),
+  ImpactFeedbackStyle: { Light: 'Light', Medium: 'Medium' },
+  NotificationFeedbackType: { Success: 'Success' },
+}));
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string, params?: any) => {

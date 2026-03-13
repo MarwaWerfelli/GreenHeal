@@ -99,10 +99,10 @@ describe('Storage Module - SQLite Operations', () => {
         if (query.includes('journal_entries')) {
           return storage.journal_entries.map((e: any) => ({
             id: e.id,
-            moodScore: e[0],
+            mood_score: e[0],
             notes: e[1],
-            photoPath: e[2],
-            createdAt: e[3],
+            photo_path: e[2],
+            created_at: e[3],
           }));
         }
         if (query.includes('garden_plants')) {

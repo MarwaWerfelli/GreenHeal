@@ -1,38 +1,71 @@
 const zlib = require('zlib');
 
+function includesAnyKeyword(text, keywords) {
+  return keywords.some((keyword) => text.includes(keyword));
+}
+
 function detectPlacementMode(placement = '') {
   const normalized = placement.toLowerCase();
-  if (normalized.includes('wall') || normalized.includes('hanging')) return 'wall';
-  if (normalized.includes('shelf') || normalized.includes('bookcase') || normalized.includes('ledge')) return 'shelf';
-  if (normalized.includes('table') || normalized.includes('desk') || normalized.includes('counter') || normalized.includes('nightstand')) return 'table';
-  if (normalized.includes('window') || normalized.includes('sill')) return 'window';
+  if (includesAnyKeyword(normalized, ['hanging', 'ceiling', 'suspended', 'pendant', 'macrame'])) return 'hanging';
+  if (includesAnyKeyword(normalized, ['wall', 'mounted', 'mount', 'grid', 'frame', 'geometric', 'modular', 'rail'])) return 'wall';
+  if (includesAnyKeyword(normalized, ['shelf', 'bookcase', 'ledge', 'mantel', 'etagere'])) return 'shelf';
+  if (includesAnyKeyword(normalized, ['table', 'desk', 'counter', 'nightstand', 'console', 'coffee table', 'side table'])) return 'table';
+  if (includesAnyKeyword(normalized, ['window', 'sill', 'bay window'])) return 'window';
   return 'corner';
 }
 
 function getPlacementInstruction(mode, placementText = '') {
   switch (mode) {
-    case 'wall': return `Mount the plant naturally on the wall as a modern hanging planter at ${placementText}.`;
-    case 'shelf': return `Place the plant cleanly on the shelf area at ${placementText} with realistic depth and contact shadow.`;
-    case 'table': return `Place the plant on the described furniture surface at ${placementText} with accurate scale and tabletop shadow.`;
-    case 'window': return `Stage the plant near the window area at ${placementText} while keeping the surrounding architecture unchanged.`;
-    default: return `Place the plant on the floor in the described corner area at ${placementText} with a soft realistic shadow.`;
+    case 'hanging': return `Integrate the plant naturally at ${placementText} as a compact ceiling-hung planter with slim visible cords or rod anchored to the ceiling, believable weight, and no floating foliage in open air.`;
+    case 'wall': return `Integrate the plant naturally at ${placementText} as a compact geometric wall-mounted planter or refined black-metal frame planter, visibly fixed to the wall with realistic depth, support, and soft shadow.`;
+    case 'shelf': return `Style the plant neatly at ${placementText} on a shelf or ledge using a compact planter that sits fully on the surface with realistic depth, contact shadow, and clear surface support.`;
+    case 'table': return `Place the plant at ${placementText} as a small or medium tabletop plant with a compact planter, accurate scale, visible contact with the furniture, and most of the surface still open.`;
+    case 'window': return `Stage the plant elegantly at ${placementText} near the window on a real sill, ledge, or planter stand with natural daylight, restrained size, and unchanged surrounding architecture.`;
+    default: return `Place the plant elegantly at ${placementText} in the corner as a modest floor plant near the wall with a modern planter, grounded base, and soft contact shadow.`;
   }
 }
 
-function buildVisualizationPrompt({ plantDescriptions, selectedPlantName, selectedPlacement, placementMode }) {
+function getStyleInstruction(stylePreset = 'balancedModern') {
+  switch (stylePreset) {
+    case 'wallGrid':
+      return 'Steer the styling toward a refined wall-led composition with neat alignment, compact geometric planters, and clearly visible support where appropriate.';
+    case 'hanging':
+      return 'Steer the styling toward an airy modern composition with at most one compact hanging planter and any companion plants grounded nearby with believable support.';
+    case 'shelfStyling':
+      return 'Steer the styling toward curated shelf and ledge styling with neat spacing, varied heights, and fully supported planters.';
+    case 'cornerRetreat':
+      return 'Steer the styling toward a calming corner retreat with layered heights near a nook or wall edge while keeping walkways open.';
+    default:
+      return 'Steer the styling toward a balanced modern arrangement with clean spacing, restrained styling, and subtle variation in height.';
+  }
+}
+
+function buildVisualizationPrompt({
+  plantDescriptions,
+  selectedPlantName,
+  selectedPlacement,
+  placementMode,
+  renderStyle = 'same-room-single-plant',
+  stylePreset = 'balancedModern',
+}) {
   const mode = placementMode || detectPlacementMode(selectedPlacement || plantDescriptions || '');
   const placementText = selectedPlacement || plantDescriptions || 'the recommended placement';
+  const styleInstruction = getStyleInstruction(stylePreset);
+  if (renderStyle === 'same-room-multi-plant') {
+    return `Edit this exact room photo and preserve the room as-is. Keep the existing layout, walls, floor, ceiling, furniture, decor, lighting, shadows, colors, and camera angle unchanged. Add only these healing plants: ${plantDescriptions}. Arrange them together as one cohesive, restrained composition that follows the suggested placements from this list: ${plantDescriptions}. ${styleInstruction} Keep each plant compact-to-medium relative to the room, use believable spacing with subtle variation in height, and leave enough negative space so the room still feels open and calm. Every plant must physically rest on a real floor, shelf, table, ledge, sill, or stand, or be visibly mounted to the wall or ceiling with realistic support. If any plant is hanging, show the visible support attaching it to the ceiling. If any plant is wall-mounted, show a compact modern geometric planter support fixed to the wall. Do not duplicate plants or add extra planters beyond the listed plants. Do not make the cluster oversized, dominant, floating, pasted-on, unsupported, or centered as the main subject. Do not block walkways, large furniture areas, windows, doors, or important room features. Keep the arrangement refined, minimal, and photorealistic. Do not redesign the room or add extra objects. Photorealistic same-room interior multi-plant staging.`;
+  }
   const subject = selectedPlantName ? `${selectedPlantName} in a modern planter` : `these healing plants: ${plantDescriptions}`;
-  return `Edit this exact room photo and preserve the room as-is. Keep the existing layout, walls, floor, ceiling, furniture, decor, lighting, shadows, colors, and camera angle unchanged. Add only ${subject}. ${getPlacementInstruction(mode, placementText)} Match the original perspective, proportions, and lighting. Do not redesign, restyle, or add any extra objects. Photorealistic same-room interior plant staging.`;
+  return `Edit this exact room photo and preserve the room as-is. Keep the existing layout, walls, floor, ceiling, furniture, decor, lighting, shadows, colors, and camera angle unchanged. Add only ${subject}. ${getPlacementInstruction(mode, placementText)} ${styleInstruction} Match the original perspective, room scale, and lighting perfectly. The plant must feel beautifully staged for a calm modern healing interior, with subtle placement, believable contact shadows, and realistic depth. The plant must physically rest on a real floor, shelf, table, ledge, sill, or stand, or be visibly mounted to the wall or ceiling. If the placement is hanging, show the visible support attaching it to the ceiling. If the placement is wall-mounted, show a compact modern geometric planter support fixed to the wall. Keep the plant small-to-medium relative to the room and use at most one restrained planter installation for the selected plant. Do not make the plant oversized, dominant, floating, pasted-on, unsupported, or centered as the main subject. Do not block walkways, large furniture areas, windows, doors, or important room features. Keep the planter refined, minimal, and realistic. Do not redesign the room or add extra objects. Photorealistic same-room interior plant staging.`;
 }
 
 function getDefaultMaskConfig(mode = 'corner') {
   switch (mode) {
-    case 'wall': return { centerX: 0.78, centerY: 0.22, width: 0.2, height: 0.28 };
-    case 'shelf': return { centerX: 0.7, centerY: 0.34, width: 0.22, height: 0.24 };
-    case 'table': return { centerX: 0.58, centerY: 0.56, width: 0.22, height: 0.24 };
-    case 'window': return { centerX: 0.24, centerY: 0.32, width: 0.2, height: 0.28 };
-    default: return { centerX: 0.78, centerY: 0.74, width: 0.24, height: 0.34 };
+    case 'hanging': return { centerX: 0.56, centerY: 0.18, width: 0.16, height: 0.24 };
+    case 'wall': return { centerX: 0.72, centerY: 0.34, width: 0.18, height: 0.24 };
+    case 'shelf': return { centerX: 0.68, centerY: 0.35, width: 0.16, height: 0.18 };
+    case 'table': return { centerX: 0.58, centerY: 0.56, width: 0.15, height: 0.17 };
+    case 'window': return { centerX: 0.24, centerY: 0.32, width: 0.14, height: 0.2 };
+    default: return { centerX: 0.78, centerY: 0.76, width: 0.16, height: 0.22 };
   }
 }
 
@@ -53,8 +86,8 @@ function buildMaskConfig({ placementMode, maskCenterX, maskCenterY, maskWidth, m
   return {
     centerX: coerceRatio(maskCenterX, defaults.centerX, 0.05, 0.95),
     centerY: coerceRatio(maskCenterY, defaults.centerY, 0.05, 0.95),
-    width: coerceRatio(maskWidth, defaults.width, 0.08, 0.75),
-    height: coerceRatio(maskHeight, defaults.height, 0.08, 0.8),
+    width: coerceRatio(maskWidth, defaults.width, 0.08, 0.42),
+    height: coerceRatio(maskHeight, defaults.height, 0.08, 0.48),
   };
 }
 

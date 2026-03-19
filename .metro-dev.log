@@ -1,0 +1,5 @@
+Starting project at C:\Users\ASUS\Desktop\GreenHeal
+env: load .env
+env: export OPENAI_API_KEY PERENUAL_API_KEY STABILITY_API_KEY
+› Port 8081 is being used by another process
+› Skipping dev server

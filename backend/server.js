@@ -273,7 +273,7 @@ app.post('/api/visualize', upload.single('image'), async (req, res) => {
       formData.append('strength', '0.24');
       endpoint = 'https://api.stability.ai/v2beta/stable-image/edit/inpaint';
     } else {
-      formData.append('control_strength', selectedPlantName ? '0.9' : '0.78');
+	      formData.append('control_strength', selectedPlantName ? '0.9' : '0.74');
     }
 
     const stabilityResponse = await axios.post(

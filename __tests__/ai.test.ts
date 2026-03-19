@@ -158,6 +158,68 @@ describe('AI Analysis Module', () => {
       expect(requestBody.systemPrompt).toContain('Avoid vague or unrealistic placements like floating in mid-air');
     });
 
+    test('Builds a symptom-aware prompt and preserves healing role details', async () => {
+      mockedGetAIRequestCount.mockResolvedValue({ count: 0, resetAt: new Date(Date.now() + 86400000).toISOString() });
+      mockedGetOnboardingData.mockResolvedValue({
+        healingGoal: 'sleep',
+        budget: 'under10',
+        completedAt: new Date().toISOString(),
+      });
+      mockedGetCurrentLanguage.mockResolvedValue('en');
+      mockedAxios.post.mockResolvedValue({
+        data: {
+          content: JSON.stringify([
+            {
+              name: 'Lavender',
+              placement: 'Bedside floating shelf',
+              healingBenefit: 'Supports better sleep onset',
+              healingRole: 'Helps settle the room into a bedtime ritual',
+              sensoryAction: 'Soft calming scent and a gentler visual cue',
+              careDifficulty: 'easy',
+              estimatedCost: '15 TND',
+              wateringFrequency: 7,
+              encouragingMessage: 'You got this!',
+            },
+            {
+              name: 'Snake Plant',
+              placement: 'Calm bedroom corner',
+              healingBenefit: 'Supports fresher nighttime air',
+              careDifficulty: 'easy',
+              estimatedCost: '20 TND',
+              wateringFrequency: 14,
+              encouragingMessage: 'Great choice!',
+            },
+            {
+              name: 'Peace Lily',
+              placement: 'Low dresser',
+              healingBenefit: 'Softens the emotional tone of the room',
+              careDifficulty: 'medium',
+              estimatedCost: '25 TND',
+              wateringFrequency: 5,
+              encouragingMessage: 'Perfect for you!',
+            },
+          ]),
+        },
+      });
+
+      const guidedContext = {
+        symptoms: ['night_waking', 'anxiety'] as const,
+        dominantSymptoms: ['night_waking'] as const,
+        intensityWindow: 'night' as const,
+        supportFocus: 'sleep' as const,
+      };
+
+      const result = await analyzeRoom('file://test-image.jpg', guidedContext);
+
+      const [, requestBody] = mockedAxios.post.mock.calls[0];
+      expect(requestBody.systemPrompt).toContain('frequent night waking');
+      expect(requestBody.systemPrompt).toContain('mild anxiety');
+      expect(requestBody.systemPrompt).toContain('sensory mode of action');
+      expect(result[0].healingRole).toBe('Helps settle the room into a bedtime ritual');
+      expect(result[0].sensoryAction).toBe('Soft calming scent and a gentler visual cue');
+      expect(result[1].sensoryAction).toContain('bedtime atmosphere');
+    });
+
     test('Throws error when daily limit is reached', async () => {
       mockedGetAIRequestCount.mockResolvedValue({ 
         count: 5, 

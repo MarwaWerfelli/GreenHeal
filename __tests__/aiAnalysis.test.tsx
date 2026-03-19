@@ -66,6 +66,8 @@ describe('AIAnalysisScreen', () => {
           name: 'Lavender',
           placement: 'Near the window',
           healingBenefit: 'Reduces stress',
+          healingRole: 'Supports rest before sleep',
+          sensoryAction: 'Adds a soft calming scent cue',
           careDifficulty: 'easy',
           estimatedCost: '15 TND',
           wateringFrequencyDays: 7,
@@ -101,7 +103,86 @@ describe('AIAnalysisScreen', () => {
         expect(getAllByText('Lavender').length).toBeGreaterThan(0);
         expect(getAllByText('Snake Plant').length).toBeGreaterThan(0);
         expect(getAllByText('Peace Lily').length).toBeGreaterThan(0);
+        expect(getAllByText('aiAnalysis.planTable.plant').length).toBeGreaterThan(0);
+        expect(getAllByText('aiAnalysis.planTable.placement').length).toBeGreaterThan(0);
+        expect(getAllByText('aiAnalysis.planTable.healingRole').length).toBeGreaterThan(0);
+        expect(getAllByText('aiAnalysis.planTable.sensoryAction').length).toBeGreaterThan(0);
       });
+    });
+
+    test('Passes guided context to analysis and renders the guided summary', async () => {
+      const guidedRoute = {
+        params: {
+          imageUri: 'file://test-image.jpg',
+          guidedContext: {
+            symptoms: ['night_waking', 'anxiety'],
+            dominantSymptoms: ['night_waking'],
+            intensityWindow: 'night',
+            supportFocus: 'sleep',
+          },
+        },
+      } as any;
+
+      mockedAnalyzeRoom.mockResolvedValue([
+        {
+          name: 'Lavender',
+          placement: 'Near the bed-side shelf',
+          healingBenefit: 'Reduces stress',
+          healingRole: 'Helps slow the room into a bedtime rhythm',
+          sensoryAction: 'Soft scent and gentle visual texture',
+          careDifficulty: 'easy',
+          estimatedCost: '15 TND',
+          wateringFrequencyDays: 7,
+          encouragingMessage: 'Great choice!',
+        },
+        {
+          name: 'Snake Plant',
+          placement: 'Corner',
+          healingBenefit: 'Improves air quality',
+          careDifficulty: 'easy',
+          estimatedCost: '20 TND',
+          wateringFrequencyDays: 14,
+          encouragingMessage: 'Perfect!',
+        },
+        {
+          name: 'Peace Lily',
+          placement: 'Desk',
+          healingBenefit: 'Promotes calmness',
+          careDifficulty: 'medium',
+          estimatedCost: '25 TND',
+          wateringFrequencyDays: 5,
+          encouragingMessage: 'You got this!',
+        },
+      ]);
+
+      const { getByText } = render(
+        <AIAnalysisScreen navigation={mockNavigation} route={guidedRoute} />
+      );
+
+      await waitFor(() => {
+        expect(mockedAnalyzeRoom).toHaveBeenCalledWith(
+          'file://test-image.jpg',
+          guidedRoute.params.guidedContext
+        );
+        expect(getByText('aiAnalysis.guidedSummaryTitle')).toBeTruthy();
+        expect(getByText('guidedDialogue.symptoms.night_waking.label')).toBeTruthy();
+        expect(getByText('guidedDialogue.timeOfDay.night.label')).toBeTruthy();
+        expect(getByText('guidedDialogue.supportFocus.sleep.label')).toBeTruthy();
+      });
+    });
+
+    test('Safely falls back to an empty recommendation list when analysis returns a malformed payload', async () => {
+      mockedAnalyzeRoom.mockResolvedValue(undefined as any);
+
+      const { getAllByText, queryByTestId } = render(
+        <AIAnalysisScreen navigation={mockNavigation} route={mockRoute} />
+      );
+
+      await waitFor(() => {
+        expect(getAllByText('Room plan: 0 selected').length).toBeGreaterThan(0);
+      });
+
+      expect(queryByTestId('plant-card-0')).toBeNull();
     });
 
     test('Shows error message when analysis fails', async () => {

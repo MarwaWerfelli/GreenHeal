@@ -28,6 +28,21 @@
     "title": "GreenHeal",
     "welcome": "Welcome to GreenHeal",
     "subtitle": "Your plant-based healing companion",
+    "profileQuestion": "Let's get to know you",
+    "profileSubtitle": "These details personalize your journey and help prepare progress reports for your care team.",
+    "profilePersonalSection": "Personal details",
+    "profileCareSection": "Care team details",
+    "profileOptional": "Care details are optional for now and can be updated later.",
+    "profilePrivacy": "Your information stays private and is only shared according to your consent settings.",
+    "profileFields": {
+      "fullName": "Full name",
+      "preferredName": "Preferred name",
+      "age": "Age",
+      "hospitalName": "Hospital or healing center",
+      "patientId": "Patient or report ID",
+      "careProgram": "Program or department",
+      "clinicianName": "Doctor or therapist"
+    },
     "healingQuestion": "What are you healing from?",
     "healingSubtitle": "Choose the area you'd like to focus on",
     "healingGoals": {
@@ -83,6 +98,23 @@
     "actionHintCare": "See what needs water and keep your rhythm steady",
     "actionHintJourney": "Reflect on progress, triggers, and calming moments",
     "actionHintGarden": "Review your plants and grow your green support system",
+    "dailyRhythmTitle": "Today's healing rhythm",
+    "dailyRhythmSubtitle": "A small, supportive plan to help you check in, care gently for your space, and notice your progress.",
+    "todayFocusTitle": "Today's focus",
+    "gentleStepTitle": "Gentle next step",
+    "reflectionPromptTitle": "Reflection prompt",
+    "dailyActionRestore": "Choose one calming action first: drink water, sit near natural light, or write one sentence about what feels hardest today.",
+    "dailyActionStartSpace": "Begin with one healing action for your room: scan your space and create your first calming plant plan.",
+    "dailyActionStress": "Spend two quiet minutes with a plant, slow your breathing, and notice one part of the room that already feels softer.",
+    "dailyActionSleep": "Prepare your evening space early: reduce visual clutter, water only what needs care, and keep the room restful tonight.",
+    "dailyActionPhysical": "Choose one light restorative task today: sit comfortably, care for one plant, and pause before pushing your energy too far.",
+    "dailyActionReconnect": "Pick one life-giving action today: open the curtains, care for one plant, or write one kind sentence to yourself.",
+    "dailyActionWellness": "Keep your healing routine simple today: check in with your mood, care for one plant, and notice one thing that is improving.",
+    "reflectionStress": "What helped your body feel a little safer or calmer today?",
+    "reflectionSleep": "What made your room feel more restful today, even in a small way?",
+    "reflectionPhysical": "What supported your comfort, strength, or energy today?",
+    "reflectionDepression": "What helped you feel even slightly more present or connected today?",
+    "reflectionWellness": "What healthy moment do you want to repeat tomorrow?",
     "healingPathTitle": "Your healing pathway",
     "stepOneTitle": "1. Scan your room",
     "stepOneBody": "Upload a real photo of your space so GreenHeal can design around your home, not a generic template.",
@@ -90,6 +122,14 @@
     "stepTwoBody": "Choose multiple plants that recreate the calming atmosphere of the specialist center and match your recovery focus.",
     "stepThreeTitle": "3. Care for your green routine",
     "stepThreeBody": "Follow watering reminders and simple care guidance so the room stays restorative over time.",
+    "moodSupport": {
+      "default": "Take a slow breath and choose the feeling that is closest to today. There is no wrong answer.",
+      "1": "Thank you for checking in. Be extra gentle with yourself today and keep the next step very small.",
+      "2": "You are showing up even on a hard day. Aim for comfort, hydration, and one quiet supportive action.",
+      "3": "Thank you for noticing where you are. A steady, simple routine can help keep the day grounded.",
+      "4": "It's good to see a lighter moment today. Try to protect it with one calming habit you can repeat.",
+      "5": "I'm glad today feels brighter. Capture what is helping so you can return to it again."
+    },
     "tips": {
       "0": "Lavender can reduce anxiety and improve sleep quality",
       "1": "Aloe vera purifies air and promotes skin healing",
@@ -139,6 +179,23 @@
     "planRequiredTitle": "Choose at least one plant",
     "planRequiredMessage": "Select one or more plants for your healing room plan before generating the preview.",
     "viewPlantDetails": "Tap to view full plant details",
+    "guidedSummaryTitle": "Guided healing context",
+    "guidedSummarySubtitle": "Your room analysis is being tailored to the symptoms and support goal you shared before the scan.",
+    "guidedSummarySymptoms": "Dominant symptoms",
+    "guidedSummaryTime": "Most sensitive time",
+    "guidedSummarySupport": "Desired support",
+    "planTable": {
+      "plant": "Plant",
+      "placement": "Best placement",
+      "healingBenefit": "Healing support",
+      "healingRole": "Healing role",
+      "sensoryAction": "Sensory action",
+      "sensoryFallback": "Adds a gentle visual anchor that helps the room feel calmer and more restorative.",
+      "careDifficulty": "Care level",
+      "estimatedCost": "Estimated budget",
+      "watering": "Watering rhythm",
+      "encouragement": "Healing note"
+    },
     "selectedPlantTitle": "Selected Plant for Preview",
     "sameRoomSubtitle": "We keep your original room photo and stage one selected plant in a modern, realistic way.",
     "multiPlantSubtitle": "We keep your original room photo and arrange your selected plants together in one realistic, modern composition.",
@@ -184,6 +241,91 @@
     },
     "aiGeneratedExample": "AI-Generated Example:",
     "exampleNote": "This is an AI-generated example for inspiration. Your actual room may look different."
+  },
+  "guidedDialogue": {
+    "eyebrow": "Guided healing dialogue",
+    "title": "Tell us how the room feels for you",
+    "subtitle": "Before the scan, answer a few gentle questions so GreenHeal can identify your dominant symptoms and tailor the plant plan to your real space.",
+    "summaryTitle": "Current healing focus",
+    "summaryPlaceholder": "Select your symptoms, timing, and support goal to personalize the analysis.",
+    "cta": "Continue to room scan",
+    "steps": {
+      "symptoms": "Step 1",
+      "timing": "Step 2",
+      "support": "Step 3"
+    },
+    "sections": {
+      "symptomsTitle": "Which symptoms stand out most right now?",
+      "symptomsBody": "Choose one or more sensations that best describe what the patient is currently experiencing.",
+      "timingTitle": "When do these sensations feel strongest?",
+      "supportTitle": "What kind of support would help the most?"
+    },
+    "symptoms": {
+      "night_waking": {
+        "label": "Frequent night waking",
+        "hint": "Sleep feels light, fragmented, or interrupted several times during the night."
+      },
+      "anxiety": {
+        "label": "Mild anxiety",
+        "hint": "There is a low but persistent feeling of tension, worry, or nervous anticipation."
+      },
+      "irritability": {
+        "label": "Unusual irritability",
+        "hint": "The room feels less patient, more reactive, or emotionally sharp than usual."
+      },
+      "restlessness": {
+        "label": "Restlessness",
+        "hint": "Settling down feels difficult, and the body or mind keeps searching for relief."
+      },
+      "mental_fatigue": {
+        "label": "Mental fatigue",
+        "hint": "Thinking feels heavy, foggy, or more effortful than normal."
+      },
+      "low_mood": {
+        "label": "Low mood",
+        "hint": "The atmosphere feels emotionally flat, discouraged, or lacking warmth."
+      }
+    },
+    "timeOfDay": {
+      "night": {
+        "label": "At night",
+        "hint": "The room becomes harder to settle into once the evening begins."
+      },
+      "morning": {
+        "label": "In the morning",
+        "hint": "Symptoms are strongest when waking up or starting the day."
+      },
+      "afternoon": {
+        "label": "In the afternoon",
+        "hint": "Energy drops or overstimulation build up across the middle of the day."
+      },
+      "evening": {
+        "label": "In the evening",
+        "hint": "The room feels heavier, louder, or less calming later in the day."
+      },
+      "all_day": {
+        "label": "Throughout the day",
+        "hint": "The need for support remains present most of the time."
+      }
+    },
+    "supportFocus": {
+      "sleep": {
+        "label": "Better sleep support",
+        "hint": "Prioritize a quieter pre-sleep atmosphere and more restorative bedtime cues."
+      },
+      "calm": {
+        "label": "More calm",
+        "hint": "Reduce tension and soften the room's sensory pressure."
+      },
+      "emotional_balance": {
+        "label": "Emotional balance",
+        "hint": "Help the room feel steadier, warmer, and more emotionally supportive."
+      },
+      "focus": {
+        "label": "Grounded focus",
+        "hint": "Create clearer visual order with less mental overstimulation."
+      }
+    }
   },
   "plantDetail": {
     "title": "Plant Details",
@@ -250,10 +392,145 @@
   "settings": {
     "title": "Settings",
     "language": "Language",
+    "supportTools": "Support tools",
+    "reportPreview": "Weekly report preview",
+    "reportPreviewSubtitle": "See what a healing update for your care team could include before sharing is enabled.",
+    "feedback": "Rate GreenHeal",
+    "feedbackSubtitle": "Tell us how the app is supporting your healing journey.",
     "resetProfile": "Reset Healing Profile",
     "resetConfirm": "Are you sure you want to reset your healing profile? This will clear all your onboarding data.",
     "version": "Version",
     "about": "About GreenHeal"
+  },
+  "reportPreview": {
+    "title": "Weekly report preview",
+    "subtitle": "This preview gathers a calm summary of your healing activity from the last 7 days.",
+    "previewBadge": "Preview only",
+    "loading": "Preparing your weekly summary...",
+    "partialDataNotice": "Some report details could not be loaded right now, so this preview may be incomplete.",
+    "profileTitle": "Report profile",
+    "patient": "Patient",
+    "careTeam": "Care team",
+    "healingFocus": "Healing focus",
+    "program": "Program",
+    "patientId": "Patient ID",
+    "summaryTitle": "This week at a glance",
+    "windowLabel": "Based on reflections and plant activity from the last 7 days.",
+    "entriesThisWeek": "Journal entries this week",
+    "plantsInCare": "Plants currently in care",
+    "averageMood": "Average journal mood",
+    "newPlantsThisWeek": "New plants added this week",
+    "reflectionsTitle": "Recent reflections",
+    "noReflections": "No written reflections yet this week.",
+    "includesTitle": "What this report would include",
+    "includesProfile": "Your healing focus and basic care-team profile details.",
+    "includesJournal": "Weekly reflection activity and optional note highlights.",
+    "includesPlants": "How many plants you are caring for and recent additions.",
+    "includesConsent": "Only information you review and consent to share.",
+    "consentTitle": "Sharing stays optional",
+    "consentBody": "Nothing is sent automatically from this screen. This is only a preview so you can understand what a future hospital or care-team update could contain.",
+    "artifactTitle": "Care-team report draft",
+    "artifactSubtitle": "This structured draft shows how GreenHeal can format this week's healing summary for future export or sharing.",
+    "artifactStatusLabel": "Report status",
+    "artifactWindowLabel": "Reporting window",
+    "artifactStatusReady": "Ready for future sharing",
+    "artifactStatusExported": "Export generated locally",
+    "artifactStatusPrepared": "Handoff prepared locally",
+    "artifactStatusPending": "Needs review before sharing",
+    "artifactStatusPartial": "Incomplete draft",
+    "artifactLocalNote": "This draft stays on the device for now and is not sent from this screen.",
+    "reviewTitle": "Review before future sharing",
+    "reviewSubtitle": "Confirm the details below before GreenHeal marks this preview as ready for a future care-team update.",
+    "reviewSummaryItem": "I reviewed the patient, care-team, and weekly summary details.",
+    "reviewConsentItem": "I understand this does not send anything yet and that future sharing stays optional.",
+    "reviewRequiredNote": "Mark both review items before saving this confirmation.",
+    "reviewPartialDataNote": "Load the full preview before saving a sharing confirmation.",
+    "missingProfileNote": "Complete your healing profile before saving a sharing confirmation.",
+    "saving": "Saving review...",
+    "confirmButton": "Save review confirmation",
+    "savedTitle": "Ready for future sharing",
+    "savedBody": "GreenHeal saved your review confirmation for this weekly summary preview.",
+    "lastReviewed": "Last reviewed",
+    "handoffTitle": "Prepare export handoff",
+    "handoffSubtitle": "Choose how you would prefer to deliver this report later. GreenHeal will only save the handoff plan on this device.",
+    "handoffStatusLabel": "Handoff status",
+    "handoffStatusPending": "Not prepared yet",
+    "handoffStatusReady": "Ready to prepare",
+    "handoffStatusPrepared": "Prepared locally",
+    "handoffMethodLabel": "Preferred handoff method",
+    "handoffMethodEmail": "Care team email",
+    "handoffMethodPortal": "Hospital portal",
+    "handoffMethodPrint": "Printed packet",
+    "handoffNeedsReviewNote": "Save the review confirmation before preparing a handoff plan.",
+    "handoffMethodRequiredNote": "Choose a handoff method before saving this plan.",
+    "handoffPartialDataNote": "Load the full preview before preparing a handoff plan.",
+    "handoffLocalOnlyNote": "This will save a local handoff plan only. Nothing will be exported or sent yet.",
+    "handoffSaving": "Saving handoff plan...",
+    "handoffConfirmButton": "Save handoff plan",
+    "handoffSavedTitle": "Handoff prepared locally",
+    "handoffSavedBody": "GreenHeal saved your preferred handoff method and marked this report as prepared for a future manual delivery step.",
+    "handoffPreparedAt": "Handoff prepared",
+    "handoffNextStepsTitle": "Suggested next steps",
+    "handoffNextStepReview": "Re-check the weekly report draft before delivering it.",
+    "handoffNextStepDeliver": "Use your chosen method when you are ready to hand this report to your care team.",
+    "handoffNextStepManual": "GreenHeal still will not send anything automatically.",
+    "handoffSaveError": "We couldn't save your handoff plan right now. Please try again.",
+    "exportTitle": "Generate local export",
+    "exportSubtitle": "Create a plain-text copy of this weekly report in GreenHeal's local storage for a future manual delivery step.",
+    "exportNeedsHandoffNote": "Prepare a handoff plan before generating a local export.",
+    "exportPartialDataNote": "Load the full preview before generating a local export.",
+    "exportLocalOnlyNote": "This will create a text file on this device only. GreenHeal will not share or send it automatically.",
+    "exporting": "Generating local export...",
+    "exportButton": "Generate local export",
+    "exportRegenerateButton": "Regenerate local export",
+    "exportSavedTitle": "Local export generated",
+    "exportSavedBody": "GreenHeal created a text copy of this weekly report in local app storage.",
+    "exportGeneratedAt": "Export generated",
+    "exportFileLabel": "Saved file",
+    "exportSaveError": "We couldn't generate the local export right now. Please try again.",
+    "exportHistoryTitle": "Recent local exports",
+    "exportHistorySubtitle": "These saved report files stay on this device unless you manually share one.",
+    "exportHistoryCurrentTitle": "Current/latest export",
+    "exportHistoryPreviousTitle": "Previous exports",
+    "exportHistoryShareButton": "Share this export",
+    "exportHistoryClearOlderButton": "Clear older exports",
+    "exportHistoryClearing": "Clearing older exports...",
+    "exportHistoryCleanupError": "We couldn't clear the older export history right now. Please try again.",
+    "exportHistoryRemoveButton": "Remove this export",
+    "exportHistoryRemoving": "Updating export history...",
+    "exportHistoryDetailButton": "View details",
+    "exportHistoryDetailSelectedButton": "Viewing details",
+    "exportHistoryDetailTitle": "Selected export details",
+    "exportHistoryDetailBody": "Review this saved local export entry before you share it or clean up older history.",
+    "exportHistoryDetailStatusLabel": "History status",
+    "exportHistoryDetailStatusCurrent": "Current/latest export",
+    "exportHistoryDetailStatusPrevious": "Previous export",
+    "shareTitle": "Manual delivery/share",
+    "shareSubtitle": "Open your device's share options for this local report export. You still choose whether to cancel, save, email, print, or hand it off another way.",
+    "shareNeedsExportNote": "Generate a local export before opening delivery or share options.",
+    "shareLocalOnlyNote": "This opens your device's share options manually. GreenHeal still will not send anything on its own.",
+    "shareOpening": "Opening share options...",
+    "shareButton": "Open delivery/share options",
+    "shareOpenedTitle": "Delivery/share options opened",
+    "shareOpenedBody": "GreenHeal opened your device's manual share options for this report export.",
+    "shareManualNote": "Nothing is delivered unless you choose a destination yourself.",
+    "shareMessageIntro": "GreenHeal prepared this local weekly care-team report for manual delivery.",
+    "shareSheetTitle": "GreenHeal weekly report",
+    "shareError": "We couldn't open the delivery/share options right now. Please try again.",
+    "saveError": "We couldn't save your review confirmation right now. Please try again.",
+    "notAvailable": "Not available",
+    "notAssigned": "Not assigned yet"
+  },
+  "feedback": {
+    "title": "Rate GreenHeal",
+    "subtitle": "Your feedback helps us improve the healing experience for you and others.",
+    "overallExperience": "How would you rate your overall experience?",
+    "healingSupport": "How helpful is GreenHeal for your healing routine?",
+    "comment": "What would you like us to improve?",
+    "commentPlaceholder": "Share what helped, what felt missing, or what would make GreenHeal better for you.",
+    "submit": "Submit feedback",
+    "thankYouTitle": "Thank you for your feedback",
+    "thankYouBody": "Your voice helps us make GreenHeal more supportive, calm, and useful."
   },
   "permissions": {
     "camera_required": "Camera Access Required",

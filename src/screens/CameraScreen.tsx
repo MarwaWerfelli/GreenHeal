@@ -11,14 +11,19 @@ import {
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useTranslation } from 'react-i18next';
-import { COLORS } from '../utils/constants';
+import { DESIGN_SYSTEM } from '../utils/constants';
 import type { CameraScreenProps } from '../types';
-import { pickFromGallery } from '../modules/image';
+import { pickFromGallery, prepareImageForAnalysisUpload } from '../modules/image';
 
-export default function CameraScreen({ navigation }: CameraScreenProps) {
+const colors = DESIGN_SYSTEM.colors;
+const shadows = DESIGN_SYSTEM.shadows;
+
+export default function CameraScreen({ navigation, route }: CameraScreenProps) {
   const { t } = useTranslation();
+  const guidedContext = route?.params?.guidedContext;
   const [permission, requestPermission] = useCameraPermissions();
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
+  const [preparingPhoto, setPreparingPhoto] = useState(false);
   const cameraRef = useRef<CameraView>(null);
 
   // Handle permission request
@@ -57,10 +62,20 @@ export default function CameraScreen({ navigation }: CameraScreenProps) {
   };
 
   // Use captured photo
-  const handleUsePhoto = () => {
-    if (capturedPhoto) {
-      // Navigate to AI Analysis screen with the photo
-      navigation.navigate('AIAnalysis', { imageUri: capturedPhoto });
+  const handleUsePhoto = async () => {
+    if (!capturedPhoto || preparingPhoto) {
+      return;
+    }
+
+    try {
+      setPreparingPhoto(true);
+      const preparedPhotoUri = await prepareImageForAnalysisUpload(capturedPhoto);
+      navigation.navigate('AIAnalysis', { imageUri: preparedPhotoUri, guidedContext });
+    } catch (error) {
+      console.error('Error preparing photo for analysis:', error);
+      Alert.alert(t('errors.generic'));
+    } finally {
+      setPreparingPhoto(false);
     }
   };
 
@@ -79,6 +94,10 @@ export default function CameraScreen({ navigation }: CameraScreenProps) {
 
   // Retake photo
   const handleRetake = () => {
+    if (preparingPhoto) {
+      return;
+    }
+
     setCapturedPhoto(null);
   };
 
@@ -136,16 +155,24 @@ export default function CameraScreen({ navigation }: CameraScreenProps) {
           <TouchableOpacity
             style={[styles.controlButton, styles.retakeButton]}
             onPress={handleRetake}
+            disabled={preparingPhoto}
             activeOpacity={0.8}
           >
             <Text style={styles.controlButtonText}>{t('camera.retake')}</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.controlButton, styles.useButton]}
+            style={[
+              styles.controlButton,
+              styles.useButton,
+              preparingPhoto && styles.controlButtonDisabled,
+            ]}
             onPress={handleUsePhoto}
+            disabled={preparingPhoto}
             activeOpacity={0.8}
           >
-            <Text style={styles.controlButtonText}>{t('camera.usePhoto')}</Text>
+            <Text style={styles.controlButtonText}>
+              {preparingPhoto ? t('common.loading') : t('camera.usePhoto')}
+            </Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -187,46 +214,49 @@ export default function CameraScreen({ navigation }: CameraScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.text,
+    backgroundColor: colors.bgBase,
   },
   centerContent: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 24,
   },
   loadingText: {
     fontSize: 16,
-    color: COLORS.white,
+    color: colors.textSecondary,
   },
   permissionTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: COLORS.white,
+    color: colors.textPrimary,
     marginBottom: 16,
     textAlign: 'center',
   },
   permissionText: {
     fontSize: 16,
-    color: COLORS.white,
+    color: colors.textSecondary,
     marginBottom: 32,
     textAlign: 'center',
     lineHeight: 24,
   },
   permissionButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     paddingHorizontal: 32,
     paddingVertical: 16,
-    borderRadius: 12,
+    borderRadius: 16,
+    minWidth: 220,
+    alignItems: 'center',
+    ...shadows.small,
   },
   galleryButton: {
     marginTop: 12,
-    backgroundColor: COLORS.textSecondary,
+    backgroundColor: colors.secondary,
   },
   permissionButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.white,
+    color: colors.bgSurface,
   },
   camera: {
     flex: 1,
@@ -239,11 +269,13 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 10,
     borderRadius: 12,
-    backgroundColor: COLORS.black + '55',
+    backgroundColor: colors.overlay,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
   },
   cameraHint: {
     fontSize: 12,
-    color: COLORS.white,
+    color: colors.bgSurface,
     textAlign: 'center',
   },
   cameraControls: {
@@ -257,10 +289,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 999,
-    backgroundColor: COLORS.black + '77',
+    backgroundColor: colors.overlay,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
   },
   galleryActionButtonText: {
-    color: COLORS.white,
+    color: colors.bgSurface,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -268,17 +302,17 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: COLORS.white,
+    backgroundColor: colors.bgSurface,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 4,
-    borderColor: COLORS.primary,
+    borderColor: colors.primary,
   },
   captureButtonInner: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
   },
   preview: {
     flex: 1,
@@ -299,16 +333,19 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     minWidth: 140,
   },
+  controlButtonDisabled: {
+    opacity: 0.7,
+  },
   retakeButton: {
-    backgroundColor: COLORS.textSecondary,
+    backgroundColor: colors.overlay,
   },
   useButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
   },
   controlButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.white,
+    color: colors.bgSurface,
     textAlign: 'center',
   },
 });

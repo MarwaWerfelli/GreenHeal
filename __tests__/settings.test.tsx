@@ -29,6 +29,11 @@ jest.mock('react-i18next', () => ({
         'languages.arabic': 'Arabic',
         'languages.french': 'French',
         'settings.language': 'Language',
+        'settings.supportTools': 'Support tools',
+        'settings.reportPreview': 'Weekly report preview',
+        'settings.reportPreviewSubtitle': 'See what a healing update for your care team could include before sharing is enabled.',
+        'settings.feedback': 'Rate GreenHeal',
+        'settings.feedbackSubtitle': 'Tell us how the app is supporting your healing journey.',
         'settings.resetProfile': 'Reset Healing Profile',
         'settings.resetConfirm': 'Are you sure you want to reset your healing profile? This will clear all your onboarding data.',
         'settings.version': 'Version',
@@ -117,6 +122,22 @@ describe('Settings Screen', () => {
       const { getByText } = render(<SettingsScreen />);
 
       expect(getByText('Reset Healing Profile')).toBeTruthy();
+    });
+
+    test('Navigates to feedback screen', () => {
+      const { getByText } = render(<SettingsScreen />);
+
+      fireEvent.press(getByText('Rate GreenHeal'));
+
+      expect(mockNavigation.navigate).toHaveBeenCalledWith('Feedback');
+    });
+
+    test('Navigates to weekly report preview screen', () => {
+      const { getByText } = render(<SettingsScreen />);
+
+      fireEvent.press(getByText('Weekly report preview'));
+
+      expect(mockNavigation.navigate).toHaveBeenCalledWith('ReportPreview');
     });
 
     test('Shows confirmation dialog when reset is pressed', () => {

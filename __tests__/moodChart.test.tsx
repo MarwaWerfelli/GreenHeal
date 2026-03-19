@@ -48,4 +48,14 @@ describe('MoodChart', () => {
       expect.objectContaining({ useNativeDriver: false })
     );
   });
+
+  it('falls back to the empty state when SQLite returns a malformed row list', async () => {
+    (SQLite.openDatabaseAsync as jest.Mock).mockResolvedValue({
+      getAllAsync: jest.fn().mockResolvedValue(undefined),
+    });
+
+    const { findByText } = render(<MoodChart />);
+
+    expect(await findByText('home.trackMoodDaily')).toBeTruthy();
+  });
 });

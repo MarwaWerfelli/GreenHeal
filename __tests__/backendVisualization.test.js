@@ -19,7 +19,8 @@ describe('backend visualization helpers', () => {
     expect(prompt).toContain('Edit this exact room photo and preserve the room as-is.');
     expect(prompt).toContain('Add only Snake Plant in a modern planter.');
     expect(prompt).toContain('table corner');
-    expect(prompt).toContain('must physically rest on a real floor, shelf, table, ledge, sill, or stand');
+    expect(prompt).toContain('professional interior-design photo');
+    expect(prompt).toContain('must physically rest on a real floor, shelf, table, ledge, sill, desk, or stand');
   });
 
   test('detects modern wall and hanging placement modes', () => {
@@ -48,8 +49,11 @@ describe('backend visualization helpers', () => {
     });
 
     expect(prompt).toContain('Add only these healing plants: Snake Plant (table corner), Peace Lily (reading nook), Pothos (window sill).');
-    expect(prompt).toContain('Arrange them together as one cohesive, restrained composition');
-    expect(prompt).toContain('Steer the styling toward curated shelf and ledge styling');
+    expect(prompt).toContain('Arrange them together as one cohesive, professionally styled, plant-rich composition');
+    expect(prompt).toContain('Distribute the listed plants across realistic supports such as corners, floor stands, desks, side tables, consoles, shelves, window ledges, wall-mounted planters, and hanging planters');
+    expect(prompt).toContain('Steer the styling toward curated shelf, ledge, and tabletop styling');
+    expect(prompt).toContain('professional editorial photograph');
+    expect(prompt).toContain('The result should feel dense, elegant, realistic, and professionally styled');
     expect(prompt).toContain('Do not duplicate plants or add extra planters beyond the listed plants.');
   });
 

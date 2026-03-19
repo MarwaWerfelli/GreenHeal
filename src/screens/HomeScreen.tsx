@@ -44,12 +44,36 @@ const MOOD_EMOJIS = ['😢', '😕', '😐', '🙂', '😊'];
 const MOOD_LABELS = ['mood.1', 'mood.2', 'mood.3', 'mood.4', 'mood.5'];
 const VALID_HEALING_GOALS: HealingGoal[] = ['stress', 'physical', 'depression', 'sleep', 'wellness'];
 
+function getSafeColorArray(value: unknown, fallback: string[]): string[] {
+  if (
+    Array.isArray(value) &&
+    value.length > 0 &&
+    value.every(color => typeof color === 'string' && color.trim().length > 0)
+  ) {
+    return value;
+  }
+
+  return fallback;
+}
+
 function isHealingGoal(value: unknown): value is HealingGoal {
   return typeof value === 'string' && VALID_HEALING_GOALS.includes(value as HealingGoal);
 }
 
 export default function HomeScreen({ navigation }: HomeScreenProps) {
   const { t } = useTranslation();
+  const dailyTips = Array.isArray(DAILY_TIPS) ? DAILY_TIPS : [];
+  const moodEmojis = Array.isArray(MOOD_EMOJIS) ? MOOD_EMOJIS : [];
+  const moodLabels = Array.isArray(MOOD_LABELS) ? MOOD_LABELS : [];
+  const heroGradientColors = getSafeColorArray(
+    DESIGN_SYSTEM.colors.heroGradient,
+    [DESIGN_SYSTEM.colors.bgBase, DESIGN_SYSTEM.colors.bgSurface]
+  );
+  const moodGradientColors = getSafeColorArray(
+    [DESIGN_SYSTEM.colors.primaryGlow, DESIGN_SYSTEM.colors.borderSubtle],
+    [DESIGN_SYSTEM.colors.bgSurface, DESIGN_SYSTEM.colors.bgElevated]
+  );
+  const tipSlideWidth = Dimensions.get('window').width - DESIGN_SYSTEM.spacing.md * 2;
   const [selectedMood, setSelectedMood] = useState<number | null>(null);
   const [plantCount, setPlantCount] = useState(0);
   const [streak, setStreak] = useState(0);
@@ -59,7 +83,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scrollX = useRef(new Animated.Value(0)).current;
   // One stable Animated.Value per mood button — must NOT be inside .map()
-  const bounceAnims = useRef(MOOD_EMOJIS.map(() => new Animated.Value(1))).current;
+  const bounceAnims = useRef(moodEmojis.map(() => new Animated.Value(1))).current;
 
   useEffect(() => {
     // Fade in animation on mount
@@ -70,12 +94,16 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     }).start();
 
     // Auto-scroll carousel every 10 seconds
+    if (dailyTips.length === 0) {
+      return;
+    }
+
     const interval = setInterval(() => {
-      setCurrentTipIndex(prev => (prev + 1) % DAILY_TIPS.length);
+      setCurrentTipIndex(prev => (prev + 1) % dailyTips.length);
     }, 10000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [dailyTips.length, fadeAnim]);
 
   // Reload plant count whenever screen comes into focus
   useFocusEffect(
@@ -93,12 +121,23 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
 
       // Get user name from onboarding (if available)
       const onboarding = await getOnboardingData();
+      const reportProfile = onboarding?.reportProfile;
+      const preferredName =
+        reportProfile && typeof reportProfile === 'object' && typeof reportProfile.preferredName === 'string'
+          ? reportProfile.preferredName.trim()
+          : '';
+      const fullName =
+        reportProfile && typeof reportProfile === 'object' && typeof reportProfile.fullName === 'string'
+          ? reportProfile.fullName.trim()
+          : '';
+      const displayName = preferredName || fullName || t('home.friend');
+
       if (onboarding && isHealingGoal(onboarding.healingGoal)) {
         setRecoveryFocus(onboarding.healingGoal);
-        setUserName(t('home.friend'));
+        setUserName(displayName);
       } else {
         setRecoveryFocus(null);
-        setUserName(t('home.friend'));
+        setUserName(displayName);
       }
 
       // Calculate streak (placeholder)
@@ -121,6 +160,54 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
     }
 
     return t(`onboarding.healingGoals.${recoveryFocus}`);
+  };
+
+  const getDailyActionText = () => {
+    if (selectedMood !== null && selectedMood <= 2) {
+      return t('home.dailyActionRestore');
+    }
+
+    if (plantCount === 0) {
+      return t('home.dailyActionStartSpace');
+    }
+
+    switch (recoveryFocus) {
+      case 'stress':
+        return t('home.dailyActionStress');
+      case 'sleep':
+        return t('home.dailyActionSleep');
+      case 'physical':
+        return t('home.dailyActionPhysical');
+      case 'depression':
+        return t('home.dailyActionReconnect');
+      case 'wellness':
+      default:
+        return t('home.dailyActionWellness');
+    }
+  };
+
+  const getReflectionPrompt = () => {
+    switch (recoveryFocus) {
+      case 'stress':
+        return t('home.reflectionStress');
+      case 'sleep':
+        return t('home.reflectionSleep');
+      case 'physical':
+        return t('home.reflectionPhysical');
+      case 'depression':
+        return t('home.reflectionDepression');
+      case 'wellness':
+      default:
+        return t('home.reflectionWellness');
+    }
+  };
+
+  const getMoodSupportMessage = () => {
+    if (selectedMood === null) {
+      return t('home.moodSupport.default');
+    }
+
+    return t(`home.moodSupport.${selectedMood}`);
   };
 
   const handleMoodSelection = useCallback(async (moodScore: number) => {
@@ -146,7 +233,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
   }, []);
 
   const handleScanRoom = useCallback(() => {
-    navigation.navigate('Camera');
+    navigation.navigate('GuidedDialogue');
   }, [navigation]);
 
   const handleMyJourney = useCallback(() => {
@@ -187,14 +274,37 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
       body: t('home.stepThreeBody'),
     },
   ];
+  const dailyRhythmCards = [
+    {
+      key: 'focus',
+      label: t('home.todayFocusTitle'),
+      text: `${t('home.focusLabel')}: ${getRecoveryFocusLabel()}`,
+      style: styles.dailyRhythmCardPrimary,
+    },
+    {
+      key: 'step',
+      label: t('home.gentleStepTitle'),
+      text: getDailyActionText(),
+      style: styles.dailyRhythmCardWarm,
+    },
+    {
+      key: 'reflection',
+      label: t('home.reflectionPromptTitle'),
+      text: getReflectionPrompt(),
+      style: styles.dailyRhythmCardCalm,
+    },
+  ];
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Hero Section with Gradient */}
         <Animated.View style={{ opacity: fadeAnim }}>
           <LinearGradient
-            colors={DESIGN_SYSTEM.colors.heroGradient}
+            colors={heroGradientColors}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.heroSection}
@@ -249,6 +359,18 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
               </TouchableOpacity>
             </View>
           </View>
+        </View>
+
+        <View style={styles.dailyRhythmSection}>
+          <Text style={styles.sectionTitle}>{t('home.dailyRhythmTitle')}</Text>
+          <Text style={styles.dailyRhythmSubtitle}>{t('home.dailyRhythmSubtitle')}</Text>
+
+          {dailyRhythmCards.map((card) => (
+            <View key={card.key} style={[styles.dailyRhythmCard, card.style]}>
+              <Text style={styles.dailyRhythmLabel}>{card.label}</Text>
+              <Text style={styles.dailyRhythmText}>{card.text}</Text>
+            </View>
+          ))}
         </View>
 
         {/* Quick Actions Grid */}
@@ -344,49 +466,57 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
         {/* Daily Tip Carousel */}
         <View style={styles.tipContainer}>
           <Text style={styles.tipTitle}>💡 {t('home.dailyTip')}</Text>
-          <FlatList
-            data={DAILY_TIPS}
-            horizontal
-            pagingEnabled={false}
-            snapToInterval={Dimensions.get('window').width - DESIGN_SYSTEM.spacing.md * 2}
-            decelerationRate="fast"
-            showsHorizontalScrollIndicator={false}
-            onScroll={Animated.event(
-              [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-              { useNativeDriver: false }
-            )}
-            onMomentumScrollEnd={(event) => {
-              const slideWidth = Dimensions.get('window').width - DESIGN_SYSTEM.spacing.md * 2;
-              const index = Math.round(event.nativeEvent.contentOffset.x / slideWidth);
-              setCurrentTipIndex(index);
-            }}
-            renderItem={({ item }) => (
-              <View style={styles.tipSlide}>
-                <Text style={styles.tipIcon}>{item.icon}</Text>
-                <Text style={styles.tipText}>{t(item.key)}</Text>
-              </View>
-            )}
-            keyExtractor={(item, index) => index.toString()}
-          />
-          
-          {/* Pagination dots */}
-          <View style={styles.paginationDots}>
-            {DAILY_TIPS.map((_, index) => (
-              <View
-                key={index}
-                style={[
-                  styles.dot,
-                  index === currentTipIndex && styles.dotActive,
-                ]}
+          {dailyTips.length > 0 ? (
+            <>
+              <FlatList
+                data={dailyTips}
+                horizontal
+                pagingEnabled={false}
+                snapToInterval={tipSlideWidth}
+                decelerationRate="fast"
+                showsHorizontalScrollIndicator={false}
+                onScroll={Animated.event(
+                  [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+                  { useNativeDriver: false }
+                )}
+                onMomentumScrollEnd={(event) => {
+                  const index = Math.round(event.nativeEvent.contentOffset.x / tipSlideWidth);
+                  const clampedIndex = Math.max(0, Math.min(index, dailyTips.length - 1));
+                  setCurrentTipIndex(clampedIndex);
+                }}
+                renderItem={({ item }) => (
+                  <View style={styles.tipSlide}>
+                    <Text style={styles.tipIcon}>{item.icon}</Text>
+                    <Text style={styles.tipText}>{t(item.key)}</Text>
+                  </View>
+                )}
+                keyExtractor={(item, index) => `${item.key}-${index}`}
               />
-            ))}
-          </View>
+
+              {/* Pagination dots */}
+              <View style={styles.paginationDots}>
+                {dailyTips.map((_, index) => (
+                  <View
+                    key={index}
+                    style={[
+                      styles.dot,
+                      index === currentTipIndex && styles.dotActive,
+                    ]}
+                  />
+                ))}
+              </View>
+            </>
+          ) : (
+            <View style={styles.tipSlide}>
+              <Text style={styles.tipText}>{t('home.friend')}</Text>
+            </View>
+          )}
         </View>
 
         {/* Mood Check-in Widget with Chart */}
         <View style={styles.moodContainer}>
           <LinearGradient
-            colors={[DESIGN_SYSTEM.colors.primaryGlow, DESIGN_SYSTEM.colors.borderSubtle]}
+            colors={moodGradientColors}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.moodGradientBorder}
@@ -394,7 +524,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             <View style={styles.moodContent}>
               <Text style={styles.moodTitle}>{t('home.moodCheckIn')}</Text>
               <View style={styles.moodScale}>
-                {MOOD_EMOJIS.map((emoji, index) => {
+                {moodEmojis.map((emoji, index) => {
                   const moodScore = index + 1;
                   const isSelected = selectedMood === moodScore;
                   const bounceAnim = bounceAnims[index];
@@ -438,11 +568,15 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                       >
                         {emoji}
                       </Animated.Text>
-                      <Text style={styles.moodLabel}>{t(MOOD_LABELS[index])}</Text>
+                      <Text style={styles.moodLabel}>{t(moodLabels[index] || `mood.${moodScore}`)}</Text>
                     </TouchableOpacity>
                   );
                 })}
               </View>
+
+              <Text testID="mood-support-text" style={styles.moodSupportText}>
+                {getMoodSupportMessage()}
+              </Text>
               
               {/* Weekly Mood Chart */}
               <MoodChart />
@@ -565,6 +699,49 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
+  dailyRhythmSection: {
+    marginHorizontal: DESIGN_SYSTEM.spacing.md,
+    marginBottom: DESIGN_SYSTEM.spacing.lg,
+  },
+  dailyRhythmSubtitle: {
+    fontSize: 14,
+    color: DESIGN_SYSTEM.colors.textSecondary,
+    lineHeight: 21,
+    marginBottom: DESIGN_SYSTEM.spacing.md,
+  },
+  dailyRhythmCard: {
+    borderRadius: 18,
+    padding: DESIGN_SYSTEM.spacing.md,
+    marginBottom: DESIGN_SYSTEM.spacing.sm,
+    borderWidth: 1,
+    ...DESIGN_SYSTEM.shadows.medium,
+  },
+  dailyRhythmCardPrimary: {
+    backgroundColor: DESIGN_SYSTEM.colors.bgSurface,
+    borderColor: DESIGN_SYSTEM.colors.borderSubtle,
+  },
+  dailyRhythmCardWarm: {
+    backgroundColor: DESIGN_SYSTEM.colors.accentWarmPale,
+    borderColor: DESIGN_SYSTEM.colors.accentGoldDim,
+  },
+  dailyRhythmCardCalm: {
+    backgroundColor: DESIGN_SYSTEM.colors.primaryPale,
+    borderColor: DESIGN_SYSTEM.colors.primaryGlow,
+  },
+  dailyRhythmLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: DESIGN_SYSTEM.colors.primary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: 6,
+  },
+  dailyRhythmText: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: DESIGN_SYSTEM.colors.textPrimary,
+    fontWeight: '600',
+  },
   statsContainer: {
     flexDirection: 'row',
     gap: DESIGN_SYSTEM.spacing.md,
@@ -619,7 +796,7 @@ const styles = StyleSheet.create({
     minHeight: 100,
   },
   scanRoomCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: DESIGN_SYSTEM.colors.bgSurface,
   },
   waterPlantsCard: {
     backgroundColor: DESIGN_SYSTEM.colors.accentBlue,
@@ -804,6 +981,14 @@ const styles = StyleSheet.create({
     color: DESIGN_SYSTEM.colors.textSecondary,
     textAlign: 'center',
     lineHeight: 12,
+  },
+  moodSupportText: {
+    fontSize: 14,
+    lineHeight: 21,
+    color: DESIGN_SYSTEM.colors.textPrimary,
+    textAlign: 'center',
+    marginTop: DESIGN_SYSTEM.spacing.md,
+    marginBottom: DESIGN_SYSTEM.spacing.md,
   },
   moodProgressText: {
     fontSize: 13,

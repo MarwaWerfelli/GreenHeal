@@ -11,11 +11,14 @@ import {
 import { useTranslation } from 'react-i18next';
 import { analyzeRoom, getRemainingRequests } from '../modules/ai';
 import { isConnected } from '../modules/connectivity';
-import { COLORS, DESIGN_SYSTEM } from '../utils/constants';
+import { DESIGN_SYSTEM } from '../utils/constants';
 import type { AIAnalysisScreenProps, PlantRecommendation } from '../types';
 
+const colors = DESIGN_SYSTEM.colors;
+const shadows = DESIGN_SYSTEM.shadows;
+
 export default function AIAnalysisScreen({ route, navigation }: AIAnalysisScreenProps) {
-  const { imageUri } = route.params;
+  const { imageUri, guidedContext } = route.params;
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,6 +35,31 @@ export default function AIAnalysisScreen({ route, navigation }: AIAnalysisScreen
     recommendations[selectedPlantIndex] ??
     recommendations[selectedPlantIndices[0] ?? 0] ??
     null;
+  const guidedSummaryRows = useMemo(() => {
+    if (!guidedContext) {
+      return [];
+    }
+
+    const dominantSymptoms = (guidedContext.dominantSymptoms.length
+      ? guidedContext.dominantSymptoms
+      : guidedContext.symptoms
+    ).map((symptom) => t(`guidedDialogue.symptoms.${symptom}.label`));
+
+    return [
+      {
+        label: t('aiAnalysis.guidedSummarySymptoms'),
+        value: dominantSymptoms.join(', '),
+      },
+      {
+        label: t('aiAnalysis.guidedSummaryTime'),
+        value: t(`guidedDialogue.timeOfDay.${guidedContext.intensityWindow}.label`),
+      },
+      {
+        label: t('aiAnalysis.guidedSummarySupport'),
+        value: t(`guidedDialogue.supportFocus.${guidedContext.supportFocus}.label`),
+      },
+    ];
+  }, [guidedContext, t]);
 
   useEffect(() => {
     checkConnectivityAndAnalyze();
@@ -62,10 +90,12 @@ export default function AIAnalysisScreen({ route, navigation }: AIAnalysisScreen
     setError(null);
 
     try {
-      const results = await analyzeRoom(imageUri);
-      setRecommendations(results);
+      const results = await analyzeRoom(imageUri, guidedContext);
+      const normalizedResults = Array.isArray(results) ? results : [];
+
+      setRecommendations(normalizedResults);
       setSelectedPlantIndex(0);
-      setSelectedPlantIndices(results.length ? [0] : []);
+      setSelectedPlantIndices(normalizedResults.length ? [0] : []);
       await loadRemainingRequests();
     } catch (err: any) {
       console.error('AI analysis error:', err);
@@ -139,7 +169,7 @@ export default function AIAnalysisScreen({ route, navigation }: AIAnalysisScreen
     return (
       <View style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
+          <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>{t('aiAnalysis.analyzing')}</Text>
         </View>
       </View>
@@ -205,9 +235,30 @@ export default function AIAnalysisScreen({ route, navigation }: AIAnalysisScreen
           </View>
         </View>
 
+        {guidedSummaryRows.length > 0 && (
+          <View style={styles.guidedContextCard}>
+            <Text style={styles.guidedContextEyebrow}>{t('aiAnalysis.guidedSummaryTitle')}</Text>
+            <Text style={styles.guidedContextSubtitle}>{t('aiAnalysis.guidedSummarySubtitle')}</Text>
+            <View style={styles.guidedContextTable}>
+              {guidedSummaryRows.map((row, index) => (
+                <View
+                  key={`${row.label}-${index}`}
+                  style={[
+                    styles.guidedContextRow,
+                    index === guidedSummaryRows.length - 1 && styles.guidedContextRowLast,
+                  ]}
+                >
+                  <Text style={styles.guidedContextLabel}>{row.label}</Text>
+                  <Text style={styles.guidedContextValue}>{row.value}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
         <View style={styles.visualizationContainer}>
           <View style={styles.visualizationHeader}>
-            <View>
+            <View style={styles.visualizationHeaderContent}>
               <Text style={styles.visualizationEyebrow}>{t('aiAnalysis.yourRoomWithPlants')}</Text>
               <Text style={styles.visualizationTitle}>
                 ✨ {t('aiAnalysis.generateVisualization')}
@@ -252,94 +303,138 @@ export default function AIAnalysisScreen({ route, navigation }: AIAnalysisScreen
           </TouchableOpacity>
         </View>
 
-        {recommendations.map((plant, index) => (
-          <View
-            key={index}
-            style={[
-              styles.plantCard,
-              selectedPlantIndices.includes(index) && styles.selectedPlantCard,
-            ]}
-          >
-            <TouchableOpacity
-              onPress={() => handlePlantPress(plant)}
-              testID={`plant-card-${index}`}
-              activeOpacity={0.85}
+        {recommendations.map((plant, index) => {
+          const planDetails = [
+            { label: t('aiAnalysis.planTable.plant'), value: plant.name, emphasize: true },
+            { label: t('aiAnalysis.planTable.placement'), value: plant.placement },
+            { label: t('aiAnalysis.planTable.healingBenefit'), value: plant.healingBenefit },
+            {
+              label: t('aiAnalysis.planTable.healingRole'),
+              value: plant.healingRole ?? plant.healingBenefit,
+            },
+            {
+              label: t('aiAnalysis.planTable.sensoryAction'),
+              value: plant.sensoryAction ?? t('aiAnalysis.planTable.sensoryFallback'),
+            },
+            {
+              label: t('aiAnalysis.planTable.careDifficulty'),
+              value: t(`careDifficulty.${plant.careDifficulty.toLowerCase()}`),
+            },
+            { label: t('aiAnalysis.planTable.estimatedCost'), value: plant.estimatedCost },
+            {
+              label: t('aiAnalysis.planTable.watering'),
+              value: t('plantDetail.wateringFrequency', { days: plant.wateringFrequencyDays }),
+            },
+          ];
+
+          return (
+            <View
+              key={`${plant.name}-${index}`}
+              style={[
+                styles.plantCard,
+                selectedPlantIndices.includes(index) && styles.selectedPlantCard,
+              ]}
             >
-              <View style={styles.plantHeader}>
-                <Text style={styles.plantName}>{plant.name}</Text>
-                <View style={styles.headerBadges}>
-                  {selectedPlantIndices.includes(index) && (
-                    <View style={styles.planBadge}>
-                      <Text style={styles.planBadgeText}>{t('aiAnalysis.selectedForPlan')}</Text>
+              <TouchableOpacity
+                onPress={() => handlePlantPress(plant)}
+                testID={`plant-card-${index}`}
+                activeOpacity={0.85}
+              >
+                <View style={styles.plantHeader}>
+                  <View style={styles.titleBlock}>
+                    <Text style={styles.planIndex}>{String(index + 1).padStart(2, '0')}</Text>
+                    <Text style={styles.plantName}>{plant.name}</Text>
+                  </View>
+                  <View style={styles.headerBadges}>
+                    {selectedPlantIndices.includes(index) && (
+                      <View style={styles.planBadge}>
+                        <Text style={styles.planBadgeText}>{t('aiAnalysis.selectedForPlan')}</Text>
+                      </View>
+                    )}
+                    <View style={styles.difficultyBadge}>
+                      <Text style={styles.difficultyText}>
+                        {t(`careDifficulty.${plant.careDifficulty.toLowerCase()}`)}
+                      </Text>
                     </View>
-                  )}
-                  <View style={styles.difficultyBadge}>
-                    <Text style={styles.difficultyText}>
-                      {t(`careDifficulty.${plant.careDifficulty.toLowerCase()}`)}
-                    </Text>
                   </View>
                 </View>
-              </View>
 
-              <Text style={styles.plantPlacement}>📍 {plant.placement}</Text>
-              <Text style={styles.plantBenefit} numberOfLines={2}>
-                {plant.healingBenefit}
-              </Text>
+                <View style={styles.planTable}>
+                  {planDetails.map((detail, detailIndex) => (
+                    <View
+                      key={`${detail.label}-${detailIndex}`}
+                      style={[
+                        styles.planTableRow,
+                        detailIndex === planDetails.length - 1 && styles.planTableRowLast,
+                      ]}
+                    >
+                      <Text style={styles.planTableLabel}>{detail.label}</Text>
+                      <Text
+                        style={[
+                          styles.planTableValue,
+                          detail.emphasize && styles.planTableValueStrong,
+                        ]}
+                      >
+                        {detail.value}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
 
-              <View style={styles.plantFooter}>
-                <Text style={styles.plantCost}>{plant.estimatedCost}</Text>
-                <Text style={styles.plantWatering}>
-                  💧 {t('plantDetail.wateringFrequency', { days: plant.wateringFrequencyDays })}
-                </Text>
-              </View>
+                <View style={styles.encouragementBox}>
+                  <Text style={styles.encouragementLabel}>
+                    {t('aiAnalysis.planTable.encouragement')}
+                  </Text>
+                  <Text style={styles.encouragingMessage}>{plant.encouragingMessage}</Text>
+                </View>
 
-              <Text style={styles.encouragingMessage}>{plant.encouragingMessage}</Text>
-              <Text style={styles.detailsHint}>{t('aiAnalysis.viewPlantDetails')}</Text>
-            </TouchableOpacity>
-
-            <View style={styles.actionRow}>
-              <TouchableOpacity
-                style={[
-                  styles.planButton,
-                  selectedPlantIndices.includes(index) && styles.planButtonActive,
-                ]}
-                onPress={() => handleTogglePlanSelection(index)}
-                testID={`toggle-plan-${index}`}
-              >
-                <Text
-                  style={[
-                    styles.planButtonText,
-                    selectedPlantIndices.includes(index) && styles.planButtonTextActive,
-                  ]}
-                >
-                  {selectedPlantIndices.includes(index)
-                    ? t('aiAnalysis.removeFromPlan')
-                    : t('aiAnalysis.addToPlan')}
-                </Text>
+                <Text style={styles.detailsHint}>{t('aiAnalysis.viewPlantDetails')}</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[
-                  styles.selectButton,
-                  index === selectedPlantIndex && styles.selectButtonActive,
-                ]}
-                onPress={() => handleSelectPreview(index)}
-                testID={`select-plant-${index}`}
-              >
-                <Text
+              <View style={styles.actionRow}>
+                <TouchableOpacity
                   style={[
-                    styles.selectButtonText,
-                    index === selectedPlantIndex && styles.selectButtonTextActive,
+                    styles.planButton,
+                    selectedPlantIndices.includes(index) && styles.planButtonActive,
                   ]}
+                  onPress={() => handleTogglePlanSelection(index)}
+                  testID={`toggle-plan-${index}`}
                 >
-                  {index === selectedPlantIndex
-                    ? t('aiAnalysis.selectedForPreview')
-                    : t('aiAnalysis.previewThisPlant')}
-                </Text>
-              </TouchableOpacity>
+                  <Text
+                    style={[
+                      styles.planButtonText,
+                      selectedPlantIndices.includes(index) && styles.planButtonTextActive,
+                    ]}
+                  >
+                    {selectedPlantIndices.includes(index)
+                      ? t('aiAnalysis.removeFromPlan')
+                      : t('aiAnalysis.addToPlan')}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.selectButton,
+                    index === selectedPlantIndex && styles.selectButtonActive,
+                  ]}
+                  onPress={() => handleSelectPreview(index)}
+                  testID={`select-plant-${index}`}
+                >
+                  <Text
+                    style={[
+                      styles.selectButtonText,
+                      index === selectedPlantIndex && styles.selectButtonTextActive,
+                    ]}
+                  >
+                    {index === selectedPlantIndex
+                      ? t('aiAnalysis.selectedForPreview')
+                      : t('aiAnalysis.previewThisPlant')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
-        ))}
+          );
+        })}
       </ScrollView>
     </View>
   );
@@ -348,7 +443,7 @@ export default function AIAnalysisScreen({ route, navigation }: AIAnalysisScreen
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: colors.bgBase,
   },
   loadingContainer: {
     flex: 1,
@@ -359,7 +454,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 20,
     fontSize: 16,
-    color: COLORS.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   errorContainer: {
@@ -374,19 +469,19 @@ const styles = StyleSheet.create({
   },
   errorMessage: {
     fontSize: 16,
-    color: COLORS.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: 30,
   },
   retryButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     paddingHorizontal: 30,
     paddingVertical: 12,
     borderRadius: 25,
     marginBottom: 15,
   },
   retryButtonText: {
-    color: COLORS.white,
+    color: colors.bgSurface,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -395,7 +490,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   backButtonText: {
-    color: COLORS.primary,
+    color: colors.primary,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -408,23 +503,72 @@ const styles = StyleSheet.create({
   },
   headerCard: {
     marginBottom: 18,
-    backgroundColor: DESIGN_SYSTEM.colors.bgSurface,
+    backgroundColor: colors.bgSurface,
     borderRadius: 28,
     padding: 22,
     borderWidth: 1,
-    borderColor: DESIGN_SYSTEM.colors.borderSubtle,
-    ...DESIGN_SYSTEM.shadows.medium,
+    borderColor: colors.borderSubtle,
+    ...shadows.medium,
+  },
+  guidedContextCard: {
+    marginBottom: 18,
+    backgroundColor: colors.bgSurface,
+    borderRadius: 24,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+  },
+  guidedContextEyebrow: {
+    color: colors.primary,
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  guidedContextSubtitle: {
+    color: colors.textSecondary,
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 14,
+  },
+  guidedContextTable: {
+    borderRadius: 18,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+  },
+  guidedContextRow: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    backgroundColor: colors.bgBase,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderSubtle,
+  },
+  guidedContextRowLast: {
+    borderBottomWidth: 0,
+  },
+  guidedContextLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.textSecondary,
+    marginBottom: 4,
+    textTransform: 'uppercase',
+  },
+  guidedContextValue: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    lineHeight: 22,
   },
   heroBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: DESIGN_SYSTEM.colors.primaryPale,
+    backgroundColor: colors.primaryPale,
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 7,
     marginBottom: 14,
   },
   heroBadgeText: {
-    color: DESIGN_SYSTEM.colors.primary,
+    color: colors.primary,
     fontSize: 12,
     fontWeight: '700',
   },
@@ -435,13 +579,13 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   metaPill: {
-    backgroundColor: DESIGN_SYSTEM.colors.bgBase,
+    backgroundColor: colors.bgBase,
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   metaPillAccent: {
-    backgroundColor: DESIGN_SYSTEM.colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -449,37 +593,37 @@ const styles = StyleSheet.create({
   metaPillText: {
     fontSize: 12,
     fontWeight: '700',
-    color: DESIGN_SYSTEM.colors.textSecondary,
+    color: colors.textSecondary,
   },
   metaPillAccentText: {
     fontSize: 12,
     fontWeight: '700',
-    color: DESIGN_SYSTEM.colors.bgSurface,
+    color: colors.bgSurface,
   },
   title: {
     fontSize: 28,
     fontWeight: '800',
-    color: COLORS.primary,
+    color: colors.primary,
     marginBottom: 10,
   },
   subtitle: {
     fontSize: 15,
-    color: COLORS.textSecondary,
+    color: colors.textSecondary,
     lineHeight: 22,
   },
   plantCard: {
-    backgroundColor: DESIGN_SYSTEM.colors.bgSurface,
+    backgroundColor: colors.bgSurface,
     borderRadius: 24,
     padding: 20,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: DESIGN_SYSTEM.colors.borderSubtle,
-    ...DESIGN_SYSTEM.shadows.medium,
+    borderColor: colors.borderSubtle,
+    ...shadows.medium,
   },
   selectedPlantCard: {
     borderWidth: 2,
-    borderColor: DESIGN_SYSTEM.colors.primary,
-    backgroundColor: DESIGN_SYSTEM.colors.primaryPale,
+    borderColor: colors.primary,
+    backgroundColor: colors.primaryPale,
   },
   plantHeader: {
     flexDirection: 'row',
@@ -487,10 +631,29 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 12,
   },
+  titleBlock: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  planIndex: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    marginRight: 12,
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    backgroundColor: colors.primaryPale,
+    color: colors.primary,
+    fontSize: 13,
+    fontWeight: '800',
+    overflow: 'hidden',
+    paddingTop: 8,
+  },
   plantName: {
     fontSize: 20,
     fontWeight: '800',
-    color: COLORS.primary,
+    color: colors.primary,
     flex: 1,
   },
   headerBadges: {
@@ -498,7 +661,7 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   planBadge: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 12,
@@ -507,10 +670,10 @@ const styles = StyleSheet.create({
   planBadgeText: {
     fontSize: 11,
     fontWeight: '700',
-    color: COLORS.white,
+    color: colors.bgSurface,
   },
   difficultyBadge: {
-    backgroundColor: COLORS.secondary + '18',
+    backgroundColor: colors.accentBlue,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 999,
@@ -518,16 +681,67 @@ const styles = StyleSheet.create({
   difficultyText: {
     fontSize: 12,
     fontWeight: '600',
-    color: COLORS.primary,
+    color: colors.primaryDark,
+  },
+  planTable: {
+    borderWidth: 1,
+    borderColor: colors.borderSubtle,
+    borderRadius: 20,
+    backgroundColor: colors.bgBase,
+    overflow: 'hidden',
+  },
+  planTableRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderSubtle,
+    gap: 12,
+  },
+  planTableRowLast: {
+    borderBottomWidth: 0,
+  },
+  planTableLabel: {
+    width: 112,
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  planTableValue: {
+    flex: 1,
+    fontSize: 14,
+    lineHeight: 20,
+    color: colors.textPrimary,
+  },
+  planTableValueStrong: {
+    fontWeight: '700',
+    color: colors.primary,
+  },
+  encouragementBox: {
+    marginTop: 14,
+    padding: 14,
+    borderRadius: 18,
+    backgroundColor: colors.primaryPale,
+  },
+  encouragementLabel: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: colors.primary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 6,
   },
   plantPlacement: {
     fontSize: 14,
-    color: COLORS.textSecondary,
+    color: colors.textSecondary,
     marginBottom: 8,
   },
   plantBenefit: {
     fontSize: 14,
-    color: COLORS.text,
+    color: colors.textPrimary,
     marginBottom: 12,
     lineHeight: 20,
   },
@@ -538,26 +752,26 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: DESIGN_SYSTEM.colors.borderSubtle,
+    borderTopColor: colors.borderSubtle,
   },
   plantCost: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.primary,
+    color: colors.primary,
   },
   plantWatering: {
     fontSize: 14,
-    color: COLORS.textSecondary,
+    color: colors.textSecondary,
   },
   encouragingMessage: {
     fontSize: 14,
     fontStyle: 'italic',
-    color: COLORS.secondary,
-    textAlign: 'center',
+    color: colors.secondaryDark,
+    lineHeight: 20,
   },
   detailsHint: {
     fontSize: 12,
-    color: COLORS.primary,
+    color: colors.primary,
     textAlign: 'center',
     fontWeight: '600',
     marginTop: 12,
@@ -572,43 +786,43 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: COLORS.primary,
+    borderColor: colors.primary,
     alignItems: 'center',
-    backgroundColor: DESIGN_SYSTEM.colors.bgSurface,
+    backgroundColor: colors.bgSurface,
   },
   planButtonActive: {
-    backgroundColor: DESIGN_SYSTEM.colors.primaryPale,
+    backgroundColor: colors.primaryPale,
   },
   planButtonText: {
-    color: COLORS.primary,
+    color: colors.primary,
     fontSize: 14,
     fontWeight: '600',
   },
   planButtonTextActive: {
-    color: COLORS.primary,
+    color: colors.primary,
   },
   selectButton: {
     flex: 1,
     paddingVertical: 13,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: COLORS.primary,
+    borderColor: colors.primary,
     alignItems: 'center',
-    backgroundColor: DESIGN_SYSTEM.colors.bgSurface,
+    backgroundColor: colors.bgSurface,
   },
   selectButtonActive: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
   },
   selectButtonText: {
-    color: COLORS.primary,
+    color: colors.primary,
     fontSize: 14,
     fontWeight: '600',
   },
   selectButtonTextActive: {
-    color: COLORS.white,
+    color: colors.bgSurface,
   },
   generateButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -616,58 +830,67 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 18,
     marginBottom: 20,
-    ...DESIGN_SYSTEM.shadows.glowSubtle,
+    ...shadows.glowSubtle,
   },
   generateButtonIcon: {
     fontSize: 24,
     marginRight: 10,
   },
   generateButtonText: {
-    color: COLORS.white,
+    color: colors.bgSurface,
     fontSize: 16,
     fontWeight: '600',
   },
   visualizationContainer: {
-    backgroundColor: DESIGN_SYSTEM.colors.bgSurface,
+    backgroundColor: colors.bgSurface,
     borderRadius: 28,
     padding: 20,
     marginBottom: 18,
     borderWidth: 1,
-    borderColor: DESIGN_SYSTEM.colors.borderSubtle,
-    ...DESIGN_SYSTEM.shadows.medium,
+    borderColor: colors.borderSubtle,
+    ...shadows.medium,
   },
   visualizationHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    flexWrap: 'wrap',
     alignItems: 'flex-start',
     gap: 12,
     marginBottom: 10,
   },
+  visualizationHeaderContent: {
+    flex: 1,
+    minWidth: 0,
+  },
   visualizationEyebrow: {
     fontSize: 12,
     fontWeight: '700',
-    color: DESIGN_SYSTEM.colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: 6,
   },
   visualizationTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: COLORS.primary,
+    color: colors.primary,
   },
   planSummaryBadge: {
-    backgroundColor: DESIGN_SYSTEM.colors.primaryPale,
+    backgroundColor: colors.primaryPale,
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 8,
+    maxWidth: '100%',
+    alignSelf: 'flex-start',
   },
   planSummaryBadgeText: {
     fontSize: 12,
     fontWeight: '700',
-    color: DESIGN_SYSTEM.colors.primary,
+    color: colors.primary,
+    flexShrink: 1,
+    textAlign: 'center',
   },
   planSummary: {
     fontSize: 14,
-    color: COLORS.textSecondary,
+    color: colors.textSecondary,
     lineHeight: 20,
     marginBottom: 14,
   },
@@ -678,19 +901,19 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   planChip: {
-    backgroundColor: DESIGN_SYSTEM.colors.primaryPale,
+    backgroundColor: colors.primaryPale,
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   planChipText: {
-    color: COLORS.primary,
+    color: colors.primary,
     fontSize: 12,
     fontWeight: '700',
   },
   visualizationHint: {
     fontSize: 14,
-    color: COLORS.textSecondary,
+    color: colors.textSecondary,
     marginBottom: 12,
     lineHeight: 20,
   },
@@ -700,6 +923,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   generateButtonDisabled: {
-    backgroundColor: COLORS.textDisabled,
+    backgroundColor: colors.textDisabled,
   },
 });

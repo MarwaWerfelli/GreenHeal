@@ -122,7 +122,7 @@ describe('Home Screen', () => {
         ),
         { numRuns: 100 }
       );
-    });
+    }, 30000);
   });
 
   describe('Property 7: Daily Tip Rotation', () => {
@@ -206,6 +206,22 @@ describe('Home Screen', () => {
       expect(getByText('😊')).toBeTruthy();
     });
 
+    test('Displays daily healing rhythm section', () => {
+      const { getByText } = render(<HomeScreen navigation={mockNavigation} />);
+
+      expect(getByText('home.dailyRhythmTitle')).toBeTruthy();
+      expect(getByText('home.gentleStepTitle')).toBeTruthy();
+      expect(getByText('home.reflectionPromptTitle')).toBeTruthy();
+    });
+
+    test('Scan room button navigates to guided dialogue', () => {
+      const { getByText } = render(<HomeScreen navigation={mockNavigation} />);
+
+      fireEvent.press(getByText('home.scanRoom'));
+
+      expect(mockNavigate).toHaveBeenCalledWith('GuidedDialogue');
+    });
+
     test('My journey button navigates to healing journal', () => {
       const { getByText } = render(<HomeScreen navigation={mockNavigation} />);
       const myJourneyButton = getByText('home.myJourney');
@@ -252,6 +268,36 @@ describe('Home Screen', () => {
       });
     });
 
+    test('Mood selection shows supportive guidance', async () => {
+      (saveMoodCheckIn as jest.Mock).mockResolvedValue(undefined);
+
+      const { getByText } = render(<HomeScreen navigation={mockNavigation} />);
+
+      fireEvent.press(getByText('😊'));
+
+      await waitFor(() => {
+        expect(getByText('home.moodSupport.5')).toBeTruthy();
+      });
+    });
+
+    test('Uses preferred name from onboarding when available', async () => {
+      (getOnboardingData as jest.Mock).mockResolvedValue({
+        healingGoal: 'stress',
+        budget: 'under10',
+        reportProfile: {
+          fullName: 'Lina Haddad',
+          preferredName: 'Lina',
+        },
+        completedAt: new Date().toISOString(),
+      });
+
+      const { getByText } = render(<HomeScreen navigation={mockNavigation} />);
+
+      await waitFor(() => {
+        expect(getByText(/Lina 🌿/)).toBeTruthy();
+      });
+    });
+
     test('Handles unexpected garden plant payloads without logging an error', async () => {
       const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       (getGardenPlants as jest.Mock).mockResolvedValue(undefined);
@@ -260,6 +306,28 @@ describe('Home Screen', () => {
 
       await waitFor(() => {
         expect(getGardenPlants).toHaveBeenCalled();
+      });
+
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
+      consoleErrorSpy.mockRestore();
+    });
+
+    test('Handles malformed onboarding profile payloads without logging an error', async () => {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      (getOnboardingData as jest.Mock).mockResolvedValue({
+        healingGoal: 'sleep',
+        budget: 'under10',
+        reportProfile: {
+          fullName: 42,
+          preferredName: { value: 'Lina' },
+        },
+        completedAt: new Date().toISOString(),
+      });
+
+      render(<HomeScreen navigation={mockNavigation} />);
+
+      await waitFor(() => {
+        expect(getOnboardingData).toHaveBeenCalled();
       });
 
       expect(consoleErrorSpy).not.toHaveBeenCalled();

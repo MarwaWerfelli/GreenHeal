@@ -9,6 +9,12 @@ interface MoodData {
   score: number;
 }
 
+function isMoodRow(
+  row: unknown
+): row is { mood_score: number | string; created_at: string } {
+  return !!row && typeof row === 'object';
+}
+
 function MoodChart() {
   const { t } = useTranslation();
   const [moodData, setMoodData] = useState<MoodData[]>([]);
@@ -40,18 +46,25 @@ function MoodChart() {
         'SELECT mood_score, created_at FROM mood_checkins WHERE created_at >= ? ORDER BY created_at ASC',
         [sevenDaysAgo.toISOString()]
       );
+      const normalizedRows = Array.isArray(rows) ? rows.filter(isMoodRow) : [];
 
       // Group by day and get average for each day
       const dayMap = new Map<string, number[]>();
       
-      rows.forEach(row => {
+      normalizedRows.forEach(row => {
         const date = new Date(row.created_at);
+        const score = typeof row.mood_score === 'number' ? row.mood_score : Number(row.mood_score);
+
+        if (!Number.isFinite(date.getTime()) || !Number.isFinite(score)) {
+          return;
+        }
+
         const dayKey = date.toLocaleDateString('en-US', { weekday: 'short' });
         
         if (!dayMap.has(dayKey)) {
           dayMap.set(dayKey, []);
         }
-        dayMap.get(dayKey)!.push(row.mood_score);
+        dayMap.get(dayKey)!.push(score);
       });
 
       // Calculate averages and prepare data

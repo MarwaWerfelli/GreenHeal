@@ -1,6 +1,9 @@
 import React, { Component, ReactNode } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { COLORS } from '../utils/constants';
+import { DESIGN_SYSTEM } from '../utils/constants';
+
+const colors = DESIGN_SYSTEM.colors;
+const shadows = DESIGN_SYSTEM.shadows;
 
 interface Props {
   children: ReactNode;
@@ -63,8 +66,8 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.background,
-    padding: 20,
+    backgroundColor: colors.bgBase,
+    padding: 24,
   },
   emoji: {
     fontSize: 64,
@@ -73,24 +76,25 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: COLORS.text,
+    color: colors.textPrimary,
     marginBottom: 10,
     textAlign: 'center',
   },
   message: {
     fontSize: 16,
-    color: COLORS.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: 30,
   },
   button: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     paddingHorizontal: 30,
     paddingVertical: 15,
-    borderRadius: 25,
+    borderRadius: 18,
+    ...shadows.small,
   },
   buttonText: {
-    color: COLORS.white,
+    color: colors.bgSurface,
     fontSize: 16,
     fontWeight: '600',
   },

@@ -207,6 +207,50 @@ function getDatabase(): SQLite.SQLiteDatabase {
   return db;
 }
 
+function isRowRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function normalizeQueryRows<Row extends Record<string, unknown>>(rows: unknown): Row[] {
+  if (!Array.isArray(rows)) {
+    return [];
+  }
+
+  return rows.filter(isRowRecord) as Row[];
+}
+
+function coerceString(value: unknown, fallback = ''): string {
+  return typeof value === 'string' ? value : fallback;
+}
+
+function coerceOptionalString(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined;
+}
+
+function coerceNumber(value: unknown, fallback = 0): number {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === 'string' && value.trim().length > 0) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+
+  return fallback;
+}
+
+function coerceMoodScore(value: unknown): JournalEntry['moodScore'] {
+  const moodScore = coerceNumber(value, 3);
+  return moodScore >= 1 && moodScore <= 5 ? moodScore as JournalEntry['moodScore'] : 3;
+}
+
+function coerceCareDifficulty(value: unknown): GardenPlant['careDifficulty'] {
+  return value === 'easy' || value === 'medium' || value === 'hard' ? value : 'easy';
+}
+
 /**
  * Calculate next watering date based on last watered date and frequency
  */
@@ -229,7 +273,9 @@ async function migrateWateringReminderFields(): Promise<void> {
       "PRAGMA table_info(garden_plants)"
     );
     
-    const columnNames = tableInfo.map(col => col.name);
+    const columnNames = normalizeQueryRows<{ name?: unknown }>(tableInfo)
+      .map(col => col.name)
+      .filter((name): name is string => typeof name === 'string');
     const hasNewFields = columnNames.includes('watering_reminder_enabled');
     
     if (!hasNewFields) {
@@ -293,12 +339,13 @@ export async function getJournalEntries(): Promise<JournalEntry[]> {
     const rows = await database.getAllAsync<any>(
       'SELECT * FROM journal_entries ORDER BY created_at DESC'
     );
-    return rows.map(row => ({
-      id: row.id,
-      moodScore: row.mood_score, // Map snake_case to camelCase
-      notes: row.notes,
-      photoPath: row.photo_path, // Map snake_case to camelCase
-      createdAt: row.created_at, // Map snake_case to camelCase
+
+    return normalizeQueryRows<Record<string, unknown>>(rows).map(row => ({
+      id: typeof row.id === 'number' ? row.id : coerceNumber(row.id, 0) || undefined,
+      moodScore: coerceMoodScore(row.mood_score),
+      notes: row.notes as string | undefined,
+      photoPath: row.photo_path as string | undefined,
+      createdAt: coerceString(row.created_at, new Date(0).toISOString()),
     }));
   } catch (error) {
     console.error('Error getting journal entries:', error);
@@ -374,23 +421,24 @@ export async function getGardenPlants(): Promise<GardenPlant[]> {
     const rows = await database.getAllAsync<Record<string, unknown>>(
       'SELECT * FROM garden_plants ORDER BY added_at DESC'
     );
-    return rows.map(row => ({
-      id: row.id as number,
-      name: row.name as string,
-      placement: row.placement as string | undefined,
-      healingBenefit: (row.healing_benefit ?? row.healingBenefit) as string | undefined,
-      careDifficulty: (row.care_difficulty ?? row.careDifficulty) as 'easy' | 'medium' | 'hard',
-      estimatedCost: (row.estimated_cost ?? row.estimatedCost) as string | undefined,
-      wateringFrequencyDays: (row.watering_frequency_days ?? row.wateringFrequencyDays) as number,
-      lastWateredAt: (row.last_watered_at ?? row.lastWateredAt) as string | undefined,
-      nextWateringAt: (row.next_watering_at ?? row.nextWateringAt) as string,
-      careInstructions: (row.care_instructions ?? row.careInstructions) as string | undefined,
-      notificationId: (row.notification_id ?? row.notificationId) as string | undefined,
-      addedAt: (row.added_at ?? row.addedAt) as string,
+
+    return normalizeQueryRows<Record<string, unknown>>(rows).map(row => ({
+      id: typeof row.id === 'number' ? row.id : coerceNumber(row.id, 0) || undefined,
+      name: coerceString(row.name, 'Plant'),
+      placement: coerceOptionalString(row.placement),
+      healingBenefit: coerceOptionalString(row.healing_benefit ?? row.healingBenefit),
+      careDifficulty: coerceCareDifficulty(row.care_difficulty ?? row.careDifficulty),
+      estimatedCost: coerceOptionalString(row.estimated_cost ?? row.estimatedCost),
+      wateringFrequencyDays: coerceNumber(row.watering_frequency_days ?? row.wateringFrequencyDays, 7),
+      lastWateredAt: coerceOptionalString(row.last_watered_at ?? row.lastWateredAt),
+      nextWateringAt: coerceString(row.next_watering_at ?? row.nextWateringAt, new Date().toISOString()),
+      careInstructions: coerceOptionalString(row.care_instructions ?? row.careInstructions),
+      notificationId: coerceOptionalString(row.notification_id ?? row.notificationId),
+      addedAt: coerceString(row.added_at ?? row.addedAt, new Date().toISOString()),
       wateringReminderEnabled: Boolean(row.watering_reminder_enabled ?? row.wateringReminderEnabled ?? true),
-      lastWateredDate: (row.last_watered_date ?? row.lastWateredDate) as string | undefined,
-      nextWateringDate: (row.next_watering_date ?? row.nextWateringDate) as string | undefined,
-      reminderTime: (row.reminder_time ?? row.reminderTime) as string | undefined,
+      lastWateredDate: coerceOptionalString(row.last_watered_date ?? row.lastWateredDate),
+      nextWateringDate: coerceOptionalString(row.next_watering_date ?? row.nextWateringDate),
+      reminderTime: coerceOptionalString(row.reminder_time ?? row.reminderTime),
     }));
   } catch (error) {
     console.error('Error getting garden plants:', error);

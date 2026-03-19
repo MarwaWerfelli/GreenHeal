@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { subscribeToConnectivity } from '../modules/connectivity';
-import { COLORS } from '../utils/constants';
+import { DESIGN_SYSTEM } from '../utils/constants';
+
+const colors = DESIGN_SYSTEM.colors;
+const shadows = DESIGN_SYSTEM.shadows;
 
 export default function OfflineIndicator() {
   const { t } = useTranslation();
@@ -31,14 +34,15 @@ export default function OfflineIndicator() {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#FF9800',
+    backgroundColor: colors.warning,
     paddingVertical: 8,
     paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    ...shadows.small,
   },
   text: {
-    color: '#FFFFFF',
+    color: colors.bgSurface,
     fontSize: 14,
     fontWeight: '600',
   },

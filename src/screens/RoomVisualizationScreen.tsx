@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -9,12 +9,9 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
-  Animated,
-  PanResponder,
-  LayoutChangeEvent,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import type { RoomVisualizationScreenProps } from '../types';
+import type { PlantRecommendation, RoomVisualizationScreenProps } from '../types';
 import { DESIGN_SYSTEM } from '../utils/constants';
 import Constants from 'expo-constants';
 import { prepareImageForVisualizationUpload } from '../modules/image';
@@ -50,6 +47,21 @@ const STYLE_PRESETS: Array<{ id: VisualizationStylePreset; emoji: string }> = [
 
 function includesAnyKeyword(text: string, keywords: string[]) {
   return keywords.some((keyword) => text.includes(keyword));
+}
+
+function isValidRecommendation(value: unknown): value is PlantRecommendation {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const candidate = value as Partial<PlantRecommendation>;
+
+  return (
+    typeof candidate.name === 'string' &&
+    candidate.name.trim().length > 0 &&
+    typeof candidate.placement === 'string' &&
+    candidate.placement.trim().length > 0
+  );
 }
 
 function getPlacementPreview(placement: string): PlacementPreview {
@@ -132,172 +144,28 @@ function getPlacementPreview(placement: string): PlacementPreview {
   };
 }
 
-// ─── Before / After Slider ───────────────────────────────────────────────────
-function BeforeAfterSlider({
-  beforeUri,
-  afterUri,
-}: {
-  beforeUri: string;
-  afterUri: string;
-}) {
-  const [containerWidth, setContainerWidth] = useState(0);
-  const sliderX = useRef(new Animated.Value(0)).current;
-  const currentX = useRef(0);
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderMove: (_, gs) => {
-        const next = Math.max(0, Math.min(containerWidth, currentX.current + gs.dx));
-        sliderX.setValue(next);
-      },
-      onPanResponderRelease: (_, gs) => {
-        currentX.current = Math.max(
-          0,
-          Math.min(containerWidth, currentX.current + gs.dx)
-        );
-      },
-    })
-  ).current;
-
-  function onLayout(e: LayoutChangeEvent) {
-    const w = e.nativeEvent.layout.width;
-    setContainerWidth(w);
-    currentX.current = w / 2;
-    sliderX.setValue(w / 2);
-  }
-
-  const clipWidth = sliderX.interpolate({
-    inputRange: [0, Math.max(containerWidth, 1)],
-    outputRange: [0, Math.max(containerWidth, 1)],
-    extrapolate: 'clamp',
-  });
-
-  return (
-    <View style={sliderStyles.wrapper} onLayout={onLayout}>
-      {/* After image — full width, at the back */}
-      <Image source={{ uri: afterUri }} style={sliderStyles.fullImage} resizeMode="cover" />
-
-      {/* Before image — clipped to left of the divider */}
-      <Animated.View style={[sliderStyles.clip, { width: clipWidth }]}>
-        <Image
-          source={{ uri: beforeUri }}
-          style={[sliderStyles.fullImage, { width: containerWidth || '100%' }]}
-          resizeMode="cover"
-        />
-      </Animated.View>
-
-      {/* Divider line */}
-      <Animated.View
-        style={[sliderStyles.divider, { left: sliderX }]}
-        {...panResponder.panHandlers}
-      >
-        <View style={sliderStyles.handle}>
-          <Text style={sliderStyles.handleArrows}>{'◀  ▶'}</Text>
-        </View>
-      </Animated.View>
-
-      {/* Labels */}
-      <View style={sliderStyles.labelBefore} pointerEvents="none">
-        <Text style={sliderStyles.labelText}>Before</Text>
-      </View>
-      <View style={sliderStyles.labelAfter} pointerEvents="none">
-        <Text style={sliderStyles.labelText}>After</Text>
-      </View>
-    </View>
-  );
-}
-
-const sliderStyles = StyleSheet.create({
-  wrapper: {
-    width: '100%',
-    height: 320,
-    borderRadius: 14,
-    overflow: 'hidden',
-    backgroundColor: '#111',
-    marginTop: 16,
-  },
-  fullImage: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    height: '100%',
-    width: '100%',
-  },
-  clip: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    height: '100%',
-    overflow: 'hidden',
-  },
-  divider: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    width: 3,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  handle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.4,
-    shadowRadius: 4,
-    elevation: 6,
-  },
-  handleArrows: {
-    fontSize: 12,
-    color: '#2D6A4F',
-    fontWeight: 'bold',
-  },
-  labelBefore: {
-    position: 'absolute',
-    top: 10,
-    left: 10,
-    backgroundColor: 'rgba(0,0,0,0.55)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  labelAfter: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    backgroundColor: 'rgba(45,106,79,0.85)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  labelText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-});
-
 // ─── Main Screen ─────────────────────────────────────────────────────────────
 export default function RoomVisualizationScreen({
   route,
 }: RoomVisualizationScreenProps) {
   const {
-    imageUri = '',
-    recommendations = [],
-    selectedPlant,
-    selectedPlants = [],
+    imageUri: rawImageUri = '',
+    recommendations: rawRecommendations = [],
+    selectedPlant: rawSelectedPlant,
+    selectedPlants: rawSelectedPlants = [],
   } = route.params ?? {};
   const { t } = useTranslation();
   const [aiImageUrl, setAiImageUrl] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [stylePreset, setStylePreset] = useState<VisualizationStylePreset>('balancedModern');
+  const imageUri = typeof rawImageUri === 'string' ? rawImageUri : '';
+  const recommendations = Array.isArray(rawRecommendations)
+    ? rawRecommendations.filter(isValidRecommendation)
+    : [];
+  const selectedPlants = Array.isArray(rawSelectedPlants)
+    ? rawSelectedPlants.filter(isValidRecommendation)
+    : [];
+  const selectedPlant = isValidRecommendation(rawSelectedPlant) ? rawSelectedPlant : null;
   const roomPlanPlants = selectedPlants.length ? selectedPlants : recommendations;
   const isMultiPlantMode = roomPlanPlants.length > 1;
   const initialPreviewIndex = Math.max(
@@ -645,15 +513,19 @@ export default function RoomVisualizationScreen({
           )}
         </TouchableOpacity>
 
-        {/* Before / After Slider */}
         {aiImageUrl && (
           <View style={styles.aiImageContainer}>
             <Text style={styles.aiImageLabel}>
               {t('aiAnalysis.aiGeneratedExample')}
             </Text>
-            <BeforeAfterSlider beforeUri={imageUri} afterUri={aiImageUrl} />
+            <Image
+              testID="generated-room-image"
+              source={{ uri: aiImageUrl }}
+              style={styles.generatedImage}
+              resizeMode="cover"
+            />
             <Text style={styles.aiImageNote}>
-              Drag the slider to compare before & after · {t('aiAnalysis.exampleNote')}
+              {t('aiAnalysis.exampleNote')}
             </Text>
           </View>
         )}
@@ -1076,6 +948,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: DESIGN_SYSTEM.colors.textPrimary,
     marginBottom: 4,
+  },
+  generatedImage: {
+    width: '100%',
+    height: 320,
+    marginTop: 12,
+    borderRadius: 20,
+    backgroundColor: DESIGN_SYSTEM.colors.borderSubtle,
   },
   aiImageNote: {
     fontSize: 12,

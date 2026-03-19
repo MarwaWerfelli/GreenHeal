@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 import i18n from '../i18n';
 import { useFocusEffect } from '@react-navigation/native';
 import { getJournalEntries } from '../modules/storage';
-import { COLORS } from '../utils/constants';
+import { DESIGN_SYSTEM } from '../utils/constants';
 import type { JournalEntry } from '../types';
 import type { CompositeScreenProps } from '@react-navigation/native';
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
@@ -28,6 +28,7 @@ const MOOD_EMOJIS = ['😢', '😕', '😐', '🙂', '😊'];
 
 export default function HealingJournalScreen({ navigation }: HealingJournalScreenProps) {
   const { t } = useTranslation();
+  const colors = DESIGN_SYSTEM.colors;
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -42,12 +43,13 @@ export default function HealingJournalScreen({ navigation }: HealingJournalScree
     try {
       const journalEntries = await getJournalEntries();
       // Sort by date descending (newest first)
-      const sorted = journalEntries.sort((a, b) => {
+      const sorted = [...(Array.isArray(journalEntries) ? journalEntries : [])].sort((a, b) => {
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       });
       setEntries(sorted);
     } catch (error) {
       console.error('Error loading journal entries:', error);
+      setEntries([]);
     } finally {
       setLoading(false);
     }
@@ -96,15 +98,17 @@ export default function HealingJournalScreen({ navigation }: HealingJournalScree
 
   function renderEntry({ item }: { item: JournalEntry }) {
     const moodEmoji = MOOD_EMOJIS[item.moodScore - 1];
-    const notesPreview = item.notes
-      ? item.notes.length > 100
-        ? item.notes.substring(0, 100) + '...'
-        : item.notes
+    const moodAccent = colors.moodScale[item.moodScore - 1] || colors.primary;
+    const safeNotes = typeof item.notes === 'string' ? item.notes : '';
+    const notesPreview = safeNotes
+      ? safeNotes.length > 100
+        ? safeNotes.substring(0, 100) + '...'
+        : safeNotes
       : t('journal.noNotes');
 
     return (
       <TouchableOpacity
-        style={[styles.entryCard, styles[`moodBorder${item.moodScore}` as keyof typeof styles] as any]}
+        style={[styles.entryCard, { borderColor: moodAccent }]}
         onPress={() => {
           if (item.id) {
             navigation.navigate('JournalEntryDetail', { entryId: item.id });
@@ -112,7 +116,10 @@ export default function HealingJournalScreen({ navigation }: HealingJournalScree
         }}
       >
         <View style={styles.entryHeader}>
-          <Text style={styles.moodEmoji}>{moodEmoji}</Text>
+          <View style={[styles.moodBadge, { backgroundColor: `${moodAccent}18` }]}>
+            <Text style={styles.moodEmoji}>{moodEmoji}</Text>
+            <Text style={[styles.moodLabel, { color: moodAccent }]}>{t(`mood.${item.moodScore}`)}</Text>
+          </View>
           <Text style={styles.entryDate}>{formatDate(item.createdAt)}</Text>
         </View>
         
@@ -132,15 +139,26 @@ export default function HealingJournalScreen({ navigation }: HealingJournalScree
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
+      <View style={styles.headerCard}>
+        <View>
+          <Text style={styles.headerEyebrow}>{t('journal.title')}</Text>
+          <Text style={styles.headerTitle}>{t('journal.newEntry')}</Text>
+        </View>
+        <View style={styles.headerCountPill}>
+          <Text style={styles.headerCountText}>{entries.length}</Text>
+        </View>
+      </View>
+
       {entries.length === 0 ? (
         <View style={styles.emptyContainer}>
+          <Text style={styles.emptyIcon}>🫶</Text>
           <Text style={styles.emptyText}>{t('journal.noEntries')}</Text>
         </View>
       ) : (
@@ -168,69 +186,113 @@ export default function HealingJournalScreen({ navigation }: HealingJournalScree
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: DESIGN_SYSTEM.colors.bgBase,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.background,
+    backgroundColor: DESIGN_SYSTEM.colors.bgBase,
+  },
+  headerCard: {
+    marginHorizontal: DESIGN_SYSTEM.spacing.md,
+    marginTop: DESIGN_SYSTEM.spacing.md,
+    marginBottom: DESIGN_SYSTEM.spacing.sm,
+    paddingHorizontal: DESIGN_SYSTEM.spacing.lg,
+    paddingVertical: DESIGN_SYSTEM.spacing.lg,
+    borderRadius: DESIGN_SYSTEM.borderRadius.xlarge,
+    backgroundColor: DESIGN_SYSTEM.colors.bgSurface,
+    borderWidth: 1,
+    borderColor: DESIGN_SYSTEM.colors.borderSubtle,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    ...DESIGN_SYSTEM.shadows.medium,
+  },
+  headerEyebrow: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: DESIGN_SYSTEM.colors.primary,
+    marginBottom: DESIGN_SYSTEM.spacing.xs,
+    textTransform: 'uppercase',
+  },
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: DESIGN_SYSTEM.colors.textSecondary,
+  },
+  headerCountPill: {
+    minWidth: 44,
+    paddingHorizontal: DESIGN_SYSTEM.spacing.md,
+    paddingVertical: DESIGN_SYSTEM.spacing.sm,
+    borderRadius: DESIGN_SYSTEM.borderRadius.large,
+    backgroundColor: DESIGN_SYSTEM.colors.primaryPale,
+    alignItems: 'center',
+  },
+  headerCountText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: DESIGN_SYSTEM.colors.primary,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    marginHorizontal: DESIGN_SYSTEM.spacing.md,
+    marginTop: DESIGN_SYSTEM.spacing.sm,
+    padding: DESIGN_SYSTEM.spacing.xl,
+    borderRadius: DESIGN_SYSTEM.borderRadius.xlarge,
+    backgroundColor: DESIGN_SYSTEM.colors.bgSurface,
+    borderWidth: 1,
+    borderColor: DESIGN_SYSTEM.colors.borderSubtle,
+    ...DESIGN_SYSTEM.shadows.medium,
+  },
+  emptyIcon: {
+    fontSize: 28,
+    marginBottom: DESIGN_SYSTEM.spacing.sm,
   },
   emptyText: {
     fontSize: 16,
-    color: COLORS.textSecondary,
+    color: DESIGN_SYSTEM.colors.textSecondary,
     textAlign: 'center',
+    lineHeight: 24,
   },
   listContent: {
     padding: 16,
     paddingBottom: 100,
   },
   entryCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: DESIGN_SYSTEM.colors.bgSurface,
+    borderRadius: DESIGN_SYSTEM.borderRadius.large,
+    padding: DESIGN_SYSTEM.spacing.md,
     marginBottom: 16,
-    borderWidth: 1,
-    borderColor: COLORS.secondary + '20',
-  },
-  moodBorder1: {
-    borderLeftWidth: 4,
-    borderLeftColor: '#E53935',
-  },
-  moodBorder2: {
-    borderLeftWidth: 4,
-    borderLeftColor: '#FB8C00',
-  },
-  moodBorder3: {
-    borderLeftWidth: 4,
-    borderLeftColor: '#FDD835',
-  },
-  moodBorder4: {
-    borderLeftWidth: 4,
-    borderLeftColor: '#7CB342',
-  },
-  moodBorder5: {
-    borderLeftWidth: 4,
-    borderLeftColor: '#43A047',
+    borderWidth: 1.5,
+    ...DESIGN_SYSTEM.shadows.small,
   },
   entryHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 12,
   },
+  moodBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: DESIGN_SYSTEM.spacing.sm,
+    paddingVertical: DESIGN_SYSTEM.spacing.xs,
+    borderRadius: DESIGN_SYSTEM.borderRadius.large,
+  },
   moodEmoji: {
-    fontSize: 32,
-    marginRight: 12,
+    fontSize: 24,
+    marginRight: 8,
+  },
+  moodLabel: {
+    fontSize: 13,
+    fontWeight: '700',
   },
   entryDate: {
     fontSize: 14,
-    color: COLORS.textSecondary,
+    color: DESIGN_SYSTEM.colors.textSecondary,
     fontWeight: '600',
   },
   thumbnail: {
@@ -241,25 +303,23 @@ const styles = StyleSheet.create({
   },
   notesPreview: {
     fontSize: 15,
-    color: COLORS.text,
+    color: DESIGN_SYSTEM.colors.textPrimary,
     lineHeight: 22,
   },
   newEntryButton: {
     position: 'absolute',
     bottom: 20,
     right: 20,
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: 24,
+    backgroundColor: DESIGN_SYSTEM.colors.primary,
+    paddingHorizontal: 22,
     paddingVertical: 16,
     borderRadius: 30,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    ...DESIGN_SYSTEM.shadows.glow,
   },
   newEntryButtonText: {
-    color: COLORS.white,
+    color: DESIGN_SYSTEM.colors.white,
     fontSize: 16,
     fontWeight: '600',
   },

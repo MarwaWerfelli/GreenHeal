@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
-  I18nManager,
+  SafeAreaView,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
@@ -14,6 +14,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import Constants from 'expo-constants';
 import { changeLanguage, getCurrentLanguage } from '../i18n';
 import { clearOnboardingData } from '../modules/storage';
+import { DESIGN_SYSTEM } from '../utils/constants';
 import type { Language, RootStackParamList } from '../types';
 
 type NavigationProp = StackNavigationProp<RootStackParamList>;
@@ -21,6 +22,7 @@ type NavigationProp = StackNavigationProp<RootStackParamList>;
 export default function SettingsScreen() {
   const { t } = useTranslation();
   const navigation = useNavigation<NavigationProp>();
+  const colors = DESIGN_SYSTEM.colors;
   const [currentLang, setCurrentLang] = useState<Language>(getCurrentLanguage());
 
   const languages: { code: Language; label: string }[] = [
@@ -75,77 +77,130 @@ export default function SettingsScreen() {
   const appVersion = Constants.expoConfig?.version || '1.0.0';
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('settings.language')}</Text>
-        {languages.map((lang) => (
-          <TouchableOpacity
-            key={lang.code}
-            style={[
-              styles.languageOption,
-              currentLang === lang.code && styles.languageOptionSelected,
-            ]}
-            onPress={() => handleLanguageChange(lang.code)}
-          >
-            <Text
+    <SafeAreaView style={styles.container}>
+      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        <View style={styles.heroCard}>
+          <Text style={styles.heroEyebrow}>{t('settings.about')}</Text>
+          <Text style={styles.heroTitle}>GreenHeal</Text>
+          <Text style={styles.heroSubtitle}>{t('settings.version')} {appVersion}</Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t('settings.language')}</Text>
+          {languages.map((lang) => (
+            <TouchableOpacity
+              key={lang.code}
               style={[
-                styles.languageText,
-                currentLang === lang.code && styles.languageTextSelected,
+                styles.languageOption,
+                currentLang === lang.code && styles.languageOptionSelected,
               ]}
+              onPress={() => handleLanguageChange(lang.code)}
             >
-              {lang.label}
-            </Text>
-            {currentLang === lang.code && (
-              <View style={styles.checkmark}>
-                <Text style={styles.checkmarkText}>✓</Text>
+              <View>
+                <Text
+                  style={[
+                    styles.languageText,
+                    currentLang === lang.code && styles.languageTextSelected,
+                  ]}
+                >
+                  {lang.label}
+                </Text>
               </View>
-            )}
+              {currentLang === lang.code && (
+                <View style={styles.checkmark}>
+                  <Text style={styles.checkmarkText}>✓</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>{t('settings.supportTools')}</Text>
+          <TouchableOpacity
+            style={styles.feedbackCard}
+            testID="settings-report-preview-card"
+            onPress={() => navigation.navigate('ReportPreview')}
+          >
+            <View style={styles.supportCardHeader}>
+              <Text style={styles.feedbackTitle}>{t('settings.reportPreview')}</Text>
+              <Text style={styles.supportArrow}>→</Text>
+            </View>
+            <Text style={styles.feedbackDescription}>{t('settings.reportPreviewSubtitle')}</Text>
           </TouchableOpacity>
-        ))}
-      </View>
+          <TouchableOpacity
+            style={[styles.feedbackCard, styles.supportCardSpacing]}
+            testID="settings-feedback-card"
+            onPress={() => navigation.navigate('Feedback')}
+          >
+            <View style={styles.supportCardHeader}>
+              <Text style={styles.feedbackTitle}>{t('settings.feedback')}</Text>
+              <Text style={styles.supportArrow}>→</Text>
+            </View>
+            <Text style={styles.feedbackDescription}>{t('settings.feedbackSubtitle')}</Text>
+          </TouchableOpacity>
+        </View>
 
-      <View style={styles.section}>
-        <TouchableOpacity
-          style={styles.resetButton}
-          onPress={handleResetProfile}
-        >
-          <Text style={styles.resetButtonText}>{t('settings.resetProfile')}</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.aboutTitle}>{t('settings.about')}</Text>
-        <Text style={styles.versionText}>
-          {t('settings.version')} {appVersion}
-        </Text>
-      </View>
-    </ScrollView>
+        <View style={styles.section}>
+          <TouchableOpacity
+            style={styles.resetButton}
+            onPress={handleResetProfile}
+          >
+            <Text style={styles.resetButtonText}>{t('settings.resetProfile')}</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: DESIGN_SYSTEM.colors.bgBase,
   },
   content: {
-    padding: 20,
+    padding: DESIGN_SYSTEM.spacing.lg,
+  },
+  heroCard: {
+    backgroundColor: DESIGN_SYSTEM.colors.bgSurface,
+    borderRadius: DESIGN_SYSTEM.borderRadius.xlarge,
+    padding: DESIGN_SYSTEM.spacing.xl,
+    marginBottom: DESIGN_SYSTEM.spacing.lg,
+    borderWidth: 1,
+    borderColor: DESIGN_SYSTEM.colors.borderSubtle,
+    ...DESIGN_SYSTEM.shadows.medium,
+  },
+  heroEyebrow: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: DESIGN_SYSTEM.colors.primary,
+    marginBottom: DESIGN_SYSTEM.spacing.xs,
+    textTransform: 'uppercase',
+  },
+  heroTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: DESIGN_SYSTEM.colors.textPrimary,
+    marginBottom: DESIGN_SYSTEM.spacing.xs,
+  },
+  heroSubtitle: {
+    fontSize: 14,
+    color: DESIGN_SYSTEM.colors.textSecondary,
   },
   section: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    backgroundColor: DESIGN_SYSTEM.colors.bgSurface,
+    borderRadius: DESIGN_SYSTEM.borderRadius.xlarge,
+    padding: DESIGN_SYSTEM.spacing.lg,
+    marginBottom: DESIGN_SYSTEM.spacing.lg,
+    borderWidth: 1,
+    borderColor: DESIGN_SYSTEM.colors.borderSubtle,
+    ...DESIGN_SYSTEM.shadows.medium,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#2D6A4F',
+    color: DESIGN_SYSTEM.colors.primary,
     marginBottom: 16,
   },
   languageOption: {
@@ -154,56 +209,78 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 12,
     paddingHorizontal: 16,
-    borderRadius: 8,
+    borderRadius: DESIGN_SYSTEM.borderRadius.large,
     marginBottom: 8,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: DESIGN_SYSTEM.colors.bgElevated,
+    borderWidth: 1,
+    borderColor: DESIGN_SYSTEM.colors.borderSubtle,
   },
   languageOptionSelected: {
-    backgroundColor: '#E8F5E9',
-    borderWidth: 2,
-    borderColor: '#2D6A4F',
+    backgroundColor: DESIGN_SYSTEM.colors.primaryPale,
+    borderColor: DESIGN_SYSTEM.colors.primary,
   },
   languageText: {
     fontSize: 16,
-    color: '#333333',
+    color: DESIGN_SYSTEM.colors.textPrimary,
   },
   languageTextSelected: {
     fontWeight: '600',
-    color: '#2D6A4F',
+    color: DESIGN_SYSTEM.colors.primary,
   },
   checkmark: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#2D6A4F',
+    backgroundColor: DESIGN_SYSTEM.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   checkmarkText: {
-    color: '#FFFFFF',
+    color: DESIGN_SYSTEM.colors.white,
     fontSize: 16,
     fontWeight: 'bold',
   },
   resetButton: {
-    backgroundColor: '#DC3545',
+    backgroundColor: DESIGN_SYSTEM.colors.error,
     paddingVertical: 14,
     paddingHorizontal: 20,
-    borderRadius: 8,
+    borderRadius: DESIGN_SYSTEM.borderRadius.large,
     alignItems: 'center',
   },
   resetButtonText: {
-    color: '#FFFFFF',
+    color: DESIGN_SYSTEM.colors.white,
     fontSize: 16,
     fontWeight: '600',
   },
-  aboutTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#2D6A4F',
-    marginBottom: 8,
+  feedbackCard: {
+    backgroundColor: DESIGN_SYSTEM.colors.bgElevated,
+    borderWidth: 1,
+    borderColor: DESIGN_SYSTEM.colors.borderSubtle,
+    borderRadius: DESIGN_SYSTEM.borderRadius.large,
+    padding: 16,
   },
-  versionText: {
+  supportCardSpacing: {
+    marginTop: 12,
+  },
+  supportCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  supportArrow: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: DESIGN_SYSTEM.colors.primary,
+  },
+  feedbackTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: DESIGN_SYSTEM.colors.primary,
+  },
+  feedbackDescription: {
     fontSize: 14,
-    color: '#666666',
+    color: DESIGN_SYSTEM.colors.textSecondary,
+    lineHeight: 20,
   },
 });

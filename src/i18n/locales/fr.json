@@ -28,6 +28,21 @@
     "title": "GreenHeal",
     "welcome": "Bienvenue sur GreenHeal",
     "subtitle": "Votre compagnon de guérison par les plantes",
+    "profileQuestion": "Faisons connaissance",
+    "profileSubtitle": "Ces informations personnalisent votre parcours et aident à préparer des rapports de progression pour votre équipe soignante.",
+    "profilePersonalSection": "Informations personnelles",
+    "profileCareSection": "Informations de suivi",
+    "profileOptional": "Les informations de suivi sont facultatives pour le moment et peuvent être mises à jour plus tard.",
+    "profilePrivacy": "Vos informations restent privées et ne sont partagées que selon vos réglages de consentement.",
+    "profileFields": {
+      "fullName": "Nom complet",
+      "preferredName": "Prénom préféré",
+      "age": "Âge",
+      "hospitalName": "Hôpital ou centre de soins",
+      "patientId": "Identifiant patient ou rapport",
+      "careProgram": "Programme ou service",
+      "clinicianName": "Médecin ou thérapeute"
+    },
     "healingQuestion": "De quoi souhaitez-vous guérir ?",
     "healingSubtitle": "Choisissez le domaine sur lequel vous souhaitez vous concentrer",
     "healingGoals": {
@@ -83,6 +98,23 @@
     "actionHintCare": "Voyez ce qui a besoin d'eau et gardez un rythme stable",
     "actionHintJourney": "Réfléchissez à vos progrès, déclencheurs et moments apaisants",
     "actionHintGarden": "Passez en revue vos plantes et développez votre soutien végétal",
+    "dailyRhythmTitle": "Votre rythme thérapeutique du jour",
+    "dailyRhythmSubtitle": "Un petit plan bienveillant pour vous aider à vous écouter, à prendre soin de votre espace et à remarquer vos progrès.",
+    "todayFocusTitle": "Priorité du jour",
+    "gentleStepTitle": "Prochaine étape douce",
+    "reflectionPromptTitle": "Question de réflexion",
+    "dailyActionRestore": "Commencez par une seule action apaisante : buvez de l'eau, asseyez-vous près de la lumière naturelle ou écrivez une phrase sur ce qui est le plus difficile aujourd'hui.",
+    "dailyActionStartSpace": "Commencez par une action thérapeutique pour votre pièce : scannez votre espace et créez votre premier plan végétal apaisant.",
+    "dailyActionStress": "Passez deux minutes calmes avec une plante, ralentissez votre respiration et remarquez un endroit de la pièce déjà plus doux.",
+    "dailyActionSleep": "Préparez votre espace du soir plus tôt : réduisez le désordre visuel, arrosez seulement ce qui en a besoin et gardez la pièce reposante cette nuit.",
+    "dailyActionPhysical": "Choisissez une tâche légère et réparatrice aujourd'hui : installez-vous confortablement, prenez soin d'une plante et faites une pause avant de trop vous fatiguer.",
+    "dailyActionReconnect": "Choisissez une action qui redonne vie aujourd'hui : ouvrez les rideaux, prenez soin d'une plante ou écrivez-vous une phrase bienveillante.",
+    "dailyActionWellness": "Gardez votre routine thérapeutique simple aujourd'hui : notez votre humeur, prenez soin d'une plante et remarquez une chose qui s'améliore.",
+    "reflectionStress": "Qu'est-ce qui a aidé votre corps à se sentir un peu plus en sécurité ou apaisé aujourd'hui ?",
+    "reflectionSleep": "Qu'est-ce qui a rendu votre pièce plus reposante aujourd'hui, même légèrement ?",
+    "reflectionPhysical": "Qu'est-ce qui a soutenu votre confort, votre force ou votre énergie aujourd'hui ?",
+    "reflectionDepression": "Qu'est-ce qui vous a aidé à vous sentir ne serait-ce qu'un peu plus présent ou connecté aujourd'hui ?",
+    "reflectionWellness": "Quel moment sain avez-vous envie de répéter demain ?",
     "healingPathTitle": "Votre parcours thérapeutique",
     "stepOneTitle": "1. Scannez votre pièce",
     "stepOneBody": "Importez une vraie photo de votre espace pour que GreenHeal conçoive autour de votre maison réelle, pas d'un modèle générique.",
@@ -90,6 +122,14 @@
     "stepTwoBody": "Choisissez plusieurs plantes qui recréent l'atmosphère apaisante du centre spécialisé et correspondent à votre objectif de rétablissement.",
     "stepThreeTitle": "3. Entretenez votre routine verte",
     "stepThreeBody": "Suivez les rappels d'arrosage et les conseils simples d'entretien pour que la pièce reste réparatrice dans le temps.",
+    "moodSupport": {
+      "default": "Respirez lentement et choisissez l'émotion la plus proche de votre journée. Il n'y a pas de mauvaise réponse.",
+      "1": "Merci d'avoir pris le temps de vous écouter. Soyez particulièrement doux avec vous-même aujourd'hui et gardez la prochaine étape très simple.",
+      "2": "Vous êtes présent même dans une journée difficile. Cherchez le confort, l'hydratation et une seule action apaisante.",
+      "3": "Merci de remarquer où vous en êtes. Une routine simple et stable peut aider à garder la journée ancrée.",
+      "4": "C'est bon de voir un moment plus léger aujourd'hui. Essayez de le protéger avec une habitude apaisante que vous pouvez répéter.",
+      "5": "Je suis heureux que la journée semble plus lumineuse. Notez ce qui vous aide pour pouvoir y revenir."
+    },
     "tips": {
       "0": "La lavande peut réduire l'anxiété et améliorer la qualité du sommeil",
       "1": "L'aloe vera purifie l'air et favorise la guérison de la peau",
@@ -137,6 +177,23 @@
     "planRequiredTitle": "Choisissez au moins une plante",
     "planRequiredMessage": "Sélectionnez une ou plusieurs plantes pour votre plan thérapeutique avant de générer l'aperçu.",
     "viewPlantDetails": "Touchez pour voir les détails complets de la plante",
+    "guidedSummaryTitle": "Contexte thérapeutique guidé",
+    "guidedSummarySubtitle": "L'analyse de la pièce est adaptée aux symptômes et au soutien recherchés que vous avez indiqués avant le scan.",
+    "guidedSummarySymptoms": "Symptômes dominants",
+    "guidedSummaryTime": "Moment le plus sensible",
+    "guidedSummarySupport": "Soutien souhaité",
+    "planTable": {
+      "plant": "Plante",
+      "placement": "Meilleur emplacement",
+      "healingBenefit": "Soutien thérapeutique",
+      "healingRole": "Rôle thérapeutique",
+      "sensoryAction": "Action sensorielle",
+      "sensoryFallback": "Ajoute un repère végétal doux qui aide la pièce à paraître plus calme et réparatrice.",
+      "careDifficulty": "Niveau d'entretien",
+      "estimatedCost": "Budget estimé",
+      "watering": "Rythme d'arrosage",
+      "encouragement": "Note apaisante"
+    },
     "selectedPlantTitle": "Plante sélectionnée pour l'aperçu",
     "sameRoomSubtitle": "Nous conservons votre photo d'origine et ajoutons une seule plante choisie de manière moderne et réaliste.",
     "multiPlantSubtitle": "Nous conservons votre photo d'origine et organisons ensemble les plantes sélectionnées dans une composition moderne et réaliste.",
@@ -172,6 +229,91 @@
       "cornerRetreat": {
         "label": "Coin refuge",
         "description": "Un petit groupe doux et ancré pour un coin lecture ou un angle apaisant."
+      }
+    }
+  },
+  "guidedDialogue": {
+    "eyebrow": "Dialogue thérapeutique guidé",
+    "title": "Dites-nous comment la pièce agit sur vous",
+    "subtitle": "Avant le scan, répondez à quelques questions pour que GreenHeal identifie les symptômes dominants et adapte la proposition végétale à votre espace réel.",
+    "summaryTitle": "Orientation thérapeutique actuelle",
+    "summaryPlaceholder": "Choisissez vos symptômes, le moment où ils sont les plus marqués et le soutien recherché pour personnaliser l'analyse.",
+    "cta": "Continuer vers le scan de la pièce",
+    "steps": {
+      "symptoms": "Étape 1",
+      "timing": "Étape 2",
+      "support": "Étape 3"
+    },
+    "sections": {
+      "symptomsTitle": "Quels symptômes ressortent le plus en ce moment ?",
+      "symptomsBody": "Choisissez une ou plusieurs sensations qui décrivent le mieux ce que le patient ressent actuellement.",
+      "timingTitle": "À quel moment ces sensations sont-elles les plus fortes ?",
+      "supportTitle": "Quel type de soutien aiderait le plus ?"
+    },
+    "symptoms": {
+      "night_waking": {
+        "label": "Réveils nocturnes fréquents",
+        "hint": "Le sommeil semble léger, fragmenté ou interrompu plusieurs fois dans la nuit."
+      },
+      "anxiety": {
+        "label": "Légère anxiété",
+        "hint": "Une tension, une inquiétude ou une nervosité discrète mais persistante reste présente."
+      },
+      "irritability": {
+        "label": "Irritabilité inhabituelle",
+        "hint": "La pièce semble moins tolérante, plus réactive ou émotionnellement vive que d'habitude."
+      },
+      "restlessness": {
+        "label": "Agitation",
+        "hint": "Il devient difficile de se poser, et le corps ou l'esprit cherche sans cesse un apaisement."
+      },
+      "mental_fatigue": {
+        "label": "Fatigue mentale",
+        "hint": "Réfléchir paraît plus lourd, plus flou ou plus coûteux que d'ordinaire."
+      },
+      "low_mood": {
+        "label": "Baisse de moral",
+        "hint": "L'atmosphère paraît émotionnellement plate, découragée ou moins chaleureuse."
+      }
+    },
+    "timeOfDay": {
+      "night": {
+        "label": "La nuit",
+        "hint": "La pièce devient plus difficile à habiter paisiblement dès le début de soirée."
+      },
+      "morning": {
+        "label": "Le matin",
+        "hint": "Les symptômes sont les plus présents au réveil ou au démarrage de la journée."
+      },
+      "afternoon": {
+        "label": "L'après-midi",
+        "hint": "La fatigue ou la surcharge sensorielle augmente au milieu de la journée."
+      },
+      "evening": {
+        "label": "Le soir",
+        "hint": "La pièce paraît plus lourde, plus bruyante ou moins apaisante plus tard dans la journée."
+      },
+      "all_day": {
+        "label": "Toute la journée",
+        "hint": "Le besoin de soutien reste présent presque en continu."
+      }
+    },
+    "supportFocus": {
+      "sleep": {
+        "label": "Mieux dormir",
+        "hint": "Prioriser une atmosphère du soir plus calme et des repères de coucher plus réparateurs."
+      },
+      "calm": {
+        "label": "Plus d'apaisement",
+        "hint": "Réduire la tension et adoucir la pression sensorielle de la pièce."
+      },
+      "emotional_balance": {
+        "label": "Équilibre émotionnel",
+        "hint": "Aider la pièce à paraître plus stable, plus chaleureuse et émotionnellement soutenante."
+      },
+      "focus": {
+        "label": "Concentration ancrée",
+        "hint": "Créer un ordre visuel plus net avec moins de surstimulation mentale."
       }
     }
   },
@@ -230,10 +372,145 @@
   "settings": {
     "title": "Paramètres",
     "language": "Langue",
+    "supportTools": "Outils de soutien",
+    "reportPreview": "Aperçu du rapport hebdomadaire",
+    "reportPreviewSubtitle": "Voyez ce qu'une mise à jour de guérison pour votre équipe de soins pourrait contenir avant d'activer le partage.",
+    "feedback": "Évaluer GreenHeal",
+    "feedbackSubtitle": "Dites-nous comment l'application soutient votre parcours de guérison.",
     "resetProfile": "Réinitialiser le profil de guérison",
     "resetConfirm": "Êtes-vous sûr de vouloir réinitialiser votre profil de guérison ? Cela effacera toutes vos données d'intégration.",
     "version": "Version",
     "about": "À propos de GreenHeal"
+  },
+  "reportPreview": {
+    "title": "Aperçu du rapport hebdomadaire",
+    "subtitle": "Cet aperçu rassemble un résumé apaisant de votre activité de guérison sur les 7 derniers jours.",
+    "previewBadge": "Aperçu uniquement",
+    "loading": "Préparation de votre résumé hebdomadaire...",
+    "partialDataNotice": "Certains détails du rapport n'ont pas pu être chargés pour le moment, l'aperçu peut donc être incomplet.",
+    "profileTitle": "Profil du rapport",
+    "patient": "Patient",
+    "careTeam": "Équipe de soins",
+    "healingFocus": "Objectif de guérison",
+    "program": "Programme",
+    "patientId": "ID patient",
+    "summaryTitle": "Vue d'ensemble de la semaine",
+    "windowLabel": "Basé sur les réflexions et l'activité des plantes des 7 derniers jours.",
+    "entriesThisWeek": "Entrées du journal cette semaine",
+    "plantsInCare": "Plantes actuellement suivies",
+    "averageMood": "Humeur moyenne du journal",
+    "newPlantsThisWeek": "Nouvelles plantes ajoutées cette semaine",
+    "reflectionsTitle": "Réflexions récentes",
+    "noReflections": "Aucune réflexion écrite cette semaine pour le moment.",
+    "includesTitle": "Ce que ce rapport inclurait",
+    "includesProfile": "Votre objectif de guérison et les détails de base de votre profil de soins.",
+    "includesJournal": "L'activité de réflexion hebdomadaire et des extraits de notes facultatifs.",
+    "includesPlants": "Le nombre de plantes dont vous vous occupez et les ajouts récents.",
+    "includesConsent": "Uniquement les informations que vous vérifiez et acceptez de partager.",
+    "consentTitle": "Le partage reste facultatif",
+    "consentBody": "Rien n'est envoyé automatiquement depuis cet écran. Il s'agit uniquement d'un aperçu pour vous montrer ce qu'une future mise à jour destinée à l'hôpital ou à l'équipe de soins pourrait contenir.",
+    "artifactTitle": "Brouillon du rapport pour l'équipe de soins",
+    "artifactSubtitle": "Ce brouillon structuré montre comment GreenHeal peut formater le résumé de guérison de cette semaine pour un futur export ou partage.",
+    "artifactStatusLabel": "Statut du rapport",
+    "artifactWindowLabel": "Période du rapport",
+    "artifactStatusReady": "Prêt pour un futur partage",
+    "artifactStatusExported": "Export local généré",
+    "artifactStatusPrepared": "Transmission préparée localement",
+    "artifactStatusPending": "Vérification requise avant partage",
+    "artifactStatusPartial": "Brouillon incomplet",
+    "artifactLocalNote": "Ce brouillon reste pour l'instant sur l'appareil et n'est pas envoyé depuis cet écran.",
+    "reviewTitle": "Vérifier avant un futur partage",
+    "reviewSubtitle": "Confirmez les détails ci-dessous avant que GreenHeal marque cet aperçu comme prêt pour une future mise à jour destinée à l'équipe de soins.",
+    "reviewSummaryItem": "J'ai vérifié les informations du patient, de l'équipe de soins et le résumé hebdomadaire.",
+    "reviewConsentItem": "Je comprends que rien n'est encore envoyé et que le partage futur reste facultatif.",
+    "reviewRequiredNote": "Cochez les deux éléments de vérification avant d'enregistrer cette confirmation.",
+    "reviewPartialDataNote": "Chargez l'aperçu complet avant d'enregistrer une confirmation de partage.",
+    "missingProfileNote": "Complétez votre profil de guérison avant d'enregistrer une confirmation de partage.",
+    "saving": "Enregistrement de la vérification...",
+    "confirmButton": "Enregistrer la confirmation",
+    "savedTitle": "Prêt pour un futur partage",
+    "savedBody": "GreenHeal a enregistré votre confirmation de vérification pour cet aperçu hebdomadaire.",
+    "lastReviewed": "Dernière vérification",
+    "handoffTitle": "Préparer la remise du rapport",
+    "handoffSubtitle": "Choisissez comment vous préférez remettre ce rapport plus tard. GreenHeal enregistrera seulement ce plan de remise sur cet appareil.",
+    "handoffStatusLabel": "Statut de remise",
+    "handoffStatusPending": "Pas encore préparé",
+    "handoffStatusReady": "Prêt à être préparé",
+    "handoffStatusPrepared": "Préparé localement",
+    "handoffMethodLabel": "Méthode de remise préférée",
+    "handoffMethodEmail": "E-mail à l'équipe de soins",
+    "handoffMethodPortal": "Portail de l'hôpital",
+    "handoffMethodPrint": "Dossier imprimé",
+    "handoffNeedsReviewNote": "Enregistrez d'abord la confirmation de vérification avant de préparer une remise.",
+    "handoffMethodRequiredNote": "Choisissez une méthode de remise avant d'enregistrer ce plan.",
+    "handoffPartialDataNote": "Chargez l'aperçu complet avant de préparer une remise.",
+    "handoffLocalOnlyNote": "Cela enregistrera seulement un plan de remise local. Rien ne sera encore exporté ou envoyé.",
+    "handoffSaving": "Enregistrement du plan de remise...",
+    "handoffConfirmButton": "Enregistrer le plan de remise",
+    "handoffSavedTitle": "Remise préparée localement",
+    "handoffSavedBody": "GreenHeal a enregistré votre méthode de remise préférée et a marqué ce rapport comme prêt pour une future remise manuelle.",
+    "handoffPreparedAt": "Remise préparée le",
+    "handoffNextStepsTitle": "Étapes suggérées",
+    "handoffNextStepReview": "Revérifiez le brouillon du rapport hebdomadaire avant de le remettre.",
+    "handoffNextStepDeliver": "Utilisez la méthode choisie lorsque vous serez prêt à remettre ce rapport à votre équipe de soins.",
+    "handoffNextStepManual": "GreenHeal n'enverra toujours rien automatiquement.",
+    "handoffSaveError": "Impossible d'enregistrer votre plan de remise pour le moment. Veuillez réessayer.",
+    "exportTitle": "Générer un export local",
+    "exportSubtitle": "Créez une copie texte de ce rapport hebdomadaire dans le stockage local de GreenHeal pour une future remise manuelle.",
+    "exportNeedsHandoffNote": "Préparez un plan de remise avant de générer un export local.",
+    "exportPartialDataNote": "Chargez l'aperçu complet avant de générer un export local.",
+    "exportLocalOnlyNote": "Cela créera un fichier texte uniquement sur cet appareil. GreenHeal ne le partagera ni ne l'enverra automatiquement.",
+    "exporting": "Génération de l'export local...",
+    "exportButton": "Générer un export local",
+    "exportRegenerateButton": "Régénérer l'export local",
+    "exportSavedTitle": "Export local généré",
+    "exportSavedBody": "GreenHeal a créé une copie texte de ce rapport hebdomadaire dans le stockage local de l'application.",
+    "exportGeneratedAt": "Export généré le",
+    "exportFileLabel": "Fichier enregistré",
+    "exportSaveError": "Impossible de générer l'export local pour le moment. Veuillez réessayer.",
+    "exportHistoryTitle": "Exports locaux récents",
+    "exportHistorySubtitle": "Ces fichiers de rapport enregistrés restent sur cet appareil tant que vous n'en partagez pas un manuellement.",
+    "exportHistoryCurrentTitle": "Export actuel/le plus récent",
+    "exportHistoryPreviousTitle": "Exports précédents",
+    "exportHistoryShareButton": "Partager cet export",
+    "exportHistoryClearOlderButton": "Effacer les anciens exports",
+    "exportHistoryClearing": "Suppression des anciens exports...",
+    "exportHistoryCleanupError": "Impossible d'effacer l'historique des anciens exports pour le moment. Veuillez réessayer.",
+    "exportHistoryRemoveButton": "Supprimer cet export",
+    "exportHistoryRemoving": "Mise à jour de l'historique des exports...",
+    "exportHistoryDetailButton": "Voir les détails",
+    "exportHistoryDetailSelectedButton": "Détails affichés",
+    "exportHistoryDetailTitle": "Détails de l'export sélectionné",
+    "exportHistoryDetailBody": "Examinez cette entrée d'export local enregistrée avant de la partager ou de nettoyer l'historique plus ancien.",
+    "exportHistoryDetailStatusLabel": "Statut dans l'historique",
+    "exportHistoryDetailStatusCurrent": "Export actuel/le plus récent",
+    "exportHistoryDetailStatusPrevious": "Export précédent",
+    "shareTitle": "Remise/partage manuel",
+    "shareSubtitle": "Ouvrez les options de partage de votre appareil pour cet export local du rapport. Vous choisissez toujours si vous voulez annuler, enregistrer, envoyer par e-mail, imprimer ou le remettre autrement.",
+    "shareNeedsExportNote": "Générez d'abord un export local avant d'ouvrir les options de remise ou de partage.",
+    "shareLocalOnlyNote": "Cela ouvre manuellement les options de partage de votre appareil. GreenHeal n'enverra toujours rien tout seul.",
+    "shareOpening": "Ouverture des options de partage...",
+    "shareButton": "Ouvrir les options de remise/partage",
+    "shareOpenedTitle": "Options de remise/partage ouvertes",
+    "shareOpenedBody": "GreenHeal a ouvert les options de partage manuel de votre appareil pour cet export du rapport.",
+    "shareManualNote": "Rien n'est remis tant que vous ne choisissez pas vous-même une destination.",
+    "shareMessageIntro": "GreenHeal a préparé ce rapport hebdomadaire local pour l'équipe de soins en vue d'une remise manuelle.",
+    "shareSheetTitle": "Rapport hebdomadaire GreenHeal",
+    "shareError": "Impossible d'ouvrir les options de remise/partage pour le moment. Veuillez réessayer.",
+    "saveError": "Impossible d'enregistrer votre confirmation pour le moment. Veuillez réessayer.",
+    "notAvailable": "Non disponible",
+    "notAssigned": "Pas encore attribué"
+  },
+  "feedback": {
+    "title": "Évaluer GreenHeal",
+    "subtitle": "Vos retours nous aident à améliorer l'expérience de guérison pour vous et pour les autres.",
+    "overallExperience": "Comment évaluez-vous votre expérience globale ?",
+    "healingSupport": "À quel point GreenHeal soutient-il votre routine de guérison ?",
+    "comment": "Que pourrions-nous améliorer ?",
+    "commentPlaceholder": "Partagez ce qui vous aide, ce qui manque, ou ce qui rendrait GreenHeal plus utile pour vous.",
+    "submit": "Envoyer l'avis",
+    "thankYouTitle": "Merci pour votre retour",
+    "thankYouBody": "Votre voix nous aide à rendre GreenHeal plus utile, apaisant et soutenant."
   },
   "permissions": {
     "camera_required": "Accès à la caméra requis",

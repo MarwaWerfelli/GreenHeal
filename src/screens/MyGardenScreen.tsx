@@ -10,6 +10,7 @@ import {
   Animated,
   Modal,
   RefreshControl,
+  SafeAreaView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -93,9 +94,10 @@ export default function MyGardenScreen({ navigation }: MyGardenScreenProps) {
     setLoading(true);
     try {
       const gardenPlants = await getGardenPlants();
-      setPlants(gardenPlants);
+      setPlants(Array.isArray(gardenPlants) ? gardenPlants : []);
     } catch (error) {
       console.error('Error loading garden plants:', error);
+      setPlants([]);
     } finally {
       setLoading(false);
     }
@@ -112,7 +114,7 @@ export default function MyGardenScreen({ navigation }: MyGardenScreenProps) {
   };
 
   const applyFiltersAndSort = () => {
-    let result = [...plants];
+    let result = Array.isArray(plants) ? [...plants] : [];
 
     // Apply search filter
     if (searchQuery.trim()) {
@@ -188,7 +190,7 @@ export default function MyGardenScreen({ navigation }: MyGardenScreenProps) {
       if (plant.wateringReminderEnabled && plant.id) {
         // Get the updated plant data with new nextWateringDate
         const updatedPlants = await getGardenPlants();
-        const updatedPlant = updatedPlants.find(p => p.id === plant.id);
+        const updatedPlant = (Array.isArray(updatedPlants) ? updatedPlants : []).find(p => p.id === plant.id);
         
         if (updatedPlant) {
           await scheduleWateringReminder({
@@ -223,110 +225,128 @@ export default function MyGardenScreen({ navigation }: MyGardenScreenProps) {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={DESIGN_SYSTEM.colors.primary} />
-      </View>
+      <SafeAreaView style={styles.loadingContainer}>
+        <View style={styles.loadingCard}>
+          <ActivityIndicator size="large" color={DESIGN_SYSTEM.colors.primary} />
+        </View>
+      </SafeAreaView>
     );
   }
 
-  if (plants.length === 0) {
+  if (!Array.isArray(plants) || plants.length === 0) {
     return (
-      <View style={styles.emptyContainer}>
-        <Animated.View style={styles.emptyContent}>
-          <Text style={styles.emptyEmoji}>🌱</Text>
+      <SafeAreaView style={styles.emptyContainer}>
+        <Animated.View style={styles.emptyCard}>
+          <LinearGradient
+            colors={DESIGN_SYSTEM.colors.heroGradient}
+            style={styles.emptyBadge}
+          >
+            <Text style={styles.emptyEmoji}>🌱</Text>
+          </LinearGradient>
           <Text style={styles.emptyTitle}>{t('garden.emptyTitle')}</Text>
           <Text style={styles.emptyText}>{t('garden.emptyMessage')}</Text>
           <TouchableOpacity
             style={styles.emptyScanButton}
             onPress={() => navigation.navigate('Camera')}
+            activeOpacity={0.85}
           >
             <LinearGradient
-              colors={[DESIGN_SYSTEM.colors.primary, DESIGN_SYSTEM.colors.primary + 'DD']}
+              colors={DESIGN_SYSTEM.colors.primaryGradient}
               style={styles.emptyScanGradient}
             >
               <Text style={styles.emptyScanText}>{t('home.scanRoom')}</Text>
             </LinearGradient>
           </TouchableOpacity>
         </Animated.View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Header with Search and Controls */}
-      <View style={styles.header}>
-        <View style={styles.searchContainer}>
-          <Ionicons
-            name="search"
-            size={20}
-            color={DESIGN_SYSTEM.colors.textSecondary}
-            style={styles.searchIcon}
-          />
-          <TextInput
-            style={styles.searchInput}
-            placeholder={t('garden.searchPlaceholder')}
-            placeholderTextColor={DESIGN_SYSTEM.colors.textSecondary}
-            value={searchQuery}
-            onChangeText={handleSearch}
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
+      <View style={styles.headerWrap}>
+        <LinearGradient
+          colors={DESIGN_SYSTEM.colors.heroGradient}
+          style={styles.headerCard}
+        >
+          <View style={styles.searchContainer}>
+            <Ionicons
+              name="search"
+              size={20}
+              color={DESIGN_SYSTEM.colors.textSecondary}
+              style={styles.searchIcon}
+            />
+            <TextInput
+              style={styles.searchInput}
+              placeholder={t('garden.searchPlaceholder')}
+              placeholderTextColor={DESIGN_SYSTEM.colors.textSecondary}
+              value={searchQuery}
+              onChangeText={handleSearch}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <Ionicons
+                  name="close-circle"
+                  size={20}
+                  color={DESIGN_SYSTEM.colors.textSecondary}
+                />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <View style={styles.controlsRow}>
+            <TouchableOpacity
+              style={styles.controlButton}
+              onPress={() => setShowFilterModal(true)}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="filter" size={20} color={DESIGN_SYSTEM.colors.primary} />
+              {filterOption !== 'all' && <View style={styles.activeDot} />}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.controlButton}
+              onPress={() => setShowSortModal(true)}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="swap-vertical" size={20} color={DESIGN_SYSTEM.colors.primary} />
+              {sortOption !== 'recentlyAdded' && <View style={styles.activeDot} />}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.controlButton}
+              onPress={toggleViewMode}
+              activeOpacity={0.85}
+            >
               <Ionicons
-                name="close-circle"
+                name={viewMode === 'grid' ? 'list' : 'grid'}
                 size={20}
-                color={DESIGN_SYSTEM.colors.textSecondary}
+                color={DESIGN_SYSTEM.colors.primary}
               />
             </TouchableOpacity>
-          )}
-        </View>
-
-        <View style={styles.controlsRow}>
-          <TouchableOpacity
-            style={styles.controlButton}
-            onPress={() => setShowFilterModal(true)}
-          >
-            <Ionicons name="filter" size={20} color={DESIGN_SYSTEM.colors.primary} />
-            {filterOption !== 'all' && <View style={styles.activeDot} />}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.controlButton}
-            onPress={() => setShowSortModal(true)}
-          >
-            <Ionicons name="swap-vertical" size={20} color={DESIGN_SYSTEM.colors.primary} />
-            {sortOption !== 'recentlyAdded' && <View style={styles.activeDot} />}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.controlButton}
-            onPress={toggleViewMode}
-          >
-            <Ionicons
-              name={viewMode === 'grid' ? 'list' : 'grid'}
-              size={20}
-              color={DESIGN_SYSTEM.colors.primary}
-            />
-          </TouchableOpacity>
-        </View>
+          </View>
+        </LinearGradient>
       </View>
 
-      {/* Plant List */}
-      <FlatList
-        data={filteredPlants}
-        renderItem={renderPlant}
-        keyExtractor={(item) => item.id!.toString()}
-        contentContainerStyle={styles.listContent}
-        numColumns={viewMode === 'grid' ? 2 : 1}
-        key={viewMode} // Force re-render on view mode change
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={DESIGN_SYSTEM.colors.primary}
-          />
-        }
-      />
+      <View style={styles.listShell}>
+        <FlatList
+          data={filteredPlants}
+          renderItem={renderPlant}
+          keyExtractor={(item) => item.id!.toString()}
+          contentContainerStyle={styles.listContent}
+          numColumns={viewMode === 'grid' ? 2 : 1}
+          key={viewMode} // Force re-render on view mode change
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={DESIGN_SYSTEM.colors.primary}
+            />
+          }
+        />
+      </View>
 
       {/* Filter Modal */}
       <Modal
@@ -337,6 +357,7 @@ export default function MyGardenScreen({ navigation }: MyGardenScreenProps) {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
+            <View style={styles.modalHandle} />
             <Text style={styles.modalTitle}>{t('garden.filterBy')}</Text>
             
             {(['all', 'needsWater', 'healthy'] as FilterOption[]).map(option => (
@@ -379,6 +400,7 @@ export default function MyGardenScreen({ navigation }: MyGardenScreenProps) {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
+            <View style={styles.modalHandle} />
             <Text style={styles.modalTitle}>{t('garden.sortBy')}</Text>
             
             {(['name', 'nextWatering', 'recentlyAdded'] as SortOption[]).map(option => (
@@ -411,39 +433,67 @@ export default function MyGardenScreen({ navigation }: MyGardenScreenProps) {
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: DESIGN_SYSTEM.colors.background,
+    backgroundColor: DESIGN_SYSTEM.colors.bgBase,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: DESIGN_SYSTEM.colors.background,
+    backgroundColor: DESIGN_SYSTEM.colors.bgBase,
+    paddingHorizontal: DESIGN_SYSTEM.spacing.lg,
+  },
+  loadingCard: {
+    width: '100%',
+    maxWidth: 240,
+    backgroundColor: DESIGN_SYSTEM.colors.bgSurface,
+    borderRadius: 24,
+    paddingVertical: DESIGN_SYSTEM.spacing.xl,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: DESIGN_SYSTEM.colors.borderSubtle,
+    ...DESIGN_SYSTEM.shadows.medium,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: DESIGN_SYSTEM.spacing.xl,
-    backgroundColor: DESIGN_SYSTEM.colors.background,
+    backgroundColor: DESIGN_SYSTEM.colors.bgBase,
   },
-  emptyContent: {
+  emptyCard: {
     alignItems: 'center',
+    width: '100%',
+    maxWidth: 360,
+    backgroundColor: DESIGN_SYSTEM.colors.bgSurface,
+    borderRadius: 28,
+    paddingHorizontal: DESIGN_SYSTEM.spacing.lg,
+    paddingVertical: DESIGN_SYSTEM.spacing.xl,
+    borderWidth: 1,
+    borderColor: DESIGN_SYSTEM.colors.borderSubtle,
+    ...DESIGN_SYSTEM.shadows.large,
+  },
+  emptyBadge: {
+    width: 92,
+    height: 92,
+    borderRadius: 46,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: DESIGN_SYSTEM.spacing.lg,
   },
   emptyEmoji: {
     fontSize: 64,
-    marginBottom: DESIGN_SYSTEM.spacing.md,
   },
   emptyTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: DESIGN_SYSTEM.colors.text,
+    fontSize: 22,
+    fontWeight: '700',
+    color: DESIGN_SYSTEM.colors.textPrimary,
     marginBottom: DESIGN_SYSTEM.spacing.sm,
     textAlign: 'center',
   },
@@ -451,36 +501,47 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: DESIGN_SYSTEM.colors.textSecondary,
     textAlign: 'center',
+    lineHeight: 24,
     marginBottom: DESIGN_SYSTEM.spacing.lg,
   },
   emptyScanButton: {
-    borderRadius: DESIGN_SYSTEM.borderRadius.medium,
+    width: '100%',
+    borderRadius: 18,
     overflow: 'hidden',
-    ...DESIGN_SYSTEM.shadows.medium,
+    ...DESIGN_SYSTEM.shadows.glowSubtle,
   },
   emptyScanGradient: {
-    paddingHorizontal: DESIGN_SYSTEM.spacing.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: DESIGN_SYSTEM.spacing.md,
   },
   emptyScanText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: DESIGN_SYSTEM.colors.surface,
+    fontWeight: '700',
+    color: DESIGN_SYSTEM.colors.bgSurface,
   },
-  header: {
-    backgroundColor: DESIGN_SYSTEM.colors.surface,
+  headerWrap: {
     paddingHorizontal: DESIGN_SYSTEM.spacing.md,
     paddingTop: DESIGN_SYSTEM.spacing.md,
     paddingBottom: DESIGN_SYSTEM.spacing.sm,
-    ...DESIGN_SYSTEM.shadows.small,
+  },
+  headerCard: {
+    borderRadius: 24,
+    padding: DESIGN_SYSTEM.spacing.md,
+    borderWidth: 1,
+    borderColor: DESIGN_SYSTEM.colors.borderSubtle,
+    ...DESIGN_SYSTEM.shadows.medium,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: DESIGN_SYSTEM.colors.background,
-    borderRadius: DESIGN_SYSTEM.borderRadius.medium,
+    backgroundColor: DESIGN_SYSTEM.colors.bgSurface,
+    borderRadius: 18,
     paddingHorizontal: DESIGN_SYSTEM.spacing.md,
     marginBottom: DESIGN_SYSTEM.spacing.sm,
+    minHeight: 52,
+    borderWidth: 1,
+    borderColor: DESIGN_SYSTEM.colors.borderSubtle,
   },
   searchIcon: {
     marginRight: DESIGN_SYSTEM.spacing.sm,
@@ -489,7 +550,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 44,
     fontSize: 16,
-    color: DESIGN_SYSTEM.colors.text,
+    color: DESIGN_SYSTEM.colors.textPrimary,
   },
   controlsRow: {
     flexDirection: 'row',
@@ -498,11 +559,14 @@ const styles = StyleSheet.create({
   controlButton: {
     width: 44,
     height: 44,
-    borderRadius: DESIGN_SYSTEM.borderRadius.medium,
-    backgroundColor: DESIGN_SYSTEM.colors.background,
+    borderRadius: 14,
+    backgroundColor: DESIGN_SYSTEM.colors.bgSurface,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
+    borderWidth: 1,
+    borderColor: DESIGN_SYSTEM.colors.borderSubtle,
+    ...DESIGN_SYSTEM.shadows.small,
   },
   activeDot: {
     position: 'absolute',
@@ -511,7 +575,10 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: DESIGN_SYSTEM.colors.accent,
+    backgroundColor: DESIGN_SYSTEM.colors.accentRose,
+  },
+  listShell: {
+    flex: 1,
   },
   listContent: {
     padding: DESIGN_SYSTEM.spacing.md,
@@ -526,20 +593,31 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: DESIGN_SYSTEM.colors.overlayLight,
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: DESIGN_SYSTEM.colors.surface,
-    borderTopLeftRadius: DESIGN_SYSTEM.borderRadius.xlarge,
-    borderTopRightRadius: DESIGN_SYSTEM.borderRadius.xlarge,
+    backgroundColor: DESIGN_SYSTEM.colors.bgSurface,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     padding: DESIGN_SYSTEM.spacing.lg,
     paddingBottom: DESIGN_SYSTEM.spacing.xl,
+    borderWidth: 1,
+    borderColor: DESIGN_SYSTEM.colors.borderSubtle,
+    ...DESIGN_SYSTEM.shadows.large,
+  },
+  modalHandle: {
+    width: 44,
+    height: 5,
+    borderRadius: 999,
+    backgroundColor: DESIGN_SYSTEM.colors.borderStrong,
+    alignSelf: 'center',
+    marginBottom: DESIGN_SYSTEM.spacing.md,
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: DESIGN_SYSTEM.colors.text,
+    fontWeight: '700',
+    color: DESIGN_SYSTEM.colors.textPrimary,
     marginBottom: DESIGN_SYSTEM.spacing.lg,
     textAlign: 'center',
   },
@@ -549,16 +627,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: DESIGN_SYSTEM.spacing.md,
     paddingHorizontal: DESIGN_SYSTEM.spacing.lg,
-    borderRadius: DESIGN_SYSTEM.borderRadius.medium,
+    borderRadius: 18,
     marginBottom: DESIGN_SYSTEM.spacing.sm,
-    backgroundColor: DESIGN_SYSTEM.colors.background,
+    backgroundColor: DESIGN_SYSTEM.colors.bgElevated,
+    borderWidth: 1,
+    borderColor: DESIGN_SYSTEM.colors.borderSubtle,
   },
   modalOptionActive: {
-    backgroundColor: DESIGN_SYSTEM.colors.primaryLight,
+    backgroundColor: DESIGN_SYSTEM.colors.primaryPale,
+    borderColor: DESIGN_SYSTEM.colors.primaryGlow,
   },
   modalOptionText: {
     fontSize: 16,
-    color: DESIGN_SYSTEM.colors.text,
+    color: DESIGN_SYSTEM.colors.textPrimary,
   },
   modalOptionTextActive: {
     fontWeight: '600',
@@ -566,6 +647,8 @@ const styles = StyleSheet.create({
   },
   modalCloseButton: {
     marginTop: DESIGN_SYSTEM.spacing.md,
+    backgroundColor: DESIGN_SYSTEM.colors.surfaceMuted,
+    borderRadius: 18,
     paddingVertical: DESIGN_SYSTEM.spacing.md,
     alignItems: 'center',
   },

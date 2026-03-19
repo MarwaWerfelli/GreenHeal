@@ -11,6 +11,7 @@ import { init as initI18n } from '../i18n';
 import LanguageSelectionScreen from '../screens/LanguageSelectionScreen';
 import OnboardingScreen from '../screens/OnboardingScreen';
 import HomeScreen from '../screens/HomeScreen';
+import GuidedDialogueScreen from '../screens/GuidedDialogueScreen';
 import CameraScreen from '../screens/CameraScreen';
 import AIAnalysisScreen from '../screens/AIAnalysisScreen';
 import RoomVisualizationScreen from '../screens/RoomVisualizationScreen';
@@ -20,16 +21,119 @@ import JournalEntryFormScreen from '../screens/JournalEntryFormScreen';
 import JournalEntryDetailScreen from '../screens/JournalEntryDetailScreen';
 import MyGardenScreen from '../screens/MyGardenScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import FeedbackScreen from '../screens/FeedbackScreen';
+import ReportPreviewScreen from '../screens/ReportPreviewScreen';
 import OfflineIndicator from '../components/OfflineIndicator';
 import FloatingActionButton from '../components/FloatingActionButton';
 import { DESIGN_SYSTEM } from '../utils/constants';
-import type { RootStackParamList, BottomTabParamList, OnboardingData, HealingGoal, Budget } from '../types';
+import type {
+  RootStackParamList,
+  BottomTabParamList,
+  OnboardingData,
+  HealingGoal,
+  Budget,
+  ReportExportRecord,
+  ReportProfile,
+  ReportHandoffMethod,
+  ReportSharingPreferences,
+} from '../types';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
 const Stack = createStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<BottomTabParamList>();
 const VALID_HEALING_GOALS: HealingGoal[] = ['stress', 'physical', 'depression', 'sleep', 'wellness'];
 const VALID_BUDGETS: Budget[] = ['under10', '10to30', 'over30', 'have_plants'];
+const VALID_REPORT_HANDOFF_METHODS: ReportHandoffMethod[] = ['care_team_email', 'hospital_portal', 'print_packet'];
+const SCREEN_HEADER_OPTIONS = {
+  headerStyle: {
+    backgroundColor: DESIGN_SYSTEM.colors.bgBase,
+    shadowColor: 'transparent',
+  },
+  headerTintColor: DESIGN_SYSTEM.colors.primary,
+  headerTitleStyle: {
+    fontWeight: '700' as const,
+    color: DESIGN_SYSTEM.colors.textPrimary,
+  },
+};
+
+function hasOptionalString(value: unknown): value is string | undefined {
+  return value === undefined || typeof value === 'string';
+}
+
+function hasOptionalDateString(value: unknown): value is string | undefined {
+  return (
+    value === undefined ||
+    (
+      typeof value === 'string' &&
+      value.length > 0 &&
+      !Number.isNaN(Date.parse(value))
+    )
+  );
+}
+
+function isValidReportProfile(profile: unknown): profile is ReportProfile {
+  if (!profile || typeof profile !== 'object') {
+    return false;
+  }
+
+  const candidate = profile as Partial<ReportProfile>;
+
+  return (
+    typeof candidate.fullName === 'string' &&
+    candidate.fullName.trim().length > 0 &&
+    typeof candidate.preferredName === 'string' &&
+    candidate.preferredName.trim().length > 0 &&
+    hasOptionalString(candidate.age) &&
+    hasOptionalString(candidate.hospitalName) &&
+    hasOptionalString(candidate.patientId) &&
+    hasOptionalString(candidate.careProgram) &&
+    hasOptionalString(candidate.clinicianName)
+  );
+}
+
+function isValidReportExportRecord(record: unknown): record is ReportExportRecord {
+  if (!record || typeof record !== 'object') {
+    return false;
+  }
+
+  const candidate = record as Partial<ReportExportRecord>;
+
+  return (
+    typeof candidate.generatedAt === 'string' &&
+    candidate.generatedAt.length > 0 &&
+    !Number.isNaN(Date.parse(candidate.generatedAt)) &&
+    typeof candidate.fileUri === 'string' &&
+    candidate.fileUri.trim().length > 0
+  );
+}
+
+function isValidReportSharingPreferences(preferences: unknown): preferences is ReportSharingPreferences {
+  if (!preferences || typeof preferences !== 'object') {
+    return false;
+  }
+
+  const candidate = preferences as Partial<ReportSharingPreferences>;
+
+  return (
+    (candidate.readyForFutureSharing === undefined || typeof candidate.readyForFutureSharing === 'boolean') &&
+    hasOptionalDateString(candidate.reviewedAt) &&
+    hasOptionalDateString(candidate.consentConfirmedAt) &&
+    hasOptionalDateString(candidate.handoffPreparedAt) &&
+    hasOptionalDateString(candidate.exportGeneratedAt) &&
+    hasOptionalString(candidate.exportFileUri) &&
+    (
+      candidate.exportHistory === undefined ||
+      (
+        Array.isArray(candidate.exportHistory) &&
+        candidate.exportHistory.every(isValidReportExportRecord)
+      )
+    ) &&
+    (
+      candidate.handoffMethod === undefined ||
+      VALID_REPORT_HANDOFF_METHODS.includes(candidate.handoffMethod)
+    )
+  );
+}
 
 function isValidOnboardingData(data: unknown): data is OnboardingData {
   if (!data || typeof data !== 'object') {
@@ -53,8 +157,19 @@ function isValidOnboardingData(data: unknown): data is OnboardingData {
       Array.isArray(candidate.existingPlantPhotos) &&
       candidate.existingPlantPhotos.every(photo => typeof photo === 'string')
     );
+  const hasValidReportProfile =
+    candidate.reportProfile === undefined || isValidReportProfile(candidate.reportProfile);
+  const hasValidReportSharing =
+    candidate.reportSharing === undefined || isValidReportSharingPreferences(candidate.reportSharing);
 
-  return hasValidHealingGoal && hasValidBudget && hasValidCompletedAt && hasValidExistingPlantPhotos;
+  return (
+    hasValidHealingGoal &&
+    hasValidBudget &&
+    hasValidCompletedAt &&
+    hasValidExistingPlantPhotos &&
+    hasValidReportProfile &&
+    hasValidReportSharing
+  );
 }
 
 // Custom floating tab bar component
@@ -63,7 +178,7 @@ function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 
   return (
     <View style={tabBarStyles.container}>
-      <BlurView intensity={80} tint="light" style={tabBarStyles.blurContainer}>
+      <BlurView intensity={60} tint="light" style={tabBarStyles.blurContainer}>
         <View style={tabBarStyles.tabBar}>
           {state.routes.map((route, index) => {
             const { options } = descriptors[route.key];
@@ -90,7 +205,9 @@ function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             };
 
             const icon = iconMap[route.name] || 'help-circle';
-            const color = isFocused ? DESIGN_SYSTEM.colors.primary : DESIGN_SYSTEM.colors.textLight;
+            const color = isFocused
+              ? DESIGN_SYSTEM.colors.primary
+              : DESIGN_SYSTEM.colors.textSecondary;
 
             return (
               <View key={route.key} style={tabBarStyles.tab}>
@@ -100,10 +217,26 @@ function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                   accessibilityState={isFocused ? { selected: true } : {}}
                   accessibilityLabel={options.tabBarAccessibilityLabel}
                   onTouchEnd={onPress}
-                  style={tabBarStyles.tabButton}
+                  style={[
+                    tabBarStyles.tabButton,
+                    isFocused && tabBarStyles.tabButtonFocused,
+                  ]}
                 >
-                  <Ionicons name={icon} size={24} color={color} />
-                  <Text style={[tabBarStyles.tabLabel, { color }]}>
+                  <View
+                    style={[
+                      tabBarStyles.iconShell,
+                      isFocused && tabBarStyles.iconShellFocused,
+                    ]}
+                  >
+                    <Ionicons name={icon} size={22} color={color} />
+                  </View>
+                  <Text
+                    style={[
+                      tabBarStyles.tabLabel,
+                      { color },
+                      isFocused && tabBarStyles.tabLabelFocused,
+                    ]}
+                  >
                     {options.tabBarLabel as string}
                   </Text>
                 </View>
@@ -116,7 +249,7 @@ function FloatingTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
       {/* Floating Action Button */}
       <View style={tabBarStyles.fabContainer}>
         <FloatingActionButton
-          onPress={() => navigation.navigate('Camera')}
+          onPress={() => navigation.navigate('GuidedDialogue')}
           icon="camera"
         />
       </View>
@@ -132,15 +265,7 @@ function MainTabs() {
       <OfflineIndicator />
       <Tab.Navigator
         tabBar={(props) => <FloatingTabBar {...props} />}
-        screenOptions={{
-          headerStyle: {
-            backgroundColor: DESIGN_SYSTEM.colors.background,
-          },
-          headerTintColor: DESIGN_SYSTEM.colors.primary,
-          headerTitleStyle: {
-            fontWeight: 'bold',
-          },
-        }}
+        screenOptions={SCREEN_HEADER_OPTIONS}
       >
         <Tab.Screen
           name="Home"
@@ -179,8 +304,136 @@ function MainTabs() {
   );
 }
 
-export default function AppNavigator() {
+type ReadyNavigatorProps = {
+  isOnboardingComplete: boolean;
+  setIsOnboardingComplete: React.Dispatch<React.SetStateAction<boolean>>;
+};
+
+function ReadyNavigator({
+  isOnboardingComplete,
+  setIsOnboardingComplete,
+}: ReadyNavigatorProps) {
   const { t } = useTranslation();
+
+  return (
+    <NavigationContainer>
+      <Stack.Navigator>
+        {!isOnboardingComplete ? (
+          <>
+            <Stack.Screen 
+              name="LanguageSelection"
+              options={{ headerShown: false }}
+            >
+              {(props) => (
+                <LanguageSelectionScreen
+                  {...props}
+                  onLanguageSelected={() => {
+                    props.navigation.navigate('Onboarding');
+                  }}
+                />
+              )}
+            </Stack.Screen>
+            <Stack.Screen 
+              name="Onboarding"
+              options={{ headerShown: false }}
+            >
+              {(props) => (
+                <OnboardingScreen
+                  {...props}
+                  onComplete={() => {
+                    setIsOnboardingComplete(true);
+                  }}
+                />
+              )}
+            </Stack.Screen>
+          </>
+        ) : (
+          <>
+            <Stack.Screen 
+              name="MainTabs" 
+              component={MainTabs}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen 
+              name="GuidedDialogue"
+              component={GuidedDialogueScreen}
+              options={{
+                title: t('guidedDialogue.title'),
+                ...SCREEN_HEADER_OPTIONS,
+              }}
+            />
+            <Stack.Screen 
+              name="Camera" 
+              component={CameraScreen}
+              options={{ 
+                headerShown: false,
+                presentation: 'modal'
+              }}
+            />
+            <Stack.Screen
+              name="Feedback"
+              component={FeedbackScreen}
+              options={{
+                title: t('feedback.title'),
+                ...SCREEN_HEADER_OPTIONS,
+              }}
+            />
+            <Stack.Screen
+              name="ReportPreview"
+              component={ReportPreviewScreen}
+              options={{
+                title: t('reportPreview.title'),
+                ...SCREEN_HEADER_OPTIONS,
+              }}
+            />
+            <Stack.Screen 
+              name="AIAnalysis" 
+              component={AIAnalysisScreen}
+              options={{ 
+                title: t('aiAnalysis.title'),
+                ...SCREEN_HEADER_OPTIONS,
+              }}
+            />
+            <Stack.Screen 
+              name="RoomVisualization" 
+              component={RoomVisualizationScreen}
+              options={{ 
+                title: t('aiAnalysis.yourRoom'),
+                ...SCREEN_HEADER_OPTIONS,
+              }}
+            />
+            <Stack.Screen 
+              name="PlantDetail" 
+              component={PlantDetailScreen}
+              options={{ 
+                title: t('plantDetail.title'),
+                ...SCREEN_HEADER_OPTIONS,
+              }}
+            />
+            <Stack.Screen 
+              name="JournalEntryForm" 
+              component={JournalEntryFormScreen}
+              options={{ 
+                title: t('journal.newEntryTitle'),
+                ...SCREEN_HEADER_OPTIONS,
+              }}
+            />
+            <Stack.Screen 
+              name="JournalEntryDetail" 
+              component={JournalEntryDetailScreen}
+              options={{ 
+                title: t('journal.entryTitle'),
+                ...SCREEN_HEADER_OPTIONS,
+              }}
+            />
+          </>
+        )}
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
+
+export default function AppNavigator() {
   const [isLoading, setIsLoading] = useState(true);
   const [isOnboardingComplete, setIsOnboardingComplete] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -237,134 +490,37 @@ export default function AppNavigator() {
 
   if (error) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: DESIGN_SYSTEM.colors.background, padding: 20 }}>
-        <Text style={{ fontSize: 24, color: 'red', marginBottom: 10 }}>⚠️</Text>
-        <Text style={{ fontSize: 18, color: 'red', fontWeight: 'bold', marginBottom: 10 }}>Error</Text>
-        <Text style={{ fontSize: 14, color: DESIGN_SYSTEM.colors.textSecondary, textAlign: 'center' }}>{error}</Text>
+      <View style={appStateStyles.screen}>
+        <View style={appStateStyles.card}>
+          <Text style={appStateStyles.icon}>⚠️</Text>
+          <Text style={appStateStyles.title}>Something interrupted GreenHeal</Text>
+          <Text style={appStateStyles.message}>{error}</Text>
+        </View>
       </View>
     );
   }
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: DESIGN_SYSTEM.colors.background }}>
-        <Text style={{ fontSize: 24, color: DESIGN_SYSTEM.colors.primary, marginBottom: 10 }}>🌿</Text>
-        <Text style={{ fontSize: 18, color: DESIGN_SYSTEM.colors.primary, fontWeight: 'bold' }}>GreenHeal</Text>
-        <Text style={{ fontSize: 14, color: DESIGN_SYSTEM.colors.textSecondary, marginTop: 10 }}>Loading...</Text>
+      <View style={appStateStyles.screen}>
+        <View style={appStateStyles.card}>
+          <Text style={appStateStyles.icon}>🌿</Text>
+          <Text style={appStateStyles.brand}>GreenHeal</Text>
+          <Text style={appStateStyles.message}>Preparing your healing journey...</Text>
+        </View>
       </View>
     );
   }
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator>
-        {!isOnboardingComplete ? (
-          <>
-            <Stack.Screen 
-              name="LanguageSelection"
-              options={{ headerShown: false }}
-            >
-              {(props) => (
-                <LanguageSelectionScreen
-                  {...props}
-                  onLanguageSelected={() => {
-                    props.navigation.navigate('Onboarding');
-                  }}
-                />
-              )}
-            </Stack.Screen>
-            <Stack.Screen 
-              name="Onboarding"
-              options={{ headerShown: false }}
-            >
-              {(props) => (
-                <OnboardingScreen
-                  {...props}
-                  onComplete={() => {
-                    setIsOnboardingComplete(true);
-                  }}
-                />
-              )}
-            </Stack.Screen>
-          </>
-        ) : (
-          <>
-            <Stack.Screen 
-              name="MainTabs" 
-              component={MainTabs}
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen 
-              name="Camera" 
-              component={CameraScreen}
-              options={{ 
-                headerShown: false,
-                presentation: 'modal'
-              }}
-            />
-            <Stack.Screen 
-              name="AIAnalysis" 
-              component={AIAnalysisScreen}
-              options={{ 
-                title: t('aiAnalysis.title'),
-                headerStyle: {
-                  backgroundColor: DESIGN_SYSTEM.colors.background,
-                },
-                headerTintColor: DESIGN_SYSTEM.colors.primary,
-              }}
-            />
-            <Stack.Screen 
-              name="RoomVisualization" 
-              component={RoomVisualizationScreen}
-              options={{ 
-                title: t('aiAnalysis.yourRoom'),
-                headerStyle: {
-                  backgroundColor: DESIGN_SYSTEM.colors.background,
-                },
-                headerTintColor: DESIGN_SYSTEM.colors.primary,
-              }}
-            />
-            <Stack.Screen 
-              name="PlantDetail" 
-              component={PlantDetailScreen}
-              options={{ 
-                title: t('plantDetail.title'),
-                headerStyle: {
-                  backgroundColor: DESIGN_SYSTEM.colors.background,
-                },
-                headerTintColor: DESIGN_SYSTEM.colors.primary,
-              }}
-            />
-            <Stack.Screen 
-              name="JournalEntryForm" 
-              component={JournalEntryFormScreen}
-              options={{ 
-                title: t('journal.newEntryTitle'),
-                headerStyle: {
-                  backgroundColor: DESIGN_SYSTEM.colors.background,
-                },
-                headerTintColor: DESIGN_SYSTEM.colors.primary,
-              }}
-            />
-            <Stack.Screen 
-              name="JournalEntryDetail" 
-              component={JournalEntryDetailScreen}
-              options={{ 
-                title: t('journal.entryTitle'),
-                headerStyle: {
-                  backgroundColor: DESIGN_SYSTEM.colors.background,
-                },
-                headerTintColor: DESIGN_SYSTEM.colors.primary,
-              }}
-            />
-          </>
-        )}
-      </Stack.Navigator>
-    </NavigationContainer>
+    <ReadyNavigator
+      isOnboardingComplete={isOnboardingComplete}
+      setIsOnboardingComplete={setIsOnboardingComplete}
+    />
   );
 }
 
-// Floating tab bar styles - Fresh light theme
+// Floating tab bar styles - healing journey shell
 const tabBarStyles = StyleSheet.create({
   container: {
     position: 'absolute',
@@ -379,13 +535,13 @@ const tabBarStyles = StyleSheet.create({
     overflow: 'hidden',
     ...DESIGN_SYSTEM.shadows.medium,
     borderTopWidth: 1,
-    borderTopColor: DESIGN_SYSTEM.colors.borderSubtle,
-    backgroundColor: '#ffffff',
+    borderTopColor: DESIGN_SYSTEM.colors.glassBorder,
+    backgroundColor: DESIGN_SYSTEM.colors.glassOverlay,
   },
   tabBar: {
     flexDirection: 'row',
     height: 70,
-    backgroundColor: '#ffffff',
+    backgroundColor: DESIGN_SYSTEM.colors.glassOverlay,
     borderRadius: DESIGN_SYSTEM.borderRadius.xlarge,
     paddingHorizontal: DESIGN_SYSTEM.spacing.sm,
   },
@@ -395,14 +551,34 @@ const tabBarStyles = StyleSheet.create({
     alignItems: 'center',
   },
   tabButton: {
+    minWidth: 72,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: DESIGN_SYSTEM.spacing.sm,
+    paddingHorizontal: DESIGN_SYSTEM.spacing.sm,
+    borderRadius: DESIGN_SYSTEM.borderRadius.large,
+  },
+  tabButtonFocused: {
+    backgroundColor: DESIGN_SYSTEM.colors.primaryPale,
+  },
+  iconShell: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+  },
+  iconShellFocused: {
+    backgroundColor: DESIGN_SYSTEM.colors.bgSurface,
   },
   tabLabel: {
     fontSize: 12,
     fontWeight: '600',
     marginTop: 4,
+  },
+  tabLabelFocused: {
+    fontWeight: '700',
   },
   fabContainer: {
     position: 'absolute',
@@ -410,5 +586,50 @@ const tabBarStyles = StyleSheet.create({
     left: '50%',
     marginLeft: -32, // Half of FAB size (64/2)
     zIndex: 10,
+  },
+});
+
+const appStateStyles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: DESIGN_SYSTEM.colors.bgBase,
+    padding: DESIGN_SYSTEM.spacing.lg,
+  },
+  card: {
+    width: '100%',
+    maxWidth: 320,
+    alignItems: 'center',
+    paddingHorizontal: DESIGN_SYSTEM.spacing.lg,
+    paddingVertical: DESIGN_SYSTEM.spacing.xl,
+    borderRadius: DESIGN_SYSTEM.borderRadius.xlarge,
+    backgroundColor: DESIGN_SYSTEM.colors.bgSurface,
+    borderWidth: 1,
+    borderColor: DESIGN_SYSTEM.colors.borderSubtle,
+    ...DESIGN_SYSTEM.shadows.medium,
+  },
+  icon: {
+    fontSize: 30,
+    marginBottom: DESIGN_SYSTEM.spacing.sm,
+  },
+  brand: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: DESIGN_SYSTEM.colors.primary,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: DESIGN_SYSTEM.colors.textPrimary,
+    textAlign: 'center',
+    marginBottom: DESIGN_SYSTEM.spacing.xs,
+  },
+  message: {
+    fontSize: 14,
+    lineHeight: 21,
+    color: DESIGN_SYSTEM.colors.textSecondary,
+    textAlign: 'center',
+    marginTop: DESIGN_SYSTEM.spacing.sm,
   },
 });

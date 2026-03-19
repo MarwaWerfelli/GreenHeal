@@ -129,7 +129,7 @@ describe('Offline Mode', () => {
       );
 
       await waitFor(() => {
-        expect(mockedAnalyzeRoom).toHaveBeenCalledWith('file:///test/image.jpg');
+        expect(mockedAnalyzeRoom).toHaveBeenCalledWith('file:///test/image.jpg', undefined);
         expect(queryByText('AI analysis requires an internet connection')).toBeNull();
       });
     });

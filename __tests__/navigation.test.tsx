@@ -69,6 +69,14 @@ jest.mock('../src/screens/HomeScreen', () => {
   };
 });
 
+jest.mock('../src/screens/GuidedDialogueScreen', () => {
+  const React = require('react');
+  const { Text } = require('react-native');
+  return function GuidedDialogueScreen() {
+    return <Text testID="guided-dialogue-screen">Guided Dialogue</Text>;
+  };
+});
+
 jest.mock('../src/screens/CameraScreen', () => {
   const React = require('react');
   const { Text } = require('react-native');
@@ -141,6 +149,22 @@ jest.mock('../src/screens/SettingsScreen', () => {
   };
 });
 
+jest.mock('../src/screens/FeedbackScreen', () => {
+  const React = require('react');
+  const { Text } = require('react-native');
+  return function FeedbackScreen() {
+    return <Text testID="feedback-screen">Feedback</Text>;
+  };
+});
+
+jest.mock('../src/screens/ReportPreviewScreen', () => {
+  const React = require('react');
+  const { Text } = require('react-native');
+  return function ReportPreviewScreen() {
+    return <Text testID="report-preview-screen">Report Preview</Text>;
+  };
+});
+
 jest.mock('../src/components/OfflineIndicator', () => {
   const React = require('react');
   const { View } = require('react-native');
@@ -205,15 +229,24 @@ jest.mock('@react-navigation/bottom-tabs', () => {
 
 // Mock useTranslation for the MainTabs component
 jest.mock('react-i18next', () => ({
-  useTranslation: () => ({
+  useTranslation: jest.fn(() => ({
     t: (key: string) => key,
     i18n: { language: 'en' },
-  }),
+  })),
 }));
 
 describe('Navigation Structure', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    const { init } = require('../src/i18n');
+    const { useTranslation } = require('react-i18next');
+
+    (init as jest.Mock).mockResolvedValue(undefined);
+    (useTranslation as jest.Mock).mockImplementation(() => ({
+      t: (key: string) => key,
+      i18n: { language: 'en' },
+    }));
+
     (clearOnboardingData as jest.Mock).mockResolvedValue(undefined);
     (initDatabase as jest.Mock).mockResolvedValue(undefined);
   });
@@ -277,6 +310,22 @@ describe('Navigation Structure', () => {
       );
     });
 
+    test('Registers support stack routes after onboarding', async () => {
+      (getOnboardingData as jest.Mock).mockResolvedValue({
+        healingGoal: 'stress',
+        budget: 'under10',
+        completedAt: new Date().toISOString(),
+      });
+
+      const { getByTestId } = render(<AppNavigator />);
+
+      await waitFor(() => {
+        expect(getByTestId('feedback-screen')).toBeTruthy();
+        expect(getByTestId('report-preview-screen')).toBeTruthy();
+        expect(getByTestId('guided-dialogue-screen')).toBeTruthy();
+      });
+    });
+
     test('Initializes i18n on app start', async () => {
       (getOnboardingData as jest.Mock).mockResolvedValue(null);
       const { init } = require('../src/i18n');
@@ -286,6 +335,27 @@ describe('Navigation Structure', () => {
       await waitFor(() => {
         expect(init).toHaveBeenCalled();
       });
+    });
+
+    test('Does not call useTranslation before i18n initialization completes', () => {
+      (getOnboardingData as jest.Mock).mockResolvedValue(null);
+
+      const { init } = require('../src/i18n');
+      const { useTranslation } = require('react-i18next');
+      const originalImplementation = (useTranslation as jest.Mock).getMockImplementation();
+      const originalInitImplementation = (init as jest.Mock).getMockImplementation();
+
+      try {
+        (init as jest.Mock).mockImplementation(() => new Promise(() => {}));
+        (useTranslation as jest.Mock).mockImplementation(() => {
+          throw new Error('useTranslation called before i18n init');
+        });
+
+        expect(() => render(<AppNavigator />)).not.toThrow();
+      } finally {
+        (init as jest.Mock).mockImplementation(originalInitImplementation);
+        (useTranslation as jest.Mock).mockImplementation(originalImplementation);
+      }
     });
 
     test('Checks onboarding status on mount', async () => {

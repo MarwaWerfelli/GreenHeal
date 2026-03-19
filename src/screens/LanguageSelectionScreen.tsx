@@ -10,7 +10,7 @@ import {
 import * as Localization from 'expo-localization';
 import { saveLanguagePreference } from '../modules/storage';
 import { changeLanguage } from '../i18n';
-import { COLORS } from '../utils/constants';
+import { DESIGN_SYSTEM } from '../utils/constants';
 
 type Language = 'en' | 'ar' | 'fr';
 
@@ -34,6 +34,7 @@ interface LanguageSelectionScreenProps {
 export default function LanguageSelectionScreen({
   onLanguageSelected,
 }: LanguageSelectionScreenProps) {
+  const colors = DESIGN_SYSTEM.colors;
   const [selectedLanguage, setSelectedLanguage] = useState<Language>('en');
 
   useEffect(() => {
@@ -64,13 +65,16 @@ export default function LanguageSelectionScreen({
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+      <StatusBar barStyle="dark-content" backgroundColor={colors.bgBase} />
       
       <View style={styles.content}>
-        <Text style={styles.title}>🌿 GreenHeal</Text>
-        <Text style={styles.subtitle}>Choose Your Language</Text>
-        <Text style={styles.subtitleArabic}>اختر لغتك</Text>
-        <Text style={styles.subtitleFrench}>Choisissez votre langue</Text>
+        <View style={styles.heroCard}>
+          <Text style={styles.kicker}>Healing journey companion</Text>
+          <Text style={styles.title}>🌿 GreenHeal</Text>
+          <Text style={styles.subtitle}>Choose Your Language</Text>
+          <Text style={styles.subtitleArabic}>اختر لغتك</Text>
+          <Text style={styles.subtitleFrench}>Choisissez votre langue</Text>
+        </View>
 
         <View style={styles.languageList}>
           {LANGUAGES.map((language) => (
@@ -88,9 +92,11 @@ export default function LanguageSelectionScreen({
                 <Text style={styles.languageName}>{language.name}</Text>
                 <Text style={styles.languageNativeName}>{language.nativeName}</Text>
               </View>
-              {selectedLanguage === language.code && (
-                <Text style={styles.checkmark}>✓</Text>
-              )}
+              <View style={styles.checkmarkShell}>
+                {selectedLanguage === language.code && (
+                  <Text style={styles.checkmark}>✓</Text>
+                )}
+              </View>
             </TouchableOpacity>
           ))}
         </View>
@@ -102,51 +108,74 @@ export default function LanguageSelectionScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: DESIGN_SYSTEM.colors.bgBase,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 60,
+    paddingHorizontal: DESIGN_SYSTEM.spacing.lg,
+    paddingTop: DESIGN_SYSTEM.spacing.xxl,
     alignItems: 'center',
+  },
+  heroCard: {
+    width: '100%',
+    paddingVertical: DESIGN_SYSTEM.spacing.xl,
+    paddingHorizontal: DESIGN_SYSTEM.spacing.lg,
+    borderRadius: DESIGN_SYSTEM.borderRadius.xlarge,
+    backgroundColor: DESIGN_SYSTEM.colors.bgSurface,
+    borderWidth: 1,
+    borderColor: DESIGN_SYSTEM.colors.borderSubtle,
+    alignItems: 'center',
+    marginBottom: DESIGN_SYSTEM.spacing.lg,
+    ...DESIGN_SYSTEM.shadows.medium,
+  },
+  kicker: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: DESIGN_SYSTEM.colors.primary,
+    letterSpacing: 0.6,
+    marginBottom: DESIGN_SYSTEM.spacing.sm,
+    textTransform: 'uppercase',
   },
   title: {
     fontSize: 36,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-    marginBottom: 16,
+    fontWeight: '700',
+    color: DESIGN_SYSTEM.colors.primary,
+    marginBottom: DESIGN_SYSTEM.spacing.md,
   },
   subtitle: {
     fontSize: 20,
-    color: COLORS.text,
+    color: DESIGN_SYSTEM.colors.textPrimary,
     marginBottom: 4,
+    textAlign: 'center',
   },
   subtitleArabic: {
     fontSize: 18,
-    color: COLORS.textSecondary,
+    color: DESIGN_SYSTEM.colors.textSecondary,
     marginBottom: 4,
+    textAlign: 'center',
   },
   subtitleFrench: {
     fontSize: 18,
-    color: COLORS.textSecondary,
-    marginBottom: 40,
+    color: DESIGN_SYSTEM.colors.textSecondary,
+    textAlign: 'center',
   },
   languageList: {
     width: '100%',
-    gap: 16,
+    gap: DESIGN_SYSTEM.spacing.md,
   },
   languageButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.white,
-    padding: 20,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: 'transparent',
+    backgroundColor: DESIGN_SYSTEM.colors.bgSurface,
+    padding: DESIGN_SYSTEM.spacing.lg,
+    borderRadius: DESIGN_SYSTEM.borderRadius.large,
+    borderWidth: 1,
+    borderColor: DESIGN_SYSTEM.colors.borderSubtle,
+    ...DESIGN_SYSTEM.shadows.small,
   },
   languageButtonSelected: {
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.primaryLight,
+    borderColor: DESIGN_SYSTEM.colors.primary,
+    backgroundColor: DESIGN_SYSTEM.colors.primaryPale,
   },
   flag: {
     fontSize: 32,
@@ -158,16 +187,26 @@ const styles = StyleSheet.create({
   languageName: {
     fontSize: 18,
     fontWeight: '600',
-    color: COLORS.text,
+    color: DESIGN_SYSTEM.colors.textPrimary,
     marginBottom: 2,
   },
   languageNativeName: {
     fontSize: 16,
-    color: COLORS.textSecondary,
+    color: DESIGN_SYSTEM.colors.textSecondary,
+  },
+  checkmarkShell: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: DESIGN_SYSTEM.colors.bgElevated,
+    borderWidth: 1,
+    borderColor: DESIGN_SYSTEM.colors.borderSubtle,
   },
   checkmark: {
-    fontSize: 24,
-    color: COLORS.primary,
+    fontSize: 18,
+    color: DESIGN_SYSTEM.colors.primary,
     fontWeight: 'bold',
   },
 });

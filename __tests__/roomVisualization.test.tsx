@@ -93,7 +93,7 @@ describe('RoomVisualizationScreen', () => {
   });
 
   test('Resizes the room image before posting visualization form data', async () => {
-    const { getByText } = render(
+    const { getByTestId, getByText, queryByText } = render(
       <RoomVisualizationScreen route={singleRoute} navigation={{} as any} />
     );
 
@@ -118,6 +118,26 @@ describe('RoomVisualizationScreen', () => {
     expect(formData.get('renderStyle')).toBe('same-room-single-plant');
     expect(formData.get('selectedPlantName')).toBe('Snake Plant');
     expect(formData.get('stylePreset')).toBe('balancedModern');
+    expect(getByTestId('generated-room-image')).toBeTruthy();
+    expect(queryByText(/Drag the slider to compare before & after/i)).toBeNull();
+  });
+
+  test('Falls back safely when selectedPlants is malformed', () => {
+    const malformedRoute = {
+      params: {
+        imageUri: 'file://room-original.jpg',
+        recommendations: [snakePlant],
+        selectedPlant: snakePlant,
+        selectedPlants: null,
+      },
+    } as any;
+
+    const { getByTestId, getByText } = render(
+      <RoomVisualizationScreen route={malformedRoute} navigation={{} as any} />
+    );
+
+    expect(getByTestId('room-plan-marker-0')).toBeTruthy();
+    expect(getByText('aiAnalysis.selectedForPreview: Snake Plant')).toBeTruthy();
   });
 
   test('Shows markers, selectors, and style presets for all selected plants in the room plan', () => {

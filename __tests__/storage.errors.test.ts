@@ -174,6 +174,21 @@ describe('Storage Module - Error Handling', () => {
       expect(id).toBe(1);
     });
 
+    test('Getter operations normalize malformed query result shapes', async () => {
+      const mockDb = {
+        execAsync: jest.fn().mockResolvedValue(undefined),
+        runAsync: jest.fn(),
+        getAllAsync: jest.fn().mockResolvedValue(undefined),
+        getFirstAsync: jest.fn().mockResolvedValue(null),
+      };
+
+      (SQLite.openDatabaseAsync as jest.Mock).mockResolvedValue(mockDb);
+      await initDatabase();
+
+      await expect(getJournalEntries()).resolves.toEqual([]);
+      await expect(getGardenPlants()).resolves.toEqual([]);
+    });
+
     test('Database handles concurrent operations', async () => {
       const mockDb = {
         execAsync: jest.fn().mockResolvedValue(undefined),

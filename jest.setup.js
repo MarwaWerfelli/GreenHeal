@@ -43,6 +43,12 @@ jest.mock('expo-file-system', () => ({
   readDirectoryAsync: jest.fn(),
 }));
 
+// Mock expo-sharing
+jest.mock('expo-sharing', () => ({
+  isAvailableAsync: jest.fn(),
+  shareAsync: jest.fn(),
+}));
+
 // Mock expo-sqlite
 jest.mock('expo-sqlite', () => ({
   openDatabaseAsync: jest.fn(),

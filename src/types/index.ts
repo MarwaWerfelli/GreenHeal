@@ -5,11 +5,60 @@ export type Language = 'en' | 'ar' | 'fr';
 export type HealingGoal = 'stress' | 'physical' | 'depression' | 'sleep' | 'wellness';
 export type Budget = 'under10' | '10to30' | 'over30' | 'have_plants';
 
+export interface ReportProfile {
+  fullName: string;
+  preferredName: string;
+  age?: string;
+  hospitalName?: string;
+  patientId?: string;
+  careProgram?: string;
+  clinicianName?: string;
+}
+
+export type ReportHandoffMethod = 'care_team_email' | 'hospital_portal' | 'print_packet';
+
+export interface ReportExportRecord {
+  generatedAt: string;
+  fileUri: string;
+}
+
+export interface ReportSharingPreferences {
+  readyForFutureSharing?: boolean;
+  reviewedAt?: string;
+  consentConfirmedAt?: string;
+  handoffPreparedAt?: string;
+  handoffMethod?: ReportHandoffMethod;
+  exportGeneratedAt?: string;
+  exportFileUri?: string;
+  exportHistory?: ReportExportRecord[];
+}
+
 export interface OnboardingData {
+  reportProfile?: ReportProfile;
+  reportSharing?: ReportSharingPreferences;
   healingGoal: HealingGoal;
   budget: Budget;
   existingPlantPhotos?: string[];
   completedAt: string;
+}
+
+export type GuidedSymptomKey =
+  | 'night_waking'
+  | 'anxiety'
+  | 'irritability'
+  | 'restlessness'
+  | 'mental_fatigue'
+  | 'low_mood';
+
+export type SymptomTimeOfDay = 'night' | 'morning' | 'afternoon' | 'evening' | 'all_day';
+
+export type SymptomSupportFocus = 'sleep' | 'calm' | 'emotional_balance' | 'focus';
+
+export interface GuidedDialogueContext {
+  symptoms: GuidedSymptomKey[];
+  dominantSymptoms: GuidedSymptomKey[];
+  intensityWindow: SymptomTimeOfDay;
+  supportFocus: SymptomSupportFocus;
 }
 
 // Plant types
@@ -17,6 +66,8 @@ export interface PlantRecommendation {
   name: string;
   placement: string;
   healingBenefit: string;
+  healingRole?: string;
+  sensoryAction?: string;
   careDifficulty: 'easy' | 'medium' | 'hard';
   estimatedCost: string;
   wateringFrequencyDays: number;
@@ -104,8 +155,11 @@ export type RootStackParamList = {
   LanguageSelection: undefined;
   Onboarding: undefined;
   MainTabs: undefined;
-  Camera: undefined;
-  AIAnalysis: { imageUri: string };
+  Feedback: undefined;
+  ReportPreview: undefined;
+  GuidedDialogue: undefined;
+  Camera: { guidedContext?: GuidedDialogueContext } | undefined;
+  AIAnalysis: { imageUri: string; guidedContext?: GuidedDialogueContext };
   RoomVisualization: {
     imageUri: string;
     recommendations: PlantRecommendation[];
@@ -133,6 +187,8 @@ export type HomeScreenProps = CompositeScreenProps<
   BottomTabScreenProps<BottomTabParamList, 'Home'>,
   StackScreenProps<RootStackParamList>
 >;
+
+export type GuidedDialogueScreenProps = StackScreenProps<RootStackParamList, 'GuidedDialogue'>;
 
 export type CameraScreenProps = StackScreenProps<RootStackParamList, 'Camera'>;
 

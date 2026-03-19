@@ -2,7 +2,7 @@ import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { Alert, Linking } from 'react-native';
 import CameraScreen from '../src/screens/CameraScreen';
-import { pickFromGallery } from '../src/modules/image';
+import { pickFromGallery, prepareImageForAnalysisUpload } from '../src/modules/image';
 
 // Mock modules
 jest.mock('react-i18next', () => ({
@@ -14,6 +14,7 @@ jest.mock('react-i18next', () => ({
 
 jest.mock('../src/modules/image', () => ({
   pickFromGallery: jest.fn(),
+  prepareImageForAnalysisUpload: jest.fn(),
 }));
 
 // Mock expo-camera
@@ -34,6 +35,8 @@ const mockNavigation = {
   navigate: mockNavigate,
 } as any;
 const mockedPickFromGallery = pickFromGallery as jest.MockedFunction<typeof pickFromGallery>;
+const mockedPrepareImageForAnalysisUpload =
+  prepareImageForAnalysisUpload as jest.MockedFunction<typeof prepareImageForAnalysisUpload>;
 
 // Mock Alert and Linking
 jest.spyOn(Alert, 'alert');
@@ -43,6 +46,7 @@ describe('Camera Screen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockedPickFromGallery.mockResolvedValue([]);
+    mockedPrepareImageForAnalysisUpload.mockImplementation(async (uri) => uri);
   });
 
   describe('Unit tests for camera permissions', () => {
@@ -144,8 +148,77 @@ describe('Camera Screen', () => {
 
       fireEvent.press(getByText('camera.usePhoto'));
 
+      await waitFor(() => {
+        expect(mockedPrepareImageForAnalysisUpload).toHaveBeenCalledWith('file://gallery-room.jpg');
+      });
+
       expect(mockNavigate).toHaveBeenCalledWith('AIAnalysis', {
         imageUri: 'file://gallery-room.jpg',
+        guidedContext: undefined,
+      });
+    });
+
+    test('Uses the prepared image URI when continuing to analysis', async () => {
+      jest.spyOn(require('expo-camera'), 'useCameraPermissions').mockReturnValue([
+        { granted: true },
+        mockRequestPermission,
+      ]);
+      mockedPickFromGallery.mockResolvedValue(['file://gallery-room.jpg']);
+      mockedPrepareImageForAnalysisUpload.mockResolvedValue('file://gallery-room-prepared.jpg');
+
+      const { getByText } = render(<CameraScreen navigation={mockNavigation} />);
+
+      fireEvent.press(getByText('camera.chooseFromGallery'));
+
+      await waitFor(() => {
+        expect(getByText('camera.usePhoto')).toBeTruthy();
+      });
+
+      fireEvent.press(getByText('camera.usePhoto'));
+
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith('AIAnalysis', {
+          imageUri: 'file://gallery-room-prepared.jpg',
+          guidedContext: undefined,
+        });
+      });
+    });
+
+    test('Forwards guided dialogue context to AI analysis', async () => {
+      jest.spyOn(require('expo-camera'), 'useCameraPermissions').mockReturnValue([
+        { granted: true },
+        mockRequestPermission,
+      ]);
+      mockedPickFromGallery.mockResolvedValue(['file://guided-room.jpg']);
+
+      const mockRoute = {
+        params: {
+          guidedContext: {
+            symptoms: ['night_waking', 'anxiety'],
+            dominantSymptoms: ['night_waking'],
+            intensityWindow: 'night',
+            supportFocus: 'sleep',
+          },
+        },
+      } as any;
+
+      const { getByText } = render(
+        <CameraScreen navigation={mockNavigation} route={mockRoute} />
+      );
+
+      fireEvent.press(getByText('camera.chooseFromGallery'));
+
+      await waitFor(() => {
+        expect(getByText('camera.usePhoto')).toBeTruthy();
+      });
+
+      fireEvent.press(getByText('camera.usePhoto'));
+
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith('AIAnalysis', {
+          imageUri: 'file://guided-room.jpg',
+          guidedContext: mockRoute.params.guidedContext,
+        });
       });
     });
   });

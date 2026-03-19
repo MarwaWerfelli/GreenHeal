@@ -39,19 +39,26 @@ describe('Onboarding Screen', () => {
           fc.constantFrom('under10', '10to30', 'over30', 'have_plants'),
           async (healingGoal, budget) => {
             const onComplete = jest.fn();
-            const { getByText } = render(<OnboardingScreen onComplete={onComplete} />);
+            const { getByPlaceholderText, getByText } = render(<OnboardingScreen onComplete={onComplete} />);
+
+            fireEvent.changeText(getByPlaceholderText('onboarding.profileFields.fullName'), 'Sarah Ahmed');
+            fireEvent.changeText(getByPlaceholderText('onboarding.profileFields.preferredName'), 'Sarah');
+            fireEvent.changeText(getByPlaceholderText('onboarding.profileFields.hospitalName'), 'Green Center');
+            fireEvent.changeText(getByPlaceholderText('onboarding.profileFields.patientId'), 'GH-102');
+
+            fireEvent.press(getByText('common.next'));
 
             // Map budget value to translation key
             const budgetKey = budget === 'have_plants' ? 'havePlants' : budget;
 
-            // Step 1: Select healing goal
+            // Step 2: Select healing goal
             const goalButton = getByText(`onboarding.healingGoals.${healingGoal}`);
             fireEvent.press(goalButton);
             
             const nextButton1 = getByText('common.next');
             fireEvent.press(nextButton1);
 
-            // Step 2: Select budget
+            // Step 3: Select budget
             await waitFor(() => {
               const budgetButton = getByText(`onboarding.budget.${budgetKey}`);
               fireEvent.press(budgetButton);
@@ -60,7 +67,7 @@ describe('Onboarding Screen', () => {
             const nextButton2 = getByText('common.next');
             fireEvent.press(nextButton2);
 
-            // Step 3: Complete onboarding
+            // Step 4: Complete onboarding
             await waitFor(() => {
               const completeButton = getByText('common.complete');
               fireEvent.press(completeButton);
@@ -70,6 +77,12 @@ describe('Onboarding Screen', () => {
             await waitFor(() => {
               expect(saveOnboardingData).toHaveBeenCalledWith(
                 expect.objectContaining({
+                  reportProfile: expect.objectContaining({
+                    fullName: 'Sarah Ahmed',
+                    preferredName: 'Sarah',
+                    hospitalName: 'Green Center',
+                    patientId: 'GH-102',
+                  }),
                   healingGoal,
                   budget,
                   completedAt: expect.any(String),
@@ -93,21 +106,26 @@ describe('Onboarding Screen', () => {
       });
 
       const onComplete = jest.fn();
-      const { getByText } = render(<OnboardingScreen onComplete={onComplete} />);
+      const { getByPlaceholderText, getByText } = render(<OnboardingScreen onComplete={onComplete} />);
 
       // Navigate to step 1
+      fireEvent.changeText(getByPlaceholderText('onboarding.profileFields.fullName'), 'Maya Johnson');
+      fireEvent.changeText(getByPlaceholderText('onboarding.profileFields.preferredName'), 'Maya');
+      fireEvent.press(getByText('common.next'));
+
+      // Navigate to step 2
       const goalButton = getByText('onboarding.healingGoals.stress');
       fireEvent.press(goalButton);
       fireEvent.press(getByText('common.next'));
 
-      // Navigate to step 2
+      // Navigate to step 3
       await waitFor(() => {
         const budgetButton = getByText('onboarding.budget.under10');
         fireEvent.press(budgetButton);
       });
       fireEvent.press(getByText('common.next'));
 
-      // Step 3: Upload photos
+      // Step 4: Upload photos
       await waitFor(() => {
         const uploadButton = getByText('onboarding.uploadPhotos');
         fireEvent.press(uploadButton);
@@ -132,23 +150,42 @@ describe('Onboarding Screen', () => {
   });
 
   describe('Unit tests for onboarding flow', () => {
-    test('Displays all healing goal options', () => {
+    test('Displays patient profile fields on first step', () => {
       const onComplete = jest.fn();
-      const { getByText } = render(<OnboardingScreen onComplete={onComplete} />);
+      const { getByPlaceholderText } = render(<OnboardingScreen onComplete={onComplete} />);
 
-      // Should display all healing goal options
-      expect(getByText('onboarding.healingGoals.stress')).toBeTruthy();
-      expect(getByText('onboarding.healingGoals.physical')).toBeTruthy();
-      expect(getByText('onboarding.healingGoals.depression')).toBeTruthy();
-      expect(getByText('onboarding.healingGoals.sleep')).toBeTruthy();
-      expect(getByText('onboarding.healingGoals.wellness')).toBeTruthy();
+      expect(getByPlaceholderText('onboarding.profileFields.fullName')).toBeTruthy();
+      expect(getByPlaceholderText('onboarding.profileFields.preferredName')).toBeTruthy();
+      expect(getByPlaceholderText('onboarding.profileFields.hospitalName')).toBeTruthy();
     });
 
-    test('Displays all budget options on step 2', async () => {
+    test('Displays all healing goal options on step 2', async () => {
       const onComplete = jest.fn();
-      const { getByText } = render(<OnboardingScreen onComplete={onComplete} />);
+      const { getByPlaceholderText, getByText } = render(<OnboardingScreen onComplete={onComplete} />);
+
+      fireEvent.changeText(getByPlaceholderText('onboarding.profileFields.fullName'), 'Sam Carter');
+      fireEvent.changeText(getByPlaceholderText('onboarding.profileFields.preferredName'), 'Sam');
+      fireEvent.press(getByText('common.next'));
+
+      await waitFor(() => {
+        expect(getByText('onboarding.healingGoals.stress')).toBeTruthy();
+        expect(getByText('onboarding.healingGoals.physical')).toBeTruthy();
+        expect(getByText('onboarding.healingGoals.depression')).toBeTruthy();
+        expect(getByText('onboarding.healingGoals.sleep')).toBeTruthy();
+        expect(getByText('onboarding.healingGoals.wellness')).toBeTruthy();
+      });
+    });
+
+    test('Displays all budget options on step 3', async () => {
+      const onComplete = jest.fn();
+      const { getByPlaceholderText, getByText } = render(<OnboardingScreen onComplete={onComplete} />);
 
       // Navigate to step 2
+      fireEvent.changeText(getByPlaceholderText('onboarding.profileFields.fullName'), 'Leila Adams');
+      fireEvent.changeText(getByPlaceholderText('onboarding.profileFields.preferredName'), 'Leila');
+      fireEvent.press(getByText('common.next'));
+
+      // Navigate to step 3
       const goalButton = getByText('onboarding.healingGoals.stress');
       fireEvent.press(goalButton);
       fireEvent.press(getByText('common.next'));
@@ -184,11 +221,22 @@ describe('Onboarding Screen', () => {
 
     test('Can navigate back through steps', async () => {
       const onComplete = jest.fn();
-      const { getByText } = render(<OnboardingScreen onComplete={onComplete} />);
+      const { getByDisplayValue, getByPlaceholderText, getByText } = render(<OnboardingScreen onComplete={onComplete} />);
 
       // Go to step 2
+      fireEvent.changeText(getByPlaceholderText('onboarding.profileFields.fullName'), 'Amira Stone');
+      fireEvent.changeText(getByPlaceholderText('onboarding.profileFields.preferredName'), 'Amira');
+      fireEvent.press(getByText('common.next'));
+
+      // Go to step 3
       fireEvent.press(getByText('onboarding.healingGoals.stress'));
       fireEvent.press(getByText('common.next'));
+
+      // Go back to step 2
+      await waitFor(() => {
+        const backButton = getByText('common.back');
+        fireEvent.press(backButton);
+      });
 
       // Go back to step 1
       await waitFor(() => {
@@ -196,9 +244,8 @@ describe('Onboarding Screen', () => {
         fireEvent.press(backButton);
       });
 
-      // Should be back on step 1
       await waitFor(() => {
-        expect(getByText('onboarding.healingGoals.stress')).toBeTruthy();
+        expect(getByDisplayValue('Amira Stone')).toBeTruthy();
       });
     });
 
@@ -209,9 +256,14 @@ describe('Onboarding Screen', () => {
       });
 
       const onComplete = jest.fn();
-      const { getByText } = render(<OnboardingScreen onComplete={onComplete} />);
+      const { getByPlaceholderText, getByText } = render(<OnboardingScreen onComplete={onComplete} />);
 
-      // Navigate to step 3
+      // Navigate to step 2
+      fireEvent.changeText(getByPlaceholderText('onboarding.profileFields.fullName'), 'Noor Salem');
+      fireEvent.changeText(getByPlaceholderText('onboarding.profileFields.preferredName'), 'Noor');
+      fireEvent.press(getByText('common.next'));
+
+      // Navigate to step 4
       fireEvent.press(getByText('onboarding.healingGoals.stress'));
       fireEvent.press(getByText('common.next'));
       
@@ -234,9 +286,13 @@ describe('Onboarding Screen', () => {
 
     test('Navigates to home on completion', async () => {
       const onComplete = jest.fn();
-      const { getByText } = render(<OnboardingScreen onComplete={onComplete} />);
+      const { getByPlaceholderText, getByText } = render(<OnboardingScreen onComplete={onComplete} />);
 
       // Complete all steps
+      fireEvent.changeText(getByPlaceholderText('onboarding.profileFields.fullName'), 'Layla Hart');
+      fireEvent.changeText(getByPlaceholderText('onboarding.profileFields.preferredName'), 'Layla');
+      fireEvent.press(getByText('common.next'));
+
       fireEvent.press(getByText('onboarding.healingGoals.wellness'));
       fireEvent.press(getByText('common.next'));
 
